@@ -13,6 +13,12 @@ from .config import load_config
 from .formatters import format_agent_context, format_result
 from .models import CONFIDENCE_ORDER, SEVERITY_ORDER
 
+TEXT_LIMITATION_FORMATS = {"text", "markdown"}
+
+
+def supports_limitations_format(fmt: str) -> bool:
+    return fmt in TEXT_LIMITATION_FORMATS
+
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
@@ -140,7 +146,7 @@ def _log_analysis_warnings(args: argparse.Namespace, result: dict[str, Any]) -> 
 
 
 def _with_limitations(output: str, fmt: str, show_limitations: bool) -> str:
-    if not show_limitations or fmt not in {"text", "markdown"}:
+    if not show_limitations or not supports_limitations_format(fmt):
         return output
     heading = "## Limitations" if fmt == "markdown" else "Limitations:"
     lines = [output.rstrip(), "", heading]
