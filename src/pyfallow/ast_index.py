@@ -341,8 +341,14 @@ def _is_type_checking_test(node: ast.AST) -> bool:
 
 
 def _is_import_error_handler(handler: ast.ExceptHandler) -> bool:
-    name = _expr_name(handler.type) if handler.type else ""
-    return name in {"ImportError", "ModuleNotFoundError"} or name.endswith(".ImportError")
+    if handler.type is None:
+        return False
+    nodes = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
+    for node in nodes:
+        name = _expr_name(node)
+        if name in {"ImportError", "ModuleNotFoundError"} or name.endswith(".ImportError"):
+            return True
+    return False
 
 
 def _decorator_name(node: ast.AST) -> str | None:

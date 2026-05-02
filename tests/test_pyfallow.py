@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pyfallow
 from pyfallow.analysis import analyze
+from pyfallow.ast_index import index_file
 from pyfallow.baseline import compare_with_baseline, create_baseline
 from pyfallow.config import load_config
 from pyfallow.dependencies import parse_dependency_declarations
@@ -1072,6 +1073,40 @@ def test_guarded_optional_import_does_not_count_as_runtime_violation(tmp_path: P
             return orjson
         """,
     )
+
+    result = analyze_fixture(tmp_path)
+    assert not issues_for(result, "optional-dependency-used-in-runtime")
+    assert not issues_for(result, "missing-runtime-dependency")
+
+
+def test_tuple_import_error_guard_marks_imports_guarded(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [project.optional-dependencies]
+        speedups = ["orjson"]
+
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(
+        tmp_path / "src/app.py",
+        """
+        try:
+            import orjson
+        except (ImportError, ModuleNotFoundError):
+            orjson = None
+
+        def main():
+            return orjson
+        """,
+    )
+
+    indexed = index_file(tmp_path / "src/app.py", tmp_path, "app", "src", False)
+    imports = [record for record in indexed.imports if record.raw_module == "orjson"]
+    assert imports and all(record.guarded for record in imports)
 
     result = analyze_fixture(tmp_path)
     assert not issues_for(result, "optional-dependency-used-in-runtime")
