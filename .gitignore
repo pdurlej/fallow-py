@@ -37,3 +37,6 @@ fallow-agent-context.md
 # opencode local config (test stack — not for public repo)
 opencode.json
 
+# soak benchmark generated checkouts and run artifacts
+benchmarks/soak/workspace/
+benchmarks/soak/results/

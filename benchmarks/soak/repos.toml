@@ -1,0 +1,82 @@
+# Pinned public repositories for the v0.3.0-alpha.1 multi-model soak.
+# Commits were resolved with `git ls-remote <url> HEAD` on 2026-05-02.
+
+[[repos]]
+name = "requests"
+url = "https://github.com/psf/requests.git"
+commit = "8f6cda9969f4a98c45ea2922f6bcbefc02256202"
+since = "HEAD~5"
+category = "canonical-library"
+notes = "Mature HTTP client library; baseline for low-noise library analysis."
+
+[[repos]]
+name = "fastapi"
+url = "https://github.com/fastapi/fastapi.git"
+commit = "e0a2c75b1a980c52c336cfefd12f2277238c4e8f"
+since = "HEAD~5"
+category = "framework"
+notes = "Modern async framework; exercises route/decorator heuristics."
+
+[[repos]]
+name = "flask"
+url = "https://github.com/pallets/flask.git"
+commit = "7374c85ddefc3f4b177a698ab9f0cbb6a5c0b392"
+since = "HEAD~5"
+category = "framework"
+notes = "Established framework with decorator-heavy public API."
+
+[[repos]]
+name = "pydantic"
+url = "https://github.com/pydantic/pydantic.git"
+commit = "597fa692eaaa90132f683e88ca994f28e185463b"
+since = "HEAD~5"
+category = "typed-models"
+notes = "Model-heavy codebase; stresses public API and class false-positive surfaces."
+
+[[repos]]
+name = "httpx"
+url = "https://github.com/encode/httpx.git"
+commit = "b5addb64f0161ff6bfe94c124ef76f6a1fba5254"
+since = "HEAD~5"
+category = "canonical-library"
+notes = "Modern HTTP client library; useful comparison point with requests."
+
+[[repos]]
+name = "django-oscar"
+url = "https://github.com/django-oscar/django-oscar.git"
+commit = "eeb5a7dd4af447f5fa9b08652e9a256bca326a56"
+since = "HEAD~5"
+category = "django-app"
+notes = "Large Django application; exercises framework magic and migrations."
+
+[[repos]]
+name = "celery"
+url = "https://github.com/celery/celery.git"
+commit = "e6965acd86496013d91a8916b61672e0023a6bf3"
+since = "HEAD~5"
+category = "task-queue"
+notes = "Dynamic task dispatch and app registry patterns."
+
+[[repos]]
+name = "click"
+url = "https://github.com/pallets/click.git"
+commit = "fed9049f7a07550d560a91b30c5b0b3e17d54981"
+since = "HEAD~5"
+category = "cli-framework"
+notes = "Decorator-heavy CLI library."
+
+[[repos]]
+name = "sqlalchemy"
+url = "https://github.com/sqlalchemy/sqlalchemy.git"
+commit = "583e2c4a0cb4ae4659a0d4c268d606b10f107ffa"
+since = "HEAD~5"
+category = "orm"
+notes = "Large ORM codebase; stresses import graph and public API handling."
+
+[[repos]]
+name = "autogpt"
+url = "https://github.com/Significant-Gravitas/AutoGPT.git"
+commit = "bf6d644de4119c463af88c48df4ed81be3ded882"
+since = "HEAD~5"
+category = "agentic-app"
+notes = "Agentic application proxy for AI-assisted codebase workflows until a maintainer-owned vibecoded project is available."

@@ -1,0 +1,37 @@
+# Model matrix for the v0.3.0-alpha.1 soak harness.
+# Names are stable internal IDs used in result paths.
+
+[[models]]
+name = "glm-5-1"
+provider = "opencode"
+model = "zai/glm-5.1"
+role = "heavy-lifter"
+notes = "Primary high-volume model through the Z.AI Coding Plan."
+
+[[models]]
+name = "claude-opus"
+provider = "opencode"
+model = "anthropic/claude-opus"
+role = "sanity-check"
+notes = "High-quality cross-validation model."
+
+[[models]]
+name = "gpt-5"
+provider = "opencode"
+model = "openai/gpt-5"
+role = "cross-validation"
+notes = "OpenAI model path for hallucination and tool-use comparison."
+
+[[models]]
+name = "qwen-35b"
+provider = "opencode"
+model = "ollama/qwen3.5:35b-a3b-coding-nvfp4"
+role = "local-mid-tier"
+notes = "Local Ollama coding model; verifies non-cloud agent workflow."
+
+[[models]]
+name = "qwen-9b"
+provider = "opencode"
+model = "ollama/qwen3.5-9b-uncensored"
+role = "cheap-model"
+notes = "Low-cost/local model for the token-economics hypothesis."

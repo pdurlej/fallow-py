@@ -1,0 +1,14 @@
+{
+  "matrix": {
+    "models": 5,
+    "planned_runs": 50,
+    "repositories": 10
+  },
+  "status": "template",
+  "summary": {
+    "blocking_findings": "pending",
+    "false_positive_rate_by_rule": "pending",
+    "qwen_9b_with_pyfallow_case_study": "pending",
+    "true_positive_rate_by_rule": "pending"
+  }
+}

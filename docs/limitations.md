@@ -46,10 +46,24 @@ Imports guarded by environment checks, platform checks, optional dependency hand
 
 Public exports are not the same as runtime usage. High- and medium-confidence public API evidence suppresses some unused-symbol findings by default. Low-confidence public API evidence lowers confidence or marks uncertainty instead of fully suppressing.
 
+## Known False-Positive Surfaces
+
+The soak harness in `benchmarks/soak/` exists to calibrate these surfaces on real projects. Current expected risk areas:
+
+- `unused-module`: plugin registries, Django app discovery, Celery task autodiscovery, and dynamically imported command modules.
+- `unused-symbol`: public APIs, decorators that register callbacks, framework hooks, and symbols referenced from templates or config files.
+- `missing-runtime-dependency`: vendored packages, monorepo-local packages not under configured roots, and import-to-distribution names that need explicit mapping.
+- `unused-runtime-dependency`: plugin packages, package metadata dependencies, optional extras, and runtime imports hidden behind reflection.
+- `circular-dependency`: type-only imports and import cycles already mitigated by local import placement.
+- `duplicate-code`: repeated structural shape that represents different domain concepts.
+- `high-complexity`: parser/compiler-style code and explicit state machines where branching is intentional.
+- `boundary-violation`: rules that do not match the repository's actual architecture vocabulary.
+
+If a rule shows more than a 30% false-positive rate during calibration, lower severity/confidence or document a targeted heuristic before presenting the rule as a CI blocker.
+
 ## Recommended Interpretation
 
 - Treat high-confidence findings as review priorities.
 - Treat medium-confidence findings as likely useful but not automatic changes.
 - Treat low-confidence findings as context for inspection.
 - Never auto-delete low-confidence dead code without human review.
-

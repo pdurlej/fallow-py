@@ -504,6 +504,7 @@ def test_release_metadata_version_schema_and_readme_examples() -> None:
         ROOT / "schemas/pyfallow-fix-plan.schema.json",
         ROOT / "examples/outputs/demo-report.excerpt.json",
         ROOT / "examples/outputs/demo.sarif.excerpt.json",
+        ROOT / "examples/outputs/soak-summary.example.json",
     ]:
         assert json.loads(path.read_text(encoding="utf-8"))
 
@@ -1988,3 +1989,81 @@ def test_verify_imports_rejects_target_file_outside_root(tmp_path: Path) -> None
         assert "outside analysis root" in str(exc)
     else:
         raise AssertionError("verify_imports accepted a target outside the analysis root")
+
+
+def test_soak_matrix_is_reproducible_and_pinned() -> None:
+    repos = tomllib.loads((ROOT / "benchmarks/soak/repos.toml").read_text(encoding="utf-8"))[
+        "repos"
+    ]
+    models = tomllib.loads((ROOT / "benchmarks/soak/models.toml").read_text(encoding="utf-8"))[
+        "models"
+    ]
+
+    assert len(repos) == 10
+    assert len(models) == 5
+    assert {repo["name"] for repo in repos} >= {"requests", "fastapi", "autogpt"}
+    assert {model["name"] for model in models} == {
+        "glm-5-1",
+        "claude-opus",
+        "gpt-5",
+        "qwen-35b",
+        "qwen-9b",
+    }
+    for repo in repos:
+        assert repo["url"].startswith("https://github.com/")
+        assert len(repo["commit"]) == 40
+        assert all(character in "0123456789abcdef" for character in repo["commit"])
+        assert repo["since"] == "HEAD~5"
+
+    result = subprocess.run(
+        [sys.executable, "benchmarks/soak/run.py", "--list"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    summary = json.loads(result.stdout)
+    assert summary["planned_runs"] == 50
+    assert len(summary["repos"]) == 10
+    assert len(summary["models"]) == 5
+
+
+def test_soak_dry_run_writes_plan_without_cloning(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    results = tmp_path / "results"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "benchmarks/soak/run.py",
+            "--repo",
+            "requests",
+            "--model",
+            "qwen-9b",
+            "--dry-run",
+            "--workspace",
+            str(workspace),
+            "--results",
+            str(results),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    result_dir = results / "requests/qwen-9b"
+    plan = json.loads((result_dir / "plan.json").read_text(encoding="utf-8"))
+    assert plan["repo"]["name"] == "requests"
+    assert plan["model"]["name"] == "qwen-9b"
+    assert plan["commands"]["pyfallow"][1:4] == ["-m", "pyfallow", "analyze"]
+    assert "--since" in plan["commands"]["pyfallow"]
+    assert "agent-fix-plan" in plan["commands"]["pyfallow"]
+    assert "opencode" == plan["commands"]["opencode"][0]
+    assert (result_dir / "human_classification.md").exists()
+    assert not (workspace / "requests").exists()
