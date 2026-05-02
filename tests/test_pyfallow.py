@@ -2156,3 +2156,83 @@ def test_soak_dry_run_writes_plan_without_cloning(tmp_path: Path) -> None:
     assert "opencode" == plan["commands"]["opencode"][0]
     assert (result_dir / "human_classification.md").exists()
     assert not (workspace / "requests").exists()
+
+
+def test_comparison_benchmark_matrix_and_docs_are_complementary() -> None:
+    repos = tomllib.loads((ROOT / "benchmarks/comparison/repos.toml").read_text(encoding="utf-8"))[
+        "repos"
+    ]
+    tools = tomllib.loads((ROOT / "benchmarks/comparison/tools.toml").read_text(encoding="utf-8"))[
+        "tools"
+    ]
+    soak_repos = tomllib.loads((ROOT / "benchmarks/soak/repos.toml").read_text(encoding="utf-8"))[
+        "repos"
+    ]
+
+    assert [repo["name"] for repo in repos] == ["requests", "fastapi", "flask", "pydantic", "httpx"]
+    assert {repo["name"] for repo in repos} <= {repo["name"] for repo in soak_repos}
+    assert {tool["name"] for tool in tools} == {"ruff", "vulture", "deptry", "pyfallow"}
+    assert any(tool["package"] == "ruff==0.15.12" for tool in tools)
+    assert any(tool["package"] == "vulture==2.16" for tool in tools)
+    assert any(tool["package"] == "deptry==0.25.1" for tool in tools)
+
+    result = subprocess.run(
+        [sys.executable, "benchmarks/comparison/run.py", "--list"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    summary = json.loads(result.stdout)
+    assert summary["planned_runs"] == 20
+    assert summary["timed_runs_per_pair"] == 5
+
+    performance = (ROOT / "docs/performance.md").read_text(encoding="utf-8")
+    assert "not a ranking" in performance
+    assert "ruff 0.15.12" in performance
+    assert "vulture 2.16" in performance
+    assert "deptry 0.25.1" in performance
+    assert "Add pyfallow when" in performance
+    assert "| requests | 0.021s | 0.179s | 0.121s | 0.245s |" in performance
+    assert "**Use alongside:** ruff" in performance
+
+
+def test_comparison_benchmark_dry_run_writes_plan_without_cloning(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    results = tmp_path / "results"
+    venvs = tmp_path / "venvs"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "benchmarks/comparison/run.py",
+            "--repo",
+            "requests",
+            "--tool",
+            "pyfallow",
+            "--dry-run",
+            "--workspace",
+            str(workspace),
+            "--results",
+            str(results),
+            "--venvs",
+            str(venvs),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    plan = json.loads((results / "requests/pyfallow.plan.json").read_text(encoding="utf-8"))
+    assert plan["repo"]["name"] == "requests"
+    assert plan["tool"]["name"] == "pyfallow"
+    assert plan["command"][1:4] == ["-m", "pyfallow", "analyze"]
+    assert "--format" in plan["command"]
+    assert "json" in plan["command"]
+    assert not (workspace / "requests").exists()

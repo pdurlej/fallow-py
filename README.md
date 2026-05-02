@@ -29,6 +29,12 @@ Then install the bundled agent instructions:
 
 See [`docs/agent-integration.md`](docs/agent-integration.md) for MCP setup, trigger rules, and the blocking/review/auto-fix workflow.
 
+## Performance
+
+pyfallow is meant to complement ruff, vulture, deptry, mypy/pyright, and security scanners rather than replace them. The benchmark harness in [`benchmarks/comparison/`](benchmarks/comparison/) compares runtime and finding categories across a small pinned repo set.
+
+See [`docs/performance.md`](docs/performance.md) for the current methodology, local timing table, and "best at / add pyfallow when" guidance for each tool.
+
 ## Why pyfallow?
 
 - Built for code agents and human reviewers.
