@@ -578,6 +578,38 @@ def test_include_tests_keeps_pytest_fixtures_conservative(tmp_path: Path) -> Non
     assert ("src/tests/test_app.py", "sample") not in unused_symbols
 
 
+def test_visit_if_test_condition_records_name_references(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(
+        tmp_path / "src/app.py",
+        """
+        ALLOWED = {"a", "b"}
+        FALLBACK = "x"
+        DEFAULT = 1
+
+        def main(x):
+            if x in ALLOWED:
+                return FALLBACK
+            elif DEFAULT and x:
+                return DEFAULT
+            return None
+        """,
+    )
+
+    result = analyze_fixture(tmp_path)
+    unused = {(issue["module"], issue.get("symbol")) for issue in issues_for(result, "unused-symbol")}
+    assert ("app", "ALLOWED") not in unused
+    assert ("app", "FALLBACK") not in unused
+    assert ("app", "DEFAULT") not in unused
+
+
 def test_reexports_and_from_package_submodule_alias_usage(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",

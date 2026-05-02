@@ -59,6 +59,7 @@ class IndexVisitor(ast.NodeVisitor):
         is_type_checking = _is_type_checking_test(node.test)
         if is_type_checking:
             self.type_checking_depth += 1
+        self.visit(node.test)
         for child in node.body:
             self.visit(child)
         if is_type_checking:
