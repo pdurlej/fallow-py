@@ -496,6 +496,23 @@ def test_example_project_cli_commands_work() -> None:
     assert "Project Overview" in agent_run.stdout
 
 
+def test_self_audit_gate_is_clean_for_repository() -> None:
+    result = run_cli(
+        [
+            "analyze",
+            "--root",
+            str(ROOT),
+            "--fail-on",
+            "warning",
+            "--min-confidence",
+            "medium",
+        ]
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "0 issues" in result.stdout
+
+
 def test_cli_exit_codes_and_focus_commands(tmp_path: Path) -> None:
     root = make_fixture_project(tmp_path)
     env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
