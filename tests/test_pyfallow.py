@@ -7,6 +7,7 @@ import subprocess
 import sys
 import textwrap
 import tomllib
+import zipfile
 from pathlib import Path
 
 import pyfallow
@@ -1650,3 +1651,42 @@ def test_json_schema_and_golden_fixture_contract() -> None:
     golden = json.loads((ROOT / "tests/golden/demo_project_report_golden.json").read_text(encoding="utf-8"))
     assert actual == golden
 
+
+def test_agent_integration_examples_are_packaged() -> None:
+    skill_root = ROOT / "examples/claude-skill/pyfallow-cleanup"
+    cursor_rule = ROOT / "examples/cursor-rules/pyfallow.mdc"
+    agent_doc = ROOT / "docs/agent-integration.md"
+
+    for path in [
+        skill_root / "SKILL.md",
+        skill_root / "workflow.md",
+        skill_root / "README.md",
+        cursor_rule,
+        agent_doc,
+    ]:
+        assert path.exists(), path
+
+    skill_text = (skill_root / "SKILL.md").read_text(encoding="utf-8")
+    workflow_text = (skill_root / "workflow.md").read_text(encoding="utf-8")
+    cursor_text = cursor_rule.read_text(encoding="utf-8")
+
+    assert "pyfallow.analyze_diff" in skill_text
+    assert "blocking" in skill_text
+    assert "DO NOT mark the task complete" in workflow_text
+    assert "`not_implemented`" in workflow_text
+    assert "alwaysApply: true" in cursor_text
+
+    archives = {
+        ROOT / "examples/claude-skill/claude-skill-pyfallow-cleanup-v0.2.0.zip": {
+            "pyfallow-cleanup/SKILL.md",
+            "pyfallow-cleanup/workflow.md",
+            "pyfallow-cleanup/README.md",
+        },
+        ROOT / "examples/cursor-rules/cursor-rules-pyfallow-v0.2.0.zip": {
+            "pyfallow.mdc",
+        },
+    }
+    for archive, expected in archives.items():
+        assert archive.exists(), archive
+        with zipfile.ZipFile(archive) as bundle:
+            assert expected <= set(bundle.namelist())

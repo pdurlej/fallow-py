@@ -11,6 +11,8 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 - Diff-aware analysis with `--since <git-ref>`.
 - `analysis.diff_scope` in JSON reports.
 - Separate `pyfallow-mcp` package with five MCP tools, two resource templates, and two prompts.
+- Claude Code `pyfallow-cleanup` skill example and Cursor rule mirror for agent workflows.
+- Public agent integration guide and small release zip assets for the bundled skill/rules.
 
 ### Changed
 

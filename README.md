@@ -12,6 +12,23 @@ Current release target: `0.2.0-alpha.1`.
 
 Runtime dependencies are stdlib-only on Python 3.11+. Development and packaging tools are optional extras.
 
+## For Agents
+
+Use pyfallow as a pre-completion checkpoint for Python edits:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pip install -e ./mcp
+pyfallow-mcp --root /path/to/repo
+```
+
+Then install the bundled agent instructions:
+
+- Claude Code skill: [`examples/claude-skill/pyfallow-cleanup/`](examples/claude-skill/pyfallow-cleanup/)
+- Cursor rule mirror: [`examples/cursor-rules/pyfallow.mdc`](examples/cursor-rules/pyfallow.mdc)
+
+See [`docs/agent-integration.md`](docs/agent-integration.md) for MCP setup, trigger rules, and the blocking/review/auto-fix workflow.
+
 ## Why pyfallow?
 
 - Built for code agents and human reviewers.
@@ -123,7 +140,7 @@ Use `--since <git-ref>` when an agent or reviewer only needs findings related to
 python -m pyfallow analyze --root . --since HEAD~1 --format json
 ```
 
-`pyfallow` still rebuilds the full module graph, then filters findings to:
+`pyfallow` still rebuilds the full module graph, then filters findings to files changed between the ref and `HEAD`, plus staged, unstaged, and untracked Python files in the working tree:
 
 - issues whose primary `path` is a changed Python file
 - import cycles involving a changed module
