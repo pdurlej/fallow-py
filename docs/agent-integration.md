@@ -55,7 +55,7 @@ pyfallow analyze --root . --since HEAD --format json --min-confidence medium
 
 1. Call `pyfallow.analyze_diff(since="HEAD", min_confidence="medium")` before commit, or use the branch base ref for PR cleanup.
 2. Before adding uncertain imports, call `pyfallow.verify_imports(file=<path>, planned_imports=[...])`.
-3. For each finding, call `pyfallow.explain_finding`.
+3. Use each finding's `classification`; call `pyfallow.explain_finding` when you need remediation details.
 4. Auto-fix only findings classified as `auto_safe`.
 5. Show `review_needed` findings to the user.
 6. Stop on `blocking` findings. Do not commit or claim completion.
@@ -65,7 +65,7 @@ Blocking findings include parse/config errors, missing runtime dependencies, cir
 
 ## Tools
 
-- `analyze_diff`: diff-aware findings for the current change
+- `analyze_diff`: diff-aware findings for the current change, including the same classification used by `agent-fix-plan`
 - `agent_context`: concise project map for planning and review
 - `explain_finding`: remediation guidance and safety classification
 - `safe_to_remove`: conservative removal classification by fingerprint

@@ -34,7 +34,7 @@ pyfallow.analyze_diff(
 
 ## Step 3: Classify Findings
 
-With `--format agent-fix-plan`, pyfallow returns `auto_safe`, `review_needed`, `blocking`, and `manual_only` groups directly. With MCP `analyze_diff`, call `explain_finding` for each finding:
+With `--format agent-fix-plan`, pyfallow returns `auto_safe`, `review_needed`, `blocking`, and `manual_only` groups directly. With MCP `analyze_diff`, use each finding's `classification`; call `explain_finding` when you need remediation details:
 
 ```text
 pyfallow.explain_finding(root=<workspace_root>, fingerprint=<fingerprint>)

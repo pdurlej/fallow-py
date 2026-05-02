@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pyfallow.models import CONFIDENCE_ORDER
+from pyfallow.classify import classify_finding
 
 from .runtime import analyze_report
 from .schemas import Classification
@@ -31,9 +31,4 @@ def safe_classification(fingerprint: str, issue: dict[str, Any] | None) -> Class
 def safe_auto_issue(issue: dict[str, Any]) -> bool:
     if issue["rule"] not in {"unused-module", "unused-symbol"}:
         return False
-    if CONFIDENCE_ORDER[issue["confidence"]] < CONFIDENCE_ORDER["high"]:
-        return False
-    evidence = issue.get("evidence", {})
-    state = evidence.get("state", {})
-    unsafe_flags = {"public_api", "framework_managed", "entrypoint_managed", "dynamic_uncertain"}
-    return not any(evidence.get(flag) or state.get(flag) for flag in unsafe_flags)
+    return classify_finding(issue).decision == "auto_safe"

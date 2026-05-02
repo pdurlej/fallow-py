@@ -28,6 +28,7 @@ class DiffScope(FlexibleModel):
 class Finding(FlexibleModel):
     id: str
     rule: str
+    classification: Literal["auto_safe", "review_needed", "blocking", "manual_only"] | None = None
     severity: str
     confidence: str
     path: str | None = None
@@ -103,7 +104,7 @@ class FixOption(BaseModel):
 
 class Remediation(BaseModel):
     finding: Finding
-    classification: Literal["auto_safe", "review_needed", "blocking"]
+    classification: Literal["auto_safe", "review_needed", "blocking", "manual_only"]
     one_liner: str
     investigation_hints: list[str]
     fix_options: list[FixOption]

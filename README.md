@@ -201,7 +201,7 @@ Claude Code `mcp.json` example:
 
 Available tools:
 
-- `analyze_diff`: diff-aware findings for agent cleanup loops
+- `analyze_diff`: diff-aware findings for agent cleanup loops, including the same classification used by `agent-fix-plan`
 - `agent_context`: structured project map for agents
 - `explain_finding`: remediation hints for a finding fingerprint
 - `verify_imports`: pre-edit prediction for planned imports, including missing modules/symbols, undeclared third-party packages, cycles, and boundary violations

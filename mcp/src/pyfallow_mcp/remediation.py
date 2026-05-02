@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from pyfallow.classify import classify_finding
+
 from .advice import fix_options, investigation_hints, safety_notes
 from .safety import safe_auto_issue
 
@@ -32,8 +34,4 @@ def explain_finding_impl(root: str | Path, fingerprint: str) -> Remediation:
 
 
 def _remediation_classification(issue: dict[str, Any]) -> str:
-    if issue["severity"] == "error" or issue["rule"] in {"parse-error", "config-error", "missing-runtime-dependency"}:
-        return "blocking"
-    if issue["rule"] in {"unused-module", "unused-symbol"} and safe_auto_issue(issue):
-        return "auto_safe"
-    return "review_needed"
+    return classify_finding(issue).decision

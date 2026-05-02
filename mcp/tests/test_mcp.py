@@ -74,6 +74,25 @@ def make_repo(root: Path) -> Path:
     return root
 
 
+def make_cycle_repo(root: Path) -> Path:
+    write(
+        root / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(root / "src/app.py", "import a\n\ndef main():\n    return a.VALUE\n")
+    write(root / "src/a.py", "VALUE = 1\n")
+    init_git_repo(root)
+    commit_all(root, "initial")
+    write(root / "src/a.py", "import b\nVALUE = b.VALUE\n")
+    write(root / "src/b.py", "import a\nVALUE = 1\n")
+    commit_all(root, "introduce cycle")
+    return root
+
+
 async def call_tool(name: str, arguments: dict) -> dict:
     async with Client(build_server()) as client:
         result = await client.call_tool(name, arguments)
@@ -130,6 +149,23 @@ def test_analyze_diff_returns_structured_diff_result(tmp_path: Path) -> None:
     assert result["diff_scope"]["changed_modules"] == ["changed"]
     assert result["findings"]
     assert result["truncated"] is False
+
+
+def test_mcp_classifies_runtime_cycles_like_agent_fix_plan(tmp_path: Path) -> None:
+    root = make_cycle_repo(tmp_path)
+
+    result = asyncio.run(
+        call_tool(
+            "analyze_diff",
+            {"root": str(root), "since": "HEAD~1", "min_confidence": "medium", "max_findings": 10},
+        )
+    )
+
+    cycle = next(item for item in result["findings"] if item["rule"] == "circular-dependency")
+    assert cycle["classification"] == "blocking"
+
+    remediation = asyncio.run(call_tool("explain_finding", {"root": str(root), "fingerprint": cycle["fingerprint"]}))
+    assert remediation["classification"] == "blocking"
 
 
 def test_agent_context_includes_public_api_and_risk_sections(tmp_path: Path) -> None:

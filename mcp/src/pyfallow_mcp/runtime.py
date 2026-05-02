@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from pyfallow.analysis import analyze
+from pyfallow.classify import classify_finding
 from pyfallow.config import load_config
 from pyfallow.models import SEVERITY_ORDER
 
@@ -61,7 +62,12 @@ def module_graph(root: str | Path) -> dict[str, Any]:
 
 
 def findings(issues: list[dict[str, Any]]) -> list[Finding]:
-    return [Finding(**issue) for issue in sorted(issues, key=issue_sort_key)]
+    models: list[Finding] = []
+    for issue in sorted(issues, key=issue_sort_key):
+        payload = dict(issue)
+        payload["classification"] = classify_finding(issue).decision
+        models.append(Finding(**payload))
+    return models
 
 
 def issue_sort_key(issue: dict[str, Any]) -> tuple[int, str, str, int, str]:

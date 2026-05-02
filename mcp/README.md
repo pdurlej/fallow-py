@@ -27,7 +27,7 @@ The core `pyfallow` package remains stdlib-only. MCP dependencies live in this i
 
 Tools:
 
-- `analyze_diff`: diff-aware pyfallow findings
+- `analyze_diff`: diff-aware pyfallow findings with `agent-fix-plan` classification
 - `agent_context`: compact project map for coding agents
 - `explain_finding`: deterministic remediation guidance
 - `safe_to_remove`: conservative removal classification
