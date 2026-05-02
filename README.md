@@ -240,6 +240,18 @@ Exit codes:
 
 The included GitHub Actions workflow gates pyfallow's own code with `--fail-on warning --min-confidence medium`.
 
+## Add to Your CI
+
+Drop-in examples live in [`examples/ci/`](examples/ci/). They are platform-neutral by design and use the same `agent-fix-plan` comment renderer on every platform.
+
+- Forgejo Actions: [`examples/ci/forgejo-actions.yml`](examples/ci/forgejo-actions.yml)
+- GitHub Actions: [`examples/ci/github-actions.yml`](examples/ci/github-actions.yml)
+- GitLab CI: [`examples/ci/gitlab-ci.yml`](examples/ci/gitlab-ci.yml)
+
+The templates run `pyfallow analyze --since <base> --format agent-fix-plan --fail-on warning --min-confidence medium` for PR/MR diffs, upload `pyfallow-report.json`, and post a grouped cleanup comment when a platform token is available.
+
+See [`examples/ci/README.md`](examples/ci/README.md) for copy paths, token notes, and the shared comment format.
+
 ## Configuration
 
 Supported config files:

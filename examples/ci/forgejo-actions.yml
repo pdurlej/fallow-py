@@ -1,0 +1,103 @@
+name: pyfallow
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  pyfallow-cleanup:
+    runs-on: docker
+    container:
+      image: python:3.12
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pyfallow
+        run: pip install pyfallow
+
+      - name: Run pyfallow
+        shell: bash
+        run: |
+          set +e
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pyfallow analyze \
+              --root . \
+              --since "${{ github.event.pull_request.base.sha }}" \
+              --format agent-fix-plan \
+              --output pyfallow-report.json \
+              --fail-on warning \
+              --min-confidence medium
+          else
+            pyfallow analyze \
+              --root . \
+              --format agent-fix-plan \
+              --output pyfallow-report.json \
+              --fail-on warning \
+              --min-confidence medium
+          fi
+          echo "$?" > pyfallow-exit-code.txt
+          exit 0
+
+      - name: Render pyfallow comment
+        if: always()
+        shell: bash
+        run: |
+          if [ -f pyfallow-report.json ]; then
+            python examples/ci/render_pyfallow_comment.py pyfallow-report.json > pyfallow-comment.md
+          else
+            echo "## pyfallow analysis" > pyfallow-comment.md
+            echo "" >> pyfallow-comment.md
+            echo "pyfallow did not produce a JSON report. Check the CI logs." >> pyfallow-comment.md
+          fi
+
+      - name: Post Forgejo PR comment
+        if: github.event_name == 'pull_request' && always()
+        env:
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SERVER_URL: ${{ github.server_url }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          TOKEN="${FORGEJO_TOKEN:-${GITHUB_TOKEN:-}}"
+          if [ -z "$TOKEN" ]; then
+            echo "No FORGEJO_TOKEN or GITHUB_TOKEN available; skipping PR comment."
+            exit 0
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          Path("pyfallow-comment.json").write_text(
+              json.dumps({"body": Path("pyfallow-comment.md").read_text(encoding="utf-8")}) + "\n",
+              encoding="utf-8",
+          )
+          PY
+          curl -fsS \
+            -X POST \
+            -H "Authorization: token ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data @pyfallow-comment.json \
+            "${SERVER_URL}/api/v1/repos/${REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            || echo "Forgejo comment post failed; pyfallow-report.json remains available as an artifact."
+
+      - name: Upload pyfallow artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyfallow
+          path: |
+            pyfallow-report.json
+            pyfallow-comment.md
+            pyfallow-exit-code.txt
+          if-no-files-found: ignore
+
+      - name: Fail on blocking pyfallow findings
+        if: always()
+        shell: bash
+        run: exit "$(cat pyfallow-exit-code.txt 2>/dev/null || echo 0)"

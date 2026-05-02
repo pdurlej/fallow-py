@@ -1705,6 +1705,95 @@ def test_agent_integration_examples_are_packaged() -> None:
             assert expected <= set(bundle.namelist())
 
 
+def test_ci_templates_are_packaged_and_platform_neutral() -> None:
+    ci_root = ROOT / "examples/ci"
+    templates = {
+        "forgejo": ci_root / "forgejo-actions.yml",
+        "github": ci_root / "github-actions.yml",
+        "gitlab": ci_root / "gitlab-ci.yml",
+    }
+    readme = (ci_root / "README.md").read_text(encoding="utf-8")
+
+    assert readme.index("## Forgejo Actions") < readme.index("## GitHub Actions")
+    assert readme.index("## GitHub Actions") < readme.index("## GitLab CI")
+    assert "complementary to ruff, mypy, vulture, CodeQL" in readme
+
+    for path in templates.values():
+        text = path.read_text(encoding="utf-8")
+        assert "--format agent-fix-plan" in text
+        assert "--since" in text
+        assert "--fail-on warning" in text
+        assert "--min-confidence medium" in text
+        assert "render_pyfallow_comment.py" in text
+        assert "pyfallow-report.json" in text
+
+    assert "runs-on: docker" in templates["forgejo"].read_text(encoding="utf-8")
+    assert "runs-on: ubuntu-latest" in templates["github"].read_text(encoding="utf-8")
+    assert "image: python:3.12" in templates["gitlab"].read_text(encoding="utf-8")
+    assert "reports:" not in templates["gitlab"].read_text(encoding="utf-8")
+
+    archive = ci_root / "ci-templates-v0.3.0.zip"
+    assert archive.exists(), archive
+    with zipfile.ZipFile(archive) as bundle:
+        assert {
+            "README.md",
+            "forgejo-actions.yml",
+            "github-actions.yml",
+            "gitlab-ci.yml",
+            "render_pyfallow_comment.py",
+        } <= set(bundle.namelist())
+
+
+def test_ci_comment_renderer_groups_agent_fix_plan(tmp_path: Path) -> None:
+    report = tmp_path / "pyfallow-report.json"
+    report.write_text(
+        json.dumps(
+            {
+                "blocking": [
+                    {
+                        "path": "src/orders.py",
+                        "range": {"start": {"line": 12}},
+                        "rule": "missing-runtime-dependency",
+                        "confidence": "high",
+                        "message": "Imported third-party package is not declared.",
+                    }
+                ],
+                "review_needed": [
+                    {
+                        "path": "src/billing.py",
+                        "range": {"start": {"line": 88}},
+                        "rule": "unused-symbol",
+                        "symbol": "format_amount",
+                        "confidence": "medium",
+                        "message": "Function defined but not referenced.",
+                    }
+                ],
+                "auto_safe": [],
+                "manual_only": [],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "examples/ci/render_pyfallow_comment.py"), str(report)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "## pyfallow analysis" in result.stdout
+    assert "**2 findings on this change**" in result.stdout
+    assert "### Blocking (1)" in result.stdout
+    assert "`src/orders.py:12` - `missing-runtime-dependency` (high)" in result.stdout
+    assert "### Review needed (1)" in result.stdout
+    assert "`src/billing.py:88` - `unused-symbol` `format_amount` (medium)" in result.stdout
+
+
 def minimal_issue(
     rule: str,
     confidence: str = "high",
