@@ -34,10 +34,10 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/pd/fallow-python"
-Repository = "https://github.com/pd/fallow-python"
-Issues = "https://github.com/pd/fallow-python/issues"
-Changelog = "https://github.com/pd/fallow-python/blob/main/CHANGELOG.md"
+Homepage = "https://example.invalid/TBD"
+Repository = "https://example.invalid/TBD"
+Issues = "https://example.invalid/TBD"
+Changelog = "https://example.invalid/TBD"
 
 [project.optional-dependencies]
 dev = [

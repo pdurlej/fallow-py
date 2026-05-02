@@ -11,7 +11,7 @@
 - Inspect README for current commands and non-affiliation language.
 - Inspect `LICENSE`.
 - Inspect GitHub templates.
-- Confirm project URLs in `pyproject.toml` match the actual GitHub repository owner.
+- Set real project URLs in `pyproject.toml` before the v0.1.0 release.
 - Update version consistently.
 - Update `CHANGELOG.md`.
 - Verify `examples/demo_project` commands still work.
