@@ -14,20 +14,6 @@ from .formatters import format_agent_context, format_result
 from .models import CONFIDENCE_ORDER, SEVERITY_ORDER
 
 
-COMMANDS = {
-    "analyze",
-    "dead-code",
-    "deps",
-    "graph",
-    "cycles",
-    "dupes",
-    "health",
-    "boundaries",
-    "baseline",
-    "agent-context",
-}
-
-
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == "python":

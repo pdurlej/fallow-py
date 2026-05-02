@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
-from .models import ImportRecord, ModuleInfo
+from .models import ModuleInfo
 
 
 @dataclass(slots=True)
@@ -143,7 +143,3 @@ def edge_for(graph: ImportGraph, source: str, target: str) -> dict[str, Any] | N
         if edge["from"] == source and edge["to"] == target:
             return edge
     return None
-
-
-def edge_records(records: list[ImportRecord]) -> list[dict[str, Any]]:
-    return [record.to_dict() for record in records]
