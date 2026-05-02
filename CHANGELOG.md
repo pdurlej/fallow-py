@@ -4,17 +4,19 @@ All notable changes to this project will be documented in this file.
 
 This project follows the spirit of [Keep a Changelog](https://keepachangelog.com/) and uses semantic versioning while the public contract stabilizes.
 
-## Unreleased
+## 0.2.0-alpha.1 - TBD
 
 ### Added
 
 - Diff-aware analysis with `--since <git-ref>`.
 - `analysis.diff_scope` in JSON reports.
+- Separate `pyfallow-mcp` package with five MCP tools, two resource templates, and two prompts.
 
 ### Changed
 
 - `--changed-only` is now a deprecated alias for `--since HEAD~1` instead of a full-analysis fallback.
 - Report schema version is now `1.1`.
+- Core package version is now `0.2.0-alpha.1`; MCP package version starts at `0.1.0-alpha.1`.
 
 ## 0.1.0-alpha.1 - 2026-05-02
 

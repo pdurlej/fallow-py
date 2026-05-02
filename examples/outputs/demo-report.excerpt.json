@@ -1,7 +1,7 @@
 {
   "tool": "fallow",
   "language": "python",
-  "version": "0.1.0-alpha.1",
+  "version": "0.2.0-alpha.1",
   "schema_version": "1.1",
   "summary_excerpt": {
     "has_missing_runtime_dependency": true,

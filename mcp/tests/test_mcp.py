@@ -1,0 +1,213 @@
+from __future__ import annotations
+
+import asyncio
+import json
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+from urllib.parse import quote
+
+from fastmcp import Client
+
+from pyfallow_mcp.server import build_server
+
+TIMEOUT = 15
+
+
+def write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(textwrap.dedent(text).strip() + "\n", encoding="utf-8")
+
+
+def run_git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+
+def init_git_repo(root: Path) -> None:
+    assert run_git(root, "init").returncode == 0
+    assert run_git(root, "branch", "-M", "main").returncode == 0
+    assert run_git(root, "config", "user.email", "pyfallow@example.invalid").returncode == 0
+    assert run_git(root, "config", "user.name", "pyfallow tests").returncode == 0
+
+
+def commit_all(root: Path, message: str) -> None:
+    assert run_git(root, "add", "-A").returncode == 0
+    result = run_git(root, "commit", "-m", message)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def make_repo(root: Path) -> Path:
+    write(
+        root / "pyproject.toml",
+        """
+        [project]
+        dependencies = ["unusedpkg"]
+
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(
+        root / "src/pkg/__init__.py",
+        """
+        from .public import PublicThing
+        __all__ = ["PublicThing"]
+        """,
+    )
+    write(root / "src/pkg/public.py", "class PublicThing:\n    pass\n")
+    write(root / "src/app.py", "from pkg import PublicThing\n\ndef main():\n    return PublicThing()\n")
+    init_git_repo(root)
+    commit_all(root, "initial")
+    write(root / "src/changed.py", "def changed_unused():\n    return 1\n")
+    commit_all(root, "changed")
+    return root
+
+
+async def call_tool(name: str, arguments: dict) -> dict:
+    async with Client(build_server()) as client:
+        result = await client.call_tool(name, arguments)
+        assert not result.is_error
+        data = normalize(result.data)
+        assert isinstance(data, dict)
+        return data
+
+
+def normalize(value):
+    if hasattr(value, "model_dump"):
+        return normalize(value.model_dump(mode="json"))
+    if hasattr(value, "__dict__") and value.__class__.__module__.startswith("fastmcp."):
+        return normalize(vars(value))
+    if isinstance(value, dict):
+        return {key: normalize(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [normalize(item) for item in value]
+    return value
+
+
+def test_mcp_server_lists_expected_capabilities(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        async with Client(build_server(default_root=tmp_path)) as client:
+            tools = {tool.name for tool in await client.list_tools()}
+            assert tools == {
+                "analyze_diff",
+                "agent_context",
+                "explain_finding",
+                "verify_imports",
+                "safe_to_remove",
+            }
+            templates = {template.uriTemplate for template in await client.list_resource_templates()}
+            assert "pyfallow://report/current/{root}" in templates
+            assert "pyfallow://module-graph/{root}" in templates
+            prompts = {prompt.name for prompt in await client.list_prompts()}
+            assert {"pre-commit-check", "pr-cleanup"} <= prompts
+
+    asyncio.run(scenario())
+
+
+def test_analyze_diff_returns_structured_diff_result(tmp_path: Path) -> None:
+    root = make_repo(tmp_path)
+
+    result = asyncio.run(
+        call_tool(
+            "analyze_diff",
+            {"root": str(root), "since": "HEAD~1", "min_confidence": "medium", "max_findings": 10},
+        )
+    )
+
+    assert result["summary"]["total_issues"] >= 1
+    assert result["diff_scope"]["changed_files"] == ["src/changed.py"]
+    assert result["diff_scope"]["changed_modules"] == ["changed"]
+    assert result["findings"]
+    assert result["truncated"] is False
+
+
+def test_agent_context_includes_public_api_and_risk_sections(tmp_path: Path) -> None:
+    root = make_repo(tmp_path)
+
+    result = asyncio.run(
+        call_tool("agent_context", {"root": str(root), "scope": "full", "max_findings": 10})
+    )
+
+    assert result["project_overview"]["modules_count"] >= 3
+    assert any(item["name"] == "PublicThing" for item in result["public_api"])
+    assert "cycles" in result["architecture_map"]
+    assert "dead_code_candidates" in result
+    assert "dependency_findings" in result
+    assert result["limitations"]
+
+
+def test_explain_finding_produces_remediation(tmp_path: Path) -> None:
+    root = make_repo(tmp_path)
+    findings = asyncio.run(
+        call_tool("analyze_diff", {"root": str(root), "since": "HEAD~1", "max_findings": 10})
+    )
+    fingerprint = findings["findings"][0]["fingerprint"]
+
+    result = asyncio.run(call_tool("explain_finding", {"root": str(root), "fingerprint": fingerprint}))
+
+    assert result["finding"]["fingerprint"] == fingerprint
+    assert result["classification"] in {"auto_safe", "review_needed", "blocking"}
+    assert result["one_liner"]
+    assert result["fix_options"]
+    assert result["safety_notes"]
+
+
+def test_verify_imports_stub_returns_not_implemented(tmp_path: Path) -> None:
+    result = asyncio.run(
+        call_tool(
+            "verify_imports",
+            {"root": str(tmp_path), "file": "src/app.py", "planned_imports": ["billing.compute_refund"]},
+        )
+    )
+
+    assert result["status"] == "not_implemented"
+    assert result["safe"] == []
+    assert result["planned_imports"] == ["billing.compute_refund"]
+
+
+def test_safe_to_remove_classifies_unknown_fingerprints_deterministically(tmp_path: Path) -> None:
+    fingerprints = [f"missing-{index}" for index in range(10)]
+
+    result = asyncio.run(call_tool("safe_to_remove", {"root": str(tmp_path), "fingerprints": fingerprints}))
+
+    assert sorted(result) == fingerprints
+    assert {item["decision"] for item in result.values()} == {"manual-only"}
+
+
+def test_resources_return_report_and_module_graph(tmp_path: Path) -> None:
+    root = make_repo(tmp_path)
+    encoded = quote(str(root), safe="")
+
+    async def scenario() -> None:
+        async with Client(build_server()) as client:
+            report = await client.read_resource(f"pyfallow://report/current/{encoded}")
+            report_payload = json.loads(report[0].text)
+            assert "summary" in report_payload
+            graph = await client.read_resource(f"pyfallow://module-graph/{encoded}")
+            graph_payload = json.loads(graph[0].text)
+            assert "modules" in graph_payload
+            assert "edges" in graph_payload
+
+    asyncio.run(scenario())
+
+
+def test_console_entrypoint_help() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "pyfallow_mcp", "--help"],
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0
+    assert "--root" in result.stdout

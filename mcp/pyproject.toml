@@ -3,24 +3,15 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyfallow"
-version = "0.2.0-alpha.1"
-description = "Python-first static codebase intelligence for agents and reviewers."
+name = "pyfallow-mcp"
+version = "0.1.0-alpha.1"
+description = "MCP server for pyfallow agentic codebase intelligence."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "pyfallow contributors" }]
-keywords = [
-  "agents",
-  "architecture",
-  "code-intelligence",
-  "dead-code",
-  "dependencies",
-  "python",
-  "sarif",
-  "static-analysis",
-]
+keywords = ["mcp", "pyfallow", "static-analysis", "ai-agents", "code-intelligence"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -28,16 +19,13 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
-  "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Quality Assurance",
 ]
-dependencies = []
-
-[project.urls]
-Homepage = "https://example.invalid/TBD"
-Repository = "https://example.invalid/TBD"
-Issues = "https://example.invalid/TBD"
-Changelog = "https://example.invalid/TBD"
+dependencies = [
+  "fastmcp>=3.2,<4",
+  "pydantic>=2.11",
+  "pyfallow>=0.2.0a1",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -47,13 +35,12 @@ dev = [
 ]
 
 [project.scripts]
-pyfallow = "pyfallow.cli:main"
-fallow = "pyfallow.cli:main"
+pyfallow-mcp = "pyfallow_mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "../src"]
 addopts = "-q"

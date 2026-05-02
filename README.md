@@ -8,7 +8,7 @@ It builds a static picture of imports, dependencies, complexity, duplication, ar
 
 ## Status
 
-Current release target: `0.1.0-alpha.1`.
+Current release target: `0.2.0-alpha.1`.
 
 Runtime dependencies are stdlib-only on Python 3.11+. Development and packaging tools are optional extras.
 
@@ -133,6 +133,41 @@ python -m pyfallow analyze --root . --since HEAD~1 --format json
 The JSON report includes `analysis.diff_scope` with the requested ref, resolved commit SHA, changed files, changed modules, and whether filtering was active.
 
 `--changed-only` remains as a deprecated alias for `--since HEAD~1`; new integrations should use `--since` directly. In non-Git workspaces, `--since` emits a warning and falls back to full analysis.
+
+## MCP Server
+
+Sprint 1 adds a separate MCP integration package so agent tools can call pyfallow directly while the core package remains stdlib-only.
+
+Install from a checkout:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pip install -e ./mcp
+pyfallow-mcp --root /path/to/repo
+```
+
+Claude Code `mcp.json` example:
+
+```json
+{
+  "mcpServers": {
+    "pyfallow": {
+      "command": "pyfallow-mcp",
+      "args": ["--root", "/path/to/repo"]
+    }
+  }
+}
+```
+
+Available tools:
+
+- `analyze_diff`: diff-aware findings for agent cleanup loops
+- `agent_context`: structured project map for agents
+- `explain_finding`: remediation hints for a finding fingerprint
+- `verify_imports`: explicit v0.2 stub, with full pre-edit checks planned for v0.3
+- `safe_to_remove`: deterministic dead-code safety classification
+
+The MCP package also exposes report and module-graph resources plus `pre-commit-check` and `pr-cleanup` prompts.
 
 ## CI Workflow
 

@@ -6,7 +6,7 @@ The current repository is a standalone Python package and CLI. This was the safe
 
 ## Compatibility Surface
 
-The package installs two console scripts:
+The core package installs two console scripts:
 
 - `pyfallow`
 - `fallow`
@@ -18,6 +18,13 @@ fallow --format json --root .
 fallow analyze --language python --format json --root .
 fallow python --format json --root .
 fallow python agent-context --format markdown --root .
+```
+
+The separate `pyfallow-mcp` package exposes the same analyzer through MCP for agent runtimes. It is intentionally packaged outside the stdlib-only core:
+
+```bash
+python -m pip install pyfallow pyfallow-mcp
+pyfallow-mcp --root /path/to/repo
 ```
 
 ## Subprocess Backend Contract
@@ -61,6 +68,8 @@ The JSON report is the integration contract. Consumers should read:
 
 Issue `fingerprint` is intended for baselines and regression gating.
 
+MCP tools return structured objects derived from this JSON contract, not raw JSON strings. `verify_imports` is a v0.2 stub until the pre-edit prediction logic lands in the planned v0.3 work.
+
 ## What Real Upstream Integration Would Need
 
 - agreement on ownership and naming
@@ -71,4 +80,3 @@ Issue `fingerprint` is intended for baselines and regression gating.
 - release process alignment
 
 Until that happens, pyfallow should describe itself as inspired by Fallow, not official Fallow.
-
