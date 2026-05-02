@@ -143,6 +143,7 @@ class PythonConfig:
     baseline: BaselineConfig = field(default_factory=BaselineConfig)
     boundary_rules: list[BoundaryRule] = field(default_factory=list)
     config_errors: list[dict[str, str]] = field(default_factory=list)
+    since_ref: str | None = None
     changed_only_requested: bool = False
     changed_only_effective: bool = False
     analysis_warnings: list[dict[str, str]] = field(default_factory=list)

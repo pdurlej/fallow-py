@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 VERSION = "0.1.0-alpha.1"
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 
 
 RULES: dict[str, dict[str, str]] = {

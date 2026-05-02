@@ -16,7 +16,7 @@ No dates are promised. The priority is trustworthiness before feature breadth.
 - Improve import/export resolution for complex package APIs.
 - Expand schema validation and compatibility tests.
 - Strengthen SARIF validation against common consumers.
-- Implement real `--changed-only` using git diff when available, with graceful fallback.
+- Build agent-facing MCP integration on top of diff-aware `--since` analysis.
 
 ## Later
 
@@ -34,4 +34,3 @@ No dates are promised. The priority is trustworthiness before feature breadth.
 - Claiming perfect dead-code proof for dynamic Python.
 - Auto-deleting code.
 - PyPI auto-publish before package ownership and metadata are confirmed.
-

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 This project follows the spirit of [Keep a Changelog](https://keepachangelog.com/) and uses semantic versioning while the public contract stabilizes.
 
+## Unreleased
+
+### Added
+
+- Diff-aware analysis with `--since <git-ref>`.
+- `analysis.diff_scope` in JSON reports.
+
+### Changed
+
+- `--changed-only` is now a deprecated alias for `--since HEAD~1` instead of a full-analysis fallback.
+- Report schema version is now `1.1`.
+
 ## 0.1.0-alpha.1 - 2026-05-02
 
 ### Added
@@ -33,5 +45,3 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 - Python dynamic behavior means findings are advisory, not runtime proof.
 - Dynamic imports, monkey patching, plugin loading, reflection, dependency injection containers, runtime path mutation, and framework magic can hide real usage.
-- `--changed-only` is accepted for compatibility but currently falls back to full analysis with a warning.
-

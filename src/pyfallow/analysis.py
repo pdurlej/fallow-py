@@ -15,6 +15,7 @@ from .dependencies import (
     entrypoints_from_packaging,
     parse_dependency_declarations,
 )
+from .diff import resolve_since
 from .discovery import discover_python_files, discover_source_roots
 from .dupes import duplicate_issues
 from .fingerprints import assign_fingerprints
@@ -125,6 +126,15 @@ def analyze(config: PythonConfig) -> dict[str, Any]:
     issues = active_issues + stale_issues
     assign_fingerprints(issues)
     issues = sorted(issues, key=_issue_sort_key)
+    diff_scope = _diff_scope_default(config)
+    if config.since_ref:
+        issues, duplicate_groups, cycle_graphs, diff_scope = _apply_diff_scope(
+            config,
+            issues,
+            modules,
+            duplicate_groups,
+            cycle_graphs,
+        )
 
     duration_ms = int((time.perf_counter() - started) * 1000)
     result = {
@@ -149,6 +159,7 @@ def analyze(config: PythonConfig) -> dict[str, Any]:
                 "effective": config.changed_only_effective,
                 "reason": _changed_only_reason(config),
             },
+            "diff_scope": diff_scope,
             "warnings": config.analysis_warnings,
             "module_ambiguities": sorted(module_ambiguities, key=lambda item: (item["module"], item["shadowed_path"])),
             "duration_ms": duration_ms,
@@ -435,10 +446,100 @@ def _changed_only_reason(config: PythonConfig) -> str | None:
     if not config.changed_only_requested:
         return None
     if config.changed_only_effective:
+        if config.since_ref:
+            return f"diff-aware analysis was applied since {config.since_ref}"
         return "changed-only analysis was applied"
     if config.analysis_warnings:
         return config.analysis_warnings[-1]["message"]
     return "changed-only analysis was requested but full analysis was used"
+
+
+def _diff_scope_default(config: PythonConfig) -> dict[str, Any]:
+    return {
+        "since": config.since_ref,
+        "since_resolved": None,
+        "changed_files": [],
+        "changed_modules": [],
+        "filtering_active": False,
+        "reason": None,
+    }
+
+
+def _apply_diff_scope(
+    config: PythonConfig,
+    issues: list[Issue],
+    modules: dict[str, ModuleInfo],
+    duplicate_groups: list[dict[str, Any]],
+    cycle_graphs: list[dict[str, Any]],
+) -> tuple[list[Issue], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    config.changed_only_requested = True
+    assert config.since_ref is not None
+    resolution = resolve_since(config.root, config.since_ref, config.ignore)
+    changed_files = set(resolution.changed_files)
+    changed_modules = {
+        module.module
+        for module in modules.values()
+        if module.path in changed_files
+    }
+    diff_scope = {
+        "since": config.since_ref,
+        "since_resolved": resolution.since_resolved,
+        "changed_files": sorted(changed_files),
+        "changed_modules": sorted(changed_modules),
+        "filtering_active": resolution.filtering_active,
+        "reason": None,
+    }
+    if resolution.warning:
+        config.changed_only_effective = False
+        config.analysis_warnings.append(resolution.warning)
+        diff_scope["reason"] = resolution.warning["message"]
+        return issues, duplicate_groups, cycle_graphs, diff_scope
+
+    config.changed_only_effective = True
+    diff_scope["reason"] = f"Filtered findings to files changed since {config.since_ref}."
+    filtered_issues = [
+        issue
+        for issue in issues
+        if _issue_in_diff_scope(issue, changed_files, changed_modules)
+    ]
+    filtered_duplicate_groups = [
+        group
+        for group in duplicate_groups
+        if any(fragment.get("path") in changed_files for fragment in group.get("fragments", []))
+    ]
+    filtered_cycle_graphs = [
+        cycle
+        for cycle in cycle_graphs
+        if _cycle_graph_in_diff_scope(cycle, changed_files, changed_modules)
+    ]
+    return filtered_issues, filtered_duplicate_groups, filtered_cycle_graphs, diff_scope
+
+
+def _issue_in_diff_scope(issue: Issue, changed_files: set[str], changed_modules: set[str]) -> bool:
+    if issue.path and issue.path in changed_files:
+        return True
+    if issue.rule == "circular-dependency":
+        cycle_path = set(issue.evidence.get("cycle_path", []))
+        files = set(issue.evidence.get("files", []))
+        return bool(cycle_path & changed_modules or files & changed_files)
+    if issue.rule == "boundary-violation":
+        evidence = issue.evidence
+        modules = {evidence.get("importer_module"), evidence.get("imported_module")}
+        paths = {evidence.get("importer_path"), evidence.get("imported_path")}
+        matching_modules = {item for item in modules if item} & changed_modules
+        matching_paths = {item for item in paths if item} & changed_files
+        return bool(matching_modules or matching_paths)
+    if issue.rule == "duplicate-code":
+        return any(fragment.get("path") in changed_files for fragment in issue.evidence.get("fragments", []))
+    return False
+
+
+def _cycle_graph_in_diff_scope(
+    cycle: dict[str, Any],
+    changed_files: set[str],
+    changed_modules: set[str],
+) -> bool:
+    return bool(set(cycle.get("modules", [])) & changed_modules or set(cycle.get("files", [])) & changed_files)
 
 
 def _import_issues(records: list[ImportRecord]) -> list[Issue]:

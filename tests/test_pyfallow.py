@@ -39,6 +39,30 @@ def run_cli(args: list[str], env: dict[str, str] | None = None) -> subprocess.Co
     )
 
 
+def run_git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+
+def init_git_repo(root: Path) -> None:
+    assert run_git(root, "init").returncode == 0
+    assert run_git(root, "branch", "-M", "main").returncode == 0
+    assert run_git(root, "config", "user.email", "pyfallow@example.invalid").returncode == 0
+    assert run_git(root, "config", "user.name", "pyfallow tests").returncode == 0
+
+
+def commit_all(root: Path, message: str) -> None:
+    assert run_git(root, "add", "-A").returncode == 0
+    result = run_git(root, "commit", "-m", message)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 def validate_schema(schema: dict, value) -> None:
     refs = schema.get("$defs", {})
 
@@ -309,7 +333,7 @@ def test_full_analysis_reports_required_signals(tmp_path: Path) -> None:
 
     assert result["tool"] == "fallow"
     assert result["language"] == "python"
-    assert result["schema_version"] == "1.0"
+    assert result["schema_version"] == "1.1"
     assert result["analysis"]["modules_analyzed"] >= 10
     assert "pkg.used" in {node["id"] for node in result["graphs"]["modules"]}
     assert "ns_pkg.mod" in {node["id"] for node in result["graphs"]["modules"]}
@@ -556,7 +580,233 @@ def test_cli_exit_codes_and_focus_commands(tmp_path: Path) -> None:
     payload = json.loads(changed_only.stdout)
     assert payload["analysis"]["changed_only"]["requested"] is True
     assert payload["analysis"]["changed_only"]["effective"] is False
-    assert payload["analysis"]["warnings"][0]["code"] == "changed-only-unavailable"
+    warning_codes = {warning["code"] for warning in payload["analysis"]["warnings"]}
+    assert {"changed-only-deprecated", "since-not-available-non-git"} <= warning_codes
+
+
+def test_since_filters_findings_to_changed_files(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    write(tmp_path / "src/stale.py", "def stale_unused():\n    return 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial")
+    write(tmp_path / "src/changed.py", "def changed_unused():\n    return 2\n")
+    commit_all(tmp_path, "add changed file")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "HEAD~1", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["analysis"]["diff_scope"]["since"] == "HEAD~1"
+    assert payload["analysis"]["diff_scope"]["changed_files"] == ["src/changed.py"]
+    assert payload["analysis"]["diff_scope"]["changed_modules"] == ["changed"]
+    assert payload["analysis"]["diff_scope"]["filtering_active"] is True
+    assert payload["analysis"]["changed_only"]["effective"] is True
+    assert payload["issues"]
+    assert {issue["path"] for issue in payload["issues"]} == {"src/changed.py"}
+
+
+def test_since_branch_ref_filters_multiple_changed_files(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    write(tmp_path / "src/stale.py", "def stale_unused():\n    return 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial main")
+    assert run_git(tmp_path, "checkout", "-b", "feature").returncode == 0
+    for index in range(5):
+        write(tmp_path / f"src/changed_{index}.py", f"def changed_{index}():\n    return {index}\n")
+    commit_all(tmp_path, "feature files")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "main", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    expected = [f"src/changed_{index}.py" for index in range(5)]
+    assert payload["analysis"]["diff_scope"]["changed_files"] == expected
+    assert payload["analysis"]["diff_scope"]["changed_modules"] == [f"changed_{index}" for index in range(5)]
+    assert {issue["path"] for issue in payload["issues"]} == set(expected)
+    assert "src/stale.py" not in {issue["path"] for issue in payload["issues"]}
+
+
+def test_since_keeps_cycle_findings_when_one_member_changed(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "import a\n\ndef main():\n    return a.VALUE\n")
+    write(tmp_path / "src/a.py", "import b\nVALUE = b.VALUE\n")
+    write(tmp_path / "src/b.py", "VALUE = 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial acyclic")
+    write(tmp_path / "src/b.py", "import a\nVALUE = 1\n")
+    commit_all(tmp_path, "introduce cycle")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "HEAD~1", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["analysis"]["diff_scope"]["changed_files"] == ["src/b.py"]
+    cycles = issues_for(payload, "circular-dependency")
+    assert len(cycles) == 1
+    assert set(cycles[0]["evidence"]["cycle_path"]) == {"a", "b"}
+    assert set(cycles[0]["evidence"]["files"]) == {"src/a.py", "src/b.py"}
+
+
+def test_since_keeps_boundary_findings_when_source_changed(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+
+        [[tool.pyfallow.boundaries.rules]]
+        name = "domain-no-infra"
+        from = "src/pkg/domain/**"
+        disallow = ["src/pkg/infra/**", "pkg.infra.*"]
+        severity = "error"
+        """,
+    )
+    write(tmp_path / "src/app.py", "from pkg.domain.service import service\n\ndef main():\n    return service()\n")
+    write(tmp_path / "src/pkg/domain/service.py", "def service():\n    return 'ok'\n")
+    write(tmp_path / "src/pkg/infra/db.py", "def connect():\n    return 'db'\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial allowed")
+    write(tmp_path / "src/pkg/domain/service.py", "from pkg.infra.db import connect\n\ndef service():\n    return connect()\n")
+    commit_all(tmp_path, "violate boundary")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "HEAD~1", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["analysis"]["diff_scope"]["changed_files"] == ["src/pkg/domain/service.py"]
+    violations = issues_for(payload, "boundary-violation")
+    assert len(violations) == 1
+    assert violations[0]["evidence"]["importer_module"] == "pkg.domain.service"
+    assert violations[0]["evidence"]["imported_module"] == "pkg.infra.db"
+
+
+def test_since_non_git_workspace_falls_back_with_warning(tmp_path: Path) -> None:
+    root = make_fixture_project(tmp_path)
+
+    result = run_cli(["analyze", "--root", str(root), "--since", "HEAD", "--format", "json"])
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["issues"]
+    assert payload["analysis"]["changed_only"] == {
+        "requested": True,
+        "effective": False,
+        "reason": "--since requested outside a Git workspace; full analysis was used.",
+    }
+    assert payload["analysis"]["diff_scope"]["filtering_active"] is False
+    assert payload["analysis"]["warnings"][0]["code"] == "since-not-available-non-git"
+
+
+def test_since_invalid_ref_exits_2(tmp_path: Path) -> None:
+    write(tmp_path / "app.py", "def main():\n    return 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "missing-ref"])
+
+    assert result.returncode == 2
+    assert "ref not found: missing-ref" in result.stderr
+
+
+def test_changed_only_deprecation_warning_and_since_alias(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial")
+    write(tmp_path / "src/changed.py", "def changed_unused():\n    return 2\n")
+    commit_all(tmp_path, "add changed file")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--changed-only", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "--changed-only is deprecated; use --since HEAD~1 instead." in result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["analysis"]["diff_scope"]["since"] == "HEAD~1"
+    assert payload["analysis"]["diff_scope"]["changed_files"] == ["src/changed.py"]
+    warning_codes = {warning["code"] for warning in payload["analysis"]["warnings"]}
+    assert "changed-only-deprecated" in warning_codes
+
+
+def test_since_zero_changes_returns_clean_report(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    write(tmp_path / "src/stale.py", "def stale_unused():\n    return 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "HEAD", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["analysis"]["diff_scope"]["changed_files"] == []
+    assert payload["analysis"]["diff_scope"]["filtering_active"] is True
+    assert payload["analysis"]["changed_only"]["effective"] is True
+    assert payload["summary"]["total_issues"] == 0
+    assert payload["summary"]["duplicate_groups"] == 0
+    assert payload["issues"] == []
+
+
+def test_since_renamed_file_uses_new_path(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    write(tmp_path / "src/old.py", "def old_unused():\n    return 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial")
+    assert run_git(tmp_path, "mv", "src/old.py", "src/new.py").returncode == 0
+    commit_all(tmp_path, "rename file")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "HEAD~1", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["analysis"]["diff_scope"]["changed_files"] == ["src/new.py"]
+    assert payload["issues"]
+    assert {issue["path"] for issue in payload["issues"]} == {"src/new.py"}
 
 
 def test_inferred_entrypoints_management_commands_and_no_boundary_violation(tmp_path: Path) -> None:

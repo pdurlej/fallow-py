@@ -36,6 +36,19 @@
             "reason": { "type": ["string", "null"] }
           }
         },
+        "diff_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["since", "since_resolved", "changed_files", "changed_modules", "filtering_active", "reason"],
+          "properties": {
+            "since": { "type": ["string", "null"] },
+            "since_resolved": { "type": ["string", "null"] },
+            "changed_files": { "type": "array", "items": { "type": "string" } },
+            "changed_modules": { "type": "array", "items": { "type": "string" } },
+            "filtering_active": { "type": "boolean" },
+            "reason": { "type": ["string", "null"] }
+          }
+        },
         "warnings": { "type": "array", "items": { "type": "object" } },
         "module_ambiguities": { "type": "array", "items": { "type": "object" } },
         "duration_ms": { "type": "integer", "minimum": 0 }

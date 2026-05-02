@@ -69,6 +69,7 @@ def _add_common(parser: argparse.ArgumentParser, agent_context: bool = False, gr
     tests.add_argument("--include-tests", action="store_true")
     tests.add_argument("--exclude-tests", action="store_true")
     parser.add_argument("--changed-only", action="store_true")
+    parser.add_argument("--since")
     parser.add_argument("--baseline")
     parser.add_argument("--fail-on", choices=["none", "error", "warning", "any"], default="none")
     parser.add_argument("--min-confidence", choices=["low", "medium", "high"], default="low")
@@ -166,32 +167,18 @@ def _apply_cli_config(config, args: argparse.Namespace) -> None:
         config.framework_heuristics = False
     elif args.framework != "auto":
         config.frameworks = [args.framework]
-    if args.changed_only:
+    if args.since and args.changed_only:
+        raise ValueError("--since and --changed-only cannot be used together")
+    if args.since:
         config.changed_only_requested = True
-        if not _inside_git_workspace(config.root):
-            config.changed_only_effective = False
-            config.analysis_warnings.append(
-                {
-                    "code": "changed-only-unavailable",
-                    "message": "--changed-only requested outside a Git workspace; full analysis was used.",
-                }
-            )
-        else:
-            config.changed_only_effective = False
-            config.analysis_warnings.append(
-                {
-                    "code": "changed-only-not-implemented",
-                    "message": "--changed-only is not implemented in this standalone backend yet; full analysis was used.",
-                }
-            )
-
-
-def _inside_git_workspace(root: Path) -> bool:
-    current = root.resolve()
-    for candidate in [current, *current.parents]:
-        if (candidate / ".git").exists():
-            return True
-    return False
+        config.since_ref = args.since
+    elif args.changed_only:
+        config.changed_only_requested = True
+        config.since_ref = "HEAD~1"
+        message = "--changed-only is deprecated; use --since HEAD~1 instead."
+        config.analysis_warnings.append({"code": "changed-only-deprecated", "message": message})
+        if not args.quiet:
+            print(message, file=sys.stderr)
 
 
 def _format_for_command(result: dict[str, Any], command: str, fmt: str) -> str:

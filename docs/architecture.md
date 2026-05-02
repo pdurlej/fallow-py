@@ -14,7 +14,8 @@ The high-level pipeline is:
 6. Build a local import graph.
 7. Run analyzers over indexed artifacts.
 8. Apply suppressions and assign stable fingerprints.
-9. Format JSON, text, SARIF, graph, baseline, or agent-context output.
+9. Apply optional diff-aware filtering when `--since` is active.
+10. Format JSON, text, SARIF, graph, baseline, or agent-context output.
 
 ## Source Discovery
 
@@ -65,6 +66,7 @@ Cycles are detected with strongly connected components and reported with import-
 
 Analyzer modules are intentionally small:
 
+- `diff`: Git ref resolution and changed-file discovery for `--since`
 - `dead_code`: reachability, unused modules, unused symbols, public API confidence, test/reference scope separation
 - `dependencies`: declared dependency parsing and import policy checks
 - `dupes`: normalized token-window duplicate detection
@@ -84,9 +86,21 @@ JSON is the canonical output. Text, SARIF, graph, baseline, and agent-context ou
 
 Stable ordering is preferred throughout the pipeline so reports are suitable for CI, baselines, and agent context.
 
+## Diff-Aware Analysis
+
+`--since <ref>` resolves the ref with Git, discovers changed Python files using `git diff --name-only --find-renames --diff-filter=ACMR <ref>...HEAD`, and then runs the normal full analysis. Full analysis is still required so cycles, boundary violations, imports, exports, and dependency policies have repo-wide context.
+
+After analysis, pyfallow filters findings to the diff scope:
+
+- findings whose primary path is a changed file
+- cycles where any module or supporting file is changed
+- boundary violations where the importer or imported target is changed
+- duplicate groups with at least one changed fragment
+
+The JSON contract exposes this in `analysis.diff_scope`. Non-Git workspaces and non-diff Git failures fall back to full analysis with warnings. Invalid refs are treated as command errors because they usually indicate an automation bug.
+
 ## Future Integration Points
 
 Optional external adapters could be added later behind explicit configuration. Good candidates include Ruff, Vulture, Deptry, Radon, Pyright, and Mypy. They should remain optional and must not replace the stdlib-only core.
 
 An upstream Fallow integration could call `pyfallow` as a subprocess language backend and consume the JSON report contract.
-

@@ -62,6 +62,13 @@ python -m pyfallow analyze --root examples/demo_project --format sarif --output 
 python -m pyfallow agent-context --root examples/demo_project --format markdown --output /tmp/pyfallow-agent-context.md
 ```
 
+Analyze only findings relevant to files changed since a Git ref:
+
+```bash
+python -m pyfallow analyze --root . --since HEAD~1 --format text
+python -m pyfallow analyze --root . --since main --format json
+```
+
 Installed console scripts:
 
 ```bash
@@ -108,6 +115,25 @@ Recommended workflow:
 5. Do not auto-delete low-confidence or framework-adjacent dead code.
 6. Rerun pyfallow after edits and compare new/resolved findings.
 
+## Diff-Aware Analysis
+
+Use `--since <git-ref>` when an agent or reviewer only needs findings related to a current change:
+
+```bash
+python -m pyfallow analyze --root . --since HEAD~1 --format json
+```
+
+`pyfallow` still rebuilds the full module graph, then filters findings to:
+
+- issues whose primary `path` is a changed Python file
+- import cycles involving a changed module
+- boundary violations involving a changed importer or imported module
+- duplicate groups with at least one changed fragment
+
+The JSON report includes `analysis.diff_scope` with the requested ref, resolved commit SHA, changed files, changed modules, and whether filtering was active.
+
+`--changed-only` remains as a deprecated alias for `--since HEAD~1`; new integrations should use `--since` directly. In non-Git workspaces, `--since` emits a warning and falls back to full analysis.
+
 ## CI Workflow
 
 Create a baseline for existing debt:
@@ -132,7 +158,7 @@ Exit codes:
 - `2`: tool, config, or runtime error
 - `3`: parse errors severe enough to invalidate analysis
 
-The included GitHub Actions workflow uses pyfallow self-analysis as smoke only; it does not fail CI on pyfallow findings from this repository.
+The included GitHub Actions workflow gates pyfallow's own code with `--fail-on warning --min-confidence medium`.
 
 ## Configuration
 
