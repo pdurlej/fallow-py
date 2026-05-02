@@ -5,6 +5,7 @@ The canonical report format is JSON. It is designed for agents, reviewers, CI, a
 Schema files live in [`../schemas`](../schemas):
 
 - `pyfallow-report.schema.json`
+- `pyfallow-fix-plan.schema.json`
 - `pyfallow-sarif.schema.json`
 
 ## Top-Level Report
@@ -70,6 +71,19 @@ Python is dynamic, so confidence matters:
 
 Low-confidence dead-code findings should not be auto-deleted.
 
+## Agent Fix-Plan Schema
+
+`--format agent-fix-plan` emits a separate schema with its own `schema_version` (`1.0`) so agent-facing cleanup plans can evolve independently from the full report.
+
+The fix-plan groups findings into:
+
+- `auto_safe`: deterministic low-risk cleanup candidates. In v0.3, concrete `minimal_patch` data is only emitted for stale suppressions.
+- `review_needed`: findings that are useful agent context but require product or architecture judgment.
+- `blocking`: findings that should stop commit/ship flows unless resolved or explicitly waived.
+- `manual_only`: low-confidence or informational findings preserved as context.
+
+Each item keeps the original `fingerprint`, rule id, file/line, confidence, one-line summary, rationale, investigation hints, and deterministic fix options. This is designed for agents to consume directly without re-parsing general-purpose JSON.
+
 ## Graphs
 
 `graphs.modules` exposes module nodes, state, exports, and symbol state. Symbol state includes separate production, test, and type-only reference counts.
@@ -98,6 +112,7 @@ SARIF output targets SARIF 2.1.0 compatibility:
 `schema_version` follows compatibility semantics:
 
 - `1.1` adds optional `analysis.diff_scope` for diff-aware analysis
+- `1.2` adds the separate `pyfallow-fix-plan.schema.json` contract for `--format agent-fix-plan`
 - additive fields are allowed within the same major schema version
 - removals and renames require a major schema version bump
 - `evidence` and `actions` remain extensible

@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-VERSION = "0.2.0-alpha.1"
-SCHEMA_VERSION = "1.1"
+VERSION = "0.3.0-alpha.1"
+SCHEMA_VERSION = "1.2"
 
 
 RULES: dict[str, dict[str, str]] = {
@@ -266,6 +266,7 @@ class Suppression:
     line: int
     rule: str | None
     raw: str
+    line_text: str = ""
     file_wide: bool = False
     used: bool = False
 

@@ -4,12 +4,15 @@ import json
 from typing import Any
 
 from .agent_context import agent_context_json, agent_context_markdown
+from .classify import agent_fix_plan
 from .sarif import to_sarif
 
 
 def format_result(result: dict[str, Any], output_format: str, command: str = "analyze") -> str:
     if output_format == "json":
         return json.dumps(result, indent=2, sort_keys=True) + "\n"
+    if output_format == "agent-fix-plan":
+        return json.dumps(agent_fix_plan(result), indent=2, sort_keys=True) + "\n"
     if output_format == "sarif":
         return json.dumps(to_sarif(result), indent=2, sort_keys=True) + "\n"
     if output_format == "markdown":

@@ -34,3 +34,6 @@ pyfallow-report.json
 pyfallow.sarif
 fallow-agent-context.md
 
+# opencode local config (test stack — not for public repo)
+opencode.json
+

@@ -12,6 +12,7 @@ from .baseline import compare_with_baseline, create_baseline, read_baseline, wri
 from .config import load_config
 from .formatters import format_agent_context, format_result
 from .models import CONFIDENCE_ORDER, SEVERITY_ORDER
+from .summary import summary_from_issue_dicts
 
 TEXT_LIMITATION_FORMATS = {"text", "markdown"}
 
@@ -61,7 +62,7 @@ def _add_common(parser: argparse.ArgumentParser, agent_context: bool = False, gr
     parser.add_argument("--config")
     parser.add_argument(
         "--format",
-        choices=["text", "json", "sarif", "markdown", "mermaid", "dot"],
+        choices=["text", "json", "sarif", "markdown", "mermaid", "dot", "agent-fix-plan"],
         default="markdown" if agent_context else "text",
     )
     parser.add_argument("--output")
@@ -183,6 +184,8 @@ def _apply_cli_config(config, args: argparse.Namespace) -> None:
 
 def _format_for_command(result: dict[str, Any], command: str, fmt: str) -> str:
     if command == "agent-context":
+        if fmt == "agent-fix-plan":
+            return format_result(result, fmt, command)
         return format_agent_context(result, "json" if fmt == "json" else "markdown")
     if command == "graph" and fmt in {"mermaid", "dot"}:
         return _graph_format(result, fmt)
@@ -220,59 +223,11 @@ def _focused_result(result: dict[str, Any], command: str) -> dict[str, Any]:
     }[command]
     clone = dict(result)
     clone["issues"] = [issue for issue in result["issues"] if issue["rule"] in rules]
-    clone["summary"] = _simple_summary(clone["issues"], result["summary"].get("duplicate_groups", 0) if command == "dupes" else 0)
+    clone["summary"] = summary_from_issue_dicts(
+        clone["issues"],
+        result["summary"].get("duplicate_groups", 0) if command == "dupes" else 0,
+    )
     return clone
-
-
-def _simple_summary(issues: list[dict[str, Any]], duplicate_groups: int) -> dict[str, int]:
-    summary = {
-        "total_issues": len(issues),
-        "errors": 0,
-        "warnings": 0,
-        "info": 0,
-        "parse_errors": 0,
-        "config_errors": 0,
-        "unused_modules": 0,
-        "unused_symbols": 0,
-        "missing_dependencies": 0,
-        "unused_dependencies": 0,
-        "circular_dependencies": 0,
-        "duplicate_groups": duplicate_groups,
-        "complexity_hotspots": 0,
-        "boundary_violations": 0,
-        "stale_suppressions": 0,
-    }
-    for issue in issues:
-        summary["errors" if issue["severity"] == "error" else "warnings" if issue["severity"] == "warning" else "info"] += 1
-        if issue["rule"] == "unused-module":
-            summary["unused_modules"] += 1
-        elif issue["rule"] == "config-error":
-            summary["config_errors"] += 1
-        elif issue["rule"] == "unused-symbol":
-            summary["unused_symbols"] += 1
-        elif issue["rule"] in {
-            "missing-runtime-dependency",
-            "missing-type-dependency",
-            "missing-test-dependency",
-            "dev-dependency-used-in-runtime",
-            "optional-dependency-used-in-runtime",
-        }:
-            summary["missing_dependencies"] += 1
-        elif issue["rule"] in {
-            "runtime-dependency-used-only-in-tests",
-            "runtime-dependency-used-only-for-types",
-            "unused-runtime-dependency",
-        }:
-            summary["unused_dependencies"] += 1
-        elif issue["rule"] == "circular-dependency":
-            summary["circular_dependencies"] += 1
-        elif issue["rule"] == "boundary-violation":
-            summary["boundary_violations"] += 1
-        elif issue["rule"] == "stale-suppression":
-            summary["stale_suppressions"] += 1
-        elif issue["rule"].startswith("high-") or issue["rule"].startswith("large-") or issue["rule"] == "risky-hotspot":
-            summary["complexity_hotspots"] += 1
-    return summary
 
 
 def _graph_format(result: dict[str, Any], fmt: str) -> str:

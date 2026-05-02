@@ -14,9 +14,10 @@ import pyfallow
 from pyfallow.analysis import analyze
 from pyfallow.ast_index import index_file
 from pyfallow.baseline import compare_with_baseline, create_baseline
+from pyfallow.classify import agent_fix_plan, classify_finding
 from pyfallow.config import load_config
 from pyfallow.dependencies import parse_dependency_declarations
-from pyfallow.models import VERSION
+from pyfallow.models import RULES, VERSION
 from pyfallow.sarif import to_sarif
 
 
@@ -75,6 +76,15 @@ def validate_schema(schema: dict, value) -> None:
         if "$ref" in node:
             check(resolve(node["$ref"]), item, path)
             return
+        if "anyOf" in node:
+            errors = []
+            for option in node["anyOf"]:
+                try:
+                    check(option, item, path)
+                    return
+                except AssertionError as exc:
+                    errors.append(str(exc))
+            raise AssertionError(f"{path} did not match anyOf: {errors}")
         if "const" in node:
             assert item == node["const"], path
         if "enum" in node:
@@ -334,7 +344,7 @@ def test_full_analysis_reports_required_signals(tmp_path: Path) -> None:
 
     assert result["tool"] == "fallow"
     assert result["language"] == "python"
-    assert result["schema_version"] == "1.1"
+    assert result["schema_version"] == "1.2"
     assert result["analysis"]["modules_analyzed"] >= 10
     assert "pkg.used" in {node["id"] for node in result["graphs"]["modules"]}
     assert "ns_pkg.mod" in {node["id"] for node in result["graphs"]["modules"]}
@@ -484,12 +494,13 @@ def test_output_formats_baseline_and_agent_context(tmp_path: Path) -> None:
 def test_release_metadata_version_schema_and_readme_examples() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyfallow.__version__ == pyproject["project"]["version"] == VERSION
-    assert pyproject["project"]["version"] == "0.2.0-alpha.1"
+    assert pyproject["project"]["version"] == "0.3.0-alpha.1"
     assert pyproject["project"]["dependencies"] == []
 
     for path in [
         ROOT / "schemas/pyfallow-report.schema.json",
         ROOT / "schemas/pyfallow-sarif.schema.json",
+        ROOT / "schemas/pyfallow-fix-plan.schema.json",
         ROOT / "examples/outputs/demo-report.excerpt.json",
         ROOT / "examples/outputs/demo.sarif.excerpt.json",
     ]:
@@ -1677,12 +1688,12 @@ def test_agent_integration_examples_are_packaged() -> None:
     assert "alwaysApply: true" in cursor_text
 
     archives = {
-        ROOT / "examples/claude-skill/claude-skill-pyfallow-cleanup-v0.2.0.zip": {
+        ROOT / "examples/claude-skill/claude-skill-pyfallow-cleanup-v0.3.0.zip": {
             "pyfallow-cleanup/SKILL.md",
             "pyfallow-cleanup/workflow.md",
             "pyfallow-cleanup/README.md",
         },
-        ROOT / "examples/cursor-rules/cursor-rules-pyfallow-v0.2.0.zip": {
+        ROOT / "examples/cursor-rules/cursor-rules-pyfallow-v0.3.0.zip": {
             "pyfallow.mdc",
         },
     }
@@ -1690,3 +1701,176 @@ def test_agent_integration_examples_are_packaged() -> None:
         assert archive.exists(), archive
         with zipfile.ZipFile(archive) as bundle:
             assert expected <= set(bundle.namelist())
+
+
+def minimal_issue(
+    rule: str,
+    confidence: str = "high",
+    severity: str | None = None,
+    evidence: dict | None = None,
+) -> dict:
+    return {
+        "id": RULES[rule]["id"],
+        "rule": rule,
+        "category": RULES[rule]["category"],
+        "severity": severity or RULES[rule]["default_severity"],
+        "confidence": confidence,
+        "path": "src/example.py",
+        "range": {"start": {"line": 7, "column": 1}, "end": {"line": 7, "column": 1}},
+        "symbol": "example_symbol" if rule == "unused-symbol" else None,
+        "module": "example",
+        "message": f"{rule} message",
+        "evidence": evidence or {},
+        "actions": [],
+        "fingerprint": f"fp-{rule}-{confidence}",
+    }
+
+
+def test_agent_fix_plan_classifies_every_rule_deterministically() -> None:
+    expected = {
+        "parse-error": "blocking",
+        "config-error": "blocking",
+        "unresolved-import": "blocking",
+        "dynamic-import": "review_needed",
+        "production-imports-test-code": "review_needed",
+        "circular-dependency": "blocking",
+        "unused-module": "review_needed",
+        "unused-symbol": "auto_safe",
+        "stale-suppression": "auto_safe",
+        "missing-runtime-dependency": "blocking",
+        "missing-type-dependency": "review_needed",
+        "missing-test-dependency": "review_needed",
+        "dev-dependency-used-in-runtime": "blocking",
+        "optional-dependency-used-in-runtime": "review_needed",
+        "runtime-dependency-used-only-in-tests": "review_needed",
+        "runtime-dependency-used-only-for-types": "review_needed",
+        "unused-runtime-dependency": "review_needed",
+        "duplicate-code": "review_needed",
+        "high-cyclomatic-complexity": "review_needed",
+        "high-cognitive-complexity": "review_needed",
+        "large-function": "review_needed",
+        "large-file": "review_needed",
+        "boundary-violation": "review_needed",
+        "framework-entrypoint-detected": "manual_only",
+        "risky-hotspot": "review_needed",
+    }
+
+    assert set(expected) == set(RULES)
+    for rule, decision in expected.items():
+        assert classify_finding(minimal_issue(rule)).decision == decision
+
+    assert classify_finding(minimal_issue("missing-runtime-dependency", "medium")).decision == "blocking"
+    assert classify_finding(minimal_issue("unused-symbol", "medium")).decision == "review_needed"
+    assert classify_finding(minimal_issue("unused-symbol", "low")).decision == "manual_only"
+    assert classify_finding(minimal_issue("unused-module", "low")).decision == "manual_only"
+    assert (
+        classify_finding(
+            minimal_issue("circular-dependency", evidence={"type_checking_imports_contributed": True})
+        ).decision
+        == "review_needed"
+    )
+    assert classify_finding(minimal_issue("boundary-violation", severity="error")).decision == "blocking"
+
+
+def test_unused_symbol_framework_managed_is_review_not_auto() -> None:
+    issue = minimal_issue(
+        "unused-symbol",
+        "high",
+        evidence={"state": {"framework_managed": True, "entrypoint_managed": False}},
+    )
+
+    result = classify_finding(issue)
+
+    assert result.decision == "review_needed"
+    assert "framework" in result.rationale
+
+
+def test_stale_suppression_minimal_patch_applies_cleanly(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(
+        tmp_path / "src/app.py",
+        """
+        # fallow: ignore[unused-symbol]
+
+        def main():
+            return 1
+        """,
+    )
+
+    result = analyze_fixture(tmp_path)
+    plan = agent_fix_plan(result)
+    stale = plan["auto_safe"][0]
+    patch = stale["minimal_patch"]
+
+    assert stale["rule"] == "stale-suppression"
+    assert patch["type"] == "delete_line"
+    path = tmp_path / patch["file"]
+    lines = path.read_text(encoding="utf-8").splitlines()
+    del lines[patch["line"] - 1]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    assert "fallow: ignore" not in path.read_text(encoding="utf-8")
+
+
+def test_agent_fix_plan_format_matches_schema_and_golden(tmp_path: Path) -> None:
+    result = analyze_fixture(ROOT / "tests/fixtures/demo_project")
+    plan = agent_fix_plan(result)
+    schema = json.loads((ROOT / "schemas/pyfallow-fix-plan.schema.json").read_text(encoding="utf-8"))
+    validate_schema(schema, plan)
+
+    assert plan["schema_version"] == "1.0"
+    assert plan["summary"]["blocking_count"] >= 1
+    missing = next(item for item in plan["blocking"] if item["rule"] == "missing-runtime-dependency")
+    assert [option["type"] for option in missing["fix_options"]] == [
+        "declare",
+        "remove_import",
+        "guard",
+        "rename",
+    ]
+
+    golden = json.loads((ROOT / "tests/golden/demo_project_fix_plan_golden.json").read_text(encoding="utf-8"))
+    actual = {
+        "summary": plan["summary"],
+        "blocking_rules": sorted({item["rule"] for item in plan["blocking"]}),
+        "review_needed_rules": sorted({item["rule"] for item in plan["review_needed"]}),
+        "auto_safe_rules": sorted({item["rule"] for item in plan["auto_safe"]}),
+    }
+    assert actual == golden
+
+
+def test_agent_fix_plan_cli_with_since_includes_diff_scope(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial")
+    write(tmp_path / "src/changed.py", "def changed_unused():\n    return 2\n")
+
+    result = run_cli(
+        ["analyze", "--root", str(tmp_path), "--since", "HEAD", "--format", "agent-fix-plan"]
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    plan = json.loads(result.stdout)
+    assert plan["diff_scope"]["changed_files"] == ["src/changed.py"]
+    assert plan["summary"]["review_needed_count"] == 2
+    assert {item["rule"] for item in plan["review_needed"]} == {"unused-module", "unused-symbol"}
+
+    default_result = run_cli(
+        ["--root", str(tmp_path), "--since", "HEAD", "--format", "agent-fix-plan"]
+    )
+    assert default_result.returncode == 0, default_result.stdout + default_result.stderr
+    assert json.loads(default_result.stdout)["diff_scope"]["changed_files"] == ["src/changed.py"]

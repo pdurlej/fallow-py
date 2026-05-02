@@ -11,7 +11,7 @@
 - Inspect README for current commands and non-affiliation language.
 - Inspect `LICENSE`.
 - Inspect GitHub templates.
-- Set real project URLs in `pyproject.toml` before the v0.2.0 release.
+- Set real project URLs in `pyproject.toml` before the next public release.
 - Update version consistently.
 - Update `CHANGELOG.md`.
 - Verify `examples/demo_project` commands still work.

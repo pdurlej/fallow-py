@@ -41,4 +41,4 @@ Apply the same classification logic manually.
 
 ## Pre-Edit Import Checks
 
-`verify_imports` exists in the MCP surface, but v0.2 returns `not_implemented`. Until v0.3, run `analyze_diff` after edits and treat missing-dependency findings as blockers.
+`verify_imports` exists in the MCP surface, but it currently returns `not_implemented`. Until the Sprint 2 verifier lands, run `analyze_diff` after edits and treat missing-dependency findings as blockers.

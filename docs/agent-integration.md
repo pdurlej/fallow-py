@@ -68,14 +68,14 @@ Blocking findings include parse/config errors, missing runtime dependencies, cir
 - `agent_context`: concise project map for planning and review
 - `explain_finding`: remediation guidance and safety classification
 - `safe_to_remove`: conservative removal classification by fingerprint
-- `verify_imports`: v0.2 stub returning `not_implemented`; full pre-edit verification is planned for v0.3
+- `verify_imports`: current Sprint 2 stub returning `not_implemented`; full pre-edit verification is planned next
 
 ## Release Assets
 
 Small zip bundles are checked in under `examples/` for first-release convenience:
 
-- `examples/claude-skill/claude-skill-pyfallow-cleanup-v0.2.0.zip`
-- `examples/cursor-rules/cursor-rules-pyfallow-v0.2.0.zip`
+- `examples/claude-skill/claude-skill-pyfallow-cleanup-v0.3.0.zip`
+- `examples/cursor-rules/cursor-rules-pyfallow-v0.3.0.zip`
 
 They contain the same text files as the source directories and should be regenerated when those files change.
 

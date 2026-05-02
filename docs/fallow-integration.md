@@ -68,7 +68,7 @@ The JSON report is the integration contract. Consumers should read:
 
 Issue `fingerprint` is intended for baselines and regression gating.
 
-MCP tools return structured objects derived from this JSON contract, not raw JSON strings. `verify_imports` is a v0.2 stub until the pre-edit prediction logic lands in the planned v0.3 work.
+MCP tools return structured objects derived from this JSON contract, not raw JSON strings. `verify_imports` is currently an explicit stub until the Sprint 2 pre-edit prediction logic lands.
 
 ## What Real Upstream Integration Would Need
 

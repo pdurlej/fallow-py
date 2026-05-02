@@ -25,6 +25,7 @@ from .models import CONFIDENCE_ORDER, RULES, SEVERITY_ORDER, Action, ExportRecor
 from .paths import normalize_package_name, relpath
 from .resolver import ModuleResolver
 from .suppressions import apply_suppressions
+from .summary import summary_from_issue_dicts
 
 
 LIMITATIONS = [
@@ -377,7 +378,7 @@ def filter_result(
     ]
     clone = dict(result)
     clone["issues"] = issues
-    clone["summary"] = _summary_from_issue_dicts(issues, result["graphs"].get("duplicate_groups", []))
+    clone["summary"] = summary_from_issue_dicts(issues, len(result["graphs"].get("duplicate_groups", [])))
     return clone
 
 
@@ -687,66 +688,7 @@ def _cycle_issues(
 
 
 def _summary(issues: list[Issue], duplicate_groups: list[dict[str, Any]]) -> dict[str, int]:
-    return _summary_from_issue_dicts([issue.to_dict() for issue in issues], duplicate_groups)
-
-
-def _summary_from_issue_dicts(issues: list[dict[str, Any]], duplicate_groups: list[dict[str, Any]]) -> dict[str, int]:
-    counts = {
-        "total_issues": len(issues),
-        "errors": 0,
-        "warnings": 0,
-        "info": 0,
-        "parse_errors": 0,
-        "config_errors": 0,
-        "unused_modules": 0,
-        "unused_symbols": 0,
-        "missing_dependencies": 0,
-        "unused_dependencies": 0,
-        "circular_dependencies": 0,
-        "duplicate_groups": len(duplicate_groups),
-        "complexity_hotspots": 0,
-        "boundary_violations": 0,
-        "stale_suppressions": 0,
-    }
-    for issue in issues:
-        if issue["severity"] == "error":
-            counts["errors"] += 1
-        elif issue["severity"] == "warning":
-            counts["warnings"] += 1
-        else:
-            counts["info"] += 1
-        rule = issue["rule"]
-        if rule == "parse-error":
-            counts["parse_errors"] += 1
-        elif rule == "config-error":
-            counts["config_errors"] += 1
-        elif rule == "unused-module":
-            counts["unused_modules"] += 1
-        elif rule == "unused-symbol":
-            counts["unused_symbols"] += 1
-        elif rule in {
-            "missing-runtime-dependency",
-            "missing-type-dependency",
-            "missing-test-dependency",
-            "dev-dependency-used-in-runtime",
-            "optional-dependency-used-in-runtime",
-        }:
-            counts["missing_dependencies"] += 1
-        elif rule in {
-            "runtime-dependency-used-only-in-tests",
-            "runtime-dependency-used-only-for-types",
-            "unused-runtime-dependency",
-        }:
-            counts["unused_dependencies"] += 1
-        elif rule == "circular-dependency":
-            counts["circular_dependencies"] += 1
-        elif rule in {"high-cyclomatic-complexity", "high-cognitive-complexity", "large-function", "large-file", "risky-hotspot"}:
-            counts["complexity_hotspots"] += 1
-        elif rule == "boundary-violation":
-            counts["boundary_violations"] += 1
-        elif rule == "stale-suppression":
-            counts["stale_suppressions"] += 1
-    return counts
+    return summary_from_issue_dicts([issue.to_dict() for issue in issues], len(duplicate_groups))
 
 
 def _issue_sort_key(issue: Issue) -> tuple[Any, ...]:

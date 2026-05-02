@@ -28,8 +28,8 @@ See [workflow.md](workflow.md) for the full workflow and examples.
 
 When triggered:
 
-1. Call `pyfallow.analyze_diff(since="HEAD", min_confidence="medium")` before commit, or `since="main"` for PR cleanup.
-2. Group findings into `auto_safe`, `review_needed`, and `blocking`.
+1. Prefer `pyfallow analyze --since HEAD --format agent-fix-plan` before commit, or call `pyfallow.analyze_diff(since="HEAD", min_confidence="medium")` through MCP.
+2. Use the returned `auto_safe`, `review_needed`, `blocking`, and `manual_only` groups.
 3. For each `auto_safe` finding, call `pyfallow.explain_finding(fingerprint=<fingerprint>)` and apply the minimal safe patch when one is available.
 4. For each `review_needed` finding, show the user the path, rule, confidence, and one-line remediation. Wait for direction.
 5. If any `blocking` finding remains, stop. Do not claim the task is complete. Do not commit or push.
@@ -56,4 +56,4 @@ Treat these as blocking by default:
 
 # Notes
 
-`pyfallow.verify_imports` is present so agents can start using the same call shape now, but v0.2 returns an explicit `not_implemented` result. Full pre-edit import prediction is planned for v0.3.
+`pyfallow.verify_imports` is present so agents can start using the same call shape now, but it currently returns an explicit `not_implemented` result. Full pre-edit import prediction is planned next in Sprint 2.

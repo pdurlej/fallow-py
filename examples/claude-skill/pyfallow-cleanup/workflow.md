@@ -13,7 +13,13 @@ Activate this skill when:
 
 ## Step 2: Run Diff-Aware Analysis
 
-Call:
+Prefer the CLI fix-plan format when shell access is available:
+
+```bash
+pyfallow analyze --root . --since HEAD --format agent-fix-plan
+```
+
+If using MCP tools directly, call:
 
 ```text
 pyfallow.analyze_diff(
@@ -24,11 +30,11 @@ pyfallow.analyze_diff(
 )
 ```
 
-The result is structured as `summary`, `findings`, `diff_scope`, and pagination metadata. `since="HEAD"` focuses on staged, unstaged, and untracked working-tree edits before commit. If the repository has a long-lived branch base, use `since="main"` or the branch base ref for PR cleanup.
+`since="HEAD"` focuses on staged, unstaged, and untracked working-tree edits before commit. If the repository has a long-lived branch base, use `since="main"` or the branch base ref for PR cleanup.
 
 ## Step 3: Classify Findings
 
-For each finding, call:
+With `--format agent-fix-plan`, pyfallow returns `auto_safe`, `review_needed`, `blocking`, and `manual_only` groups directly. With MCP `analyze_diff`, call `explain_finding` for each finding:
 
 ```text
 pyfallow.explain_finding(root=<workspace_root>, fingerprint=<fingerprint>)
@@ -110,7 +116,7 @@ pyfallow.verify_imports(
 )
 ```
 
-In v0.2 this returns `not_implemented`. Treat that as advisory only and fall back to `analyze_diff` after the edit. Full pre-edit verification is planned for v0.3.
+Until the Sprint 2 pre-edit verifier lands, this returns `not_implemented`. Treat that as advisory only and fall back to `analyze_diff` after the edit.
 
 ## Anti-Patterns
 

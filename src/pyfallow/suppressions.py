@@ -52,6 +52,7 @@ def parse_suppressions(path: str, lines: list[str]) -> list[Suppression]:
                 line=index,
                 rule=rule,
                 raw=match.group(0),
+                line_text=line.rstrip("\n"),
                 file_wide=stripped.startswith("#") and logical <= 10 and index <= 20,
             )
         )
@@ -83,7 +84,11 @@ def apply_suppressions(issues: list[Issue], suppressions: list[Suppression]) -> 
                 path=suppression.path,
                 range=Range(Position(suppression.line, 1), Position(suppression.line, 1)),
                 message=f"Suppression did not suppress any current finding ({rule}).",
-                evidence={"suppression": suppression.raw, "scope": "file" if suppression.file_wide else "line"},
+                evidence={
+                    "suppression": suppression.raw,
+                    "line_text": suppression.line_text,
+                    "scope": "file" if suppression.file_wide else "line",
+                },
                 actions=[
                     _action(
                         "remove-suppression",

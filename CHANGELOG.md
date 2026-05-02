@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 This project follows the spirit of [Keep a Changelog](https://keepachangelog.com/) and uses semantic versioning while the public contract stabilizes.
 
+## 0.3.0-alpha.1 - TBD
+
+### Added
+
+- `--format agent-fix-plan` for agent-native cleanup plans grouped as `auto_safe`, `review_needed`, `blocking`, and `manual_only`.
+- `schemas/pyfallow-fix-plan.schema.json` for the fix-plan contract.
+- Deterministic rule classification, investigation hints, and fix options for every pyfallow rule.
+
+### Changed
+
+- Report schema version is now `1.2`.
+- Core package version is now `0.3.0-alpha.1`.
+
 ## 0.2.0-alpha.1 - TBD
 
 ### Added

@@ -8,7 +8,7 @@ It builds a static picture of imports, dependencies, complexity, duplication, ar
 
 ## Status
 
-Current release target: `0.2.0-alpha.1`.
+Current release target: `0.3.0-alpha.1`.
 
 Runtime dependencies are stdlib-only on Python 3.11+. Development and packaging tools are optional extras.
 
@@ -53,7 +53,7 @@ See [`docs/agent-integration.md`](docs/agent-integration.md) for MCP setup, trig
 - parse/config errors
 - stale suppressions
 
-It also emits graph data, baseline comparisons, SARIF, and compact agent-context reports.
+It also emits graph data, baseline comparisons, SARIF, compact agent-context reports, and agent fix plans.
 
 ## Quickstart
 
@@ -132,6 +132,23 @@ Recommended workflow:
 5. Do not auto-delete low-confidence or framework-adjacent dead code.
 6. Rerun pyfallow after edits and compare new/resolved findings.
 
+## Agent Fix-Plan Format
+
+Use `agent-fix-plan` when an AI agent needs a native cleanup plan rather than the full report:
+
+```bash
+python -m pyfallow analyze --root . --since HEAD --format agent-fix-plan
+```
+
+The plan groups findings by action policy:
+
+- `auto_safe`: deterministic low-risk cleanup candidates; pyfallow currently emits a concrete minimal patch only for stale suppressions.
+- `review_needed`: useful structural signals that need human or agent reasoning with project context.
+- `blocking`: parse/config errors, missing runtime dependencies, enforced boundary violations, unresolved imports, and runtime import cycles.
+- `manual_only`: low-confidence or informational findings that should not drive automated edits.
+
+This format is meant to work alongside ruff, mypy/pyright, tests, and human review. It is not a replacement for those tools; it gives agents a deterministic slop-prevention checklist before they claim work is done.
+
 ## Diff-Aware Analysis
 
 Use `--since <git-ref>` when an agent or reviewer only needs findings related to a current change:
@@ -181,7 +198,7 @@ Available tools:
 - `analyze_diff`: diff-aware findings for agent cleanup loops
 - `agent_context`: structured project map for agents
 - `explain_finding`: remediation hints for a finding fingerprint
-- `verify_imports`: explicit v0.2 stub, with full pre-edit checks planned for v0.3
+- `verify_imports`: explicit stub until the Sprint 2 pre-edit verification implementation lands
 - `safe_to_remove`: deterministic dead-code safety classification
 
 The MCP package also exposes report and module-graph resources plus `pre-commit-check` and `pr-cleanup` prompts.
@@ -270,6 +287,7 @@ Suppressions apply to the same line, symbol definition lines, or the whole file 
 
 - `text`: compact human-readable diagnostics
 - `json`: deterministic machine-readable report
+- `agent-fix-plan`: classified JSON for agent cleanup loops
 - `sarif`: SARIF 2.1.0 for code scanning consumers
 - `markdown`: used by `agent-context`
 - `mermaid` and `dot`: graph command output
