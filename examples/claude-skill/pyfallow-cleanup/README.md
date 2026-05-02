@@ -37,4 +37,4 @@ Restart Claude Code after installing the skill and MCP server.
 5. Confirm blocking findings stop the commit path.
 6. Confirm review-needed findings are surfaced instead of auto-fixed.
 
-`pyfallow.verify_imports` is included in the skill surface, but it currently returns `not_implemented`; use it only as a stable call shape until the Sprint 2 verifier lands.
+`pyfallow.verify_imports` is included in the skill surface for pre-edit import checks. Use it before adding uncertain imports, then rerun `analyze_diff` after the edit.

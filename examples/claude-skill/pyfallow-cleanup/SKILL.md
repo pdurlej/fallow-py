@@ -29,11 +29,12 @@ See [workflow.md](workflow.md) for the full workflow and examples.
 When triggered:
 
 1. Prefer `pyfallow analyze --since HEAD --format agent-fix-plan` before commit, or call `pyfallow.analyze_diff(since="HEAD", min_confidence="medium")` through MCP.
-2. Use the returned `auto_safe`, `review_needed`, `blocking`, and `manual_only` groups.
-3. For each `auto_safe` finding, call `pyfallow.explain_finding(fingerprint=<fingerprint>)` and apply the minimal safe patch when one is available.
-4. For each `review_needed` finding, show the user the path, rule, confidence, and one-line remediation. Wait for direction.
-5. If any `blocking` finding remains, stop. Do not claim the task is complete. Do not commit or push.
-6. Re-run `pyfallow.analyze_diff` after edits and verify there are no new medium-or-higher confidence blockers.
+2. Before adding uncertain imports, call `pyfallow.verify_imports(file=<path>, planned_imports=[...])`.
+3. Use the returned `auto_safe`, `review_needed`, `blocking`, and `manual_only` groups.
+4. For each `auto_safe` finding, call `pyfallow.explain_finding(fingerprint=<fingerprint>)` and apply the minimal safe patch when one is available.
+5. For each `review_needed` finding, show the user the path, rule, confidence, and one-line remediation. Wait for direction.
+6. If any `blocking` finding remains, stop. Do not claim the task is complete. Do not commit or push.
+7. Re-run `pyfallow.analyze_diff` after edits and verify there are no new medium-or-higher confidence blockers.
 
 # Blocking Rules
 
@@ -56,4 +57,4 @@ Treat these as blocking by default:
 
 # Notes
 
-`pyfallow.verify_imports` is present so agents can start using the same call shape now, but it currently returns an explicit `not_implemented` result. Full pre-edit import prediction is planned next in Sprint 2.
+`pyfallow.verify_imports` predicts whether planned imports are safe before editing. Treat hallucinated imports, introduced cycles, enforced boundary violations, and missing runtime dependencies as blockers unless the user explicitly accepts the risk.

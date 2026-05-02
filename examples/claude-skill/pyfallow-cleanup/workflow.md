@@ -116,7 +116,7 @@ pyfallow.verify_imports(
 )
 ```
 
-Until the Sprint 2 pre-edit verifier lands, this returns `not_implemented`. Treat that as advisory only and fall back to `analyze_diff` after the edit.
+Treat `hallucinated`, `cycles_introduced`, `boundary_violations`, and `missing_dependencies` as blockers before editing. Imports listed under `safe` are statically consistent with the current project graph and declarations, but tests and type checking still need to run after the edit.
 
 ## Anti-Patterns
 

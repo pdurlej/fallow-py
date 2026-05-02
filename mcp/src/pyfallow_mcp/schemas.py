@@ -112,29 +112,53 @@ class Remediation(BaseModel):
 
 
 class HallucinatedImport(BaseModel):
+    raw: str
     import_name: str
     reason: str
+    similar: list[str] = Field(default_factory=list)
+    distribution: str | None = None
 
 
 class CyclePrediction(BaseModel):
+    raw: str
     import_name: str
     cycle_path: list[str]
 
 
 class BoundaryViolation(BaseModel):
+    raw: str
     import_name: str
     rule: str
     reason: str
 
 
+class MissingDependency(BaseModel):
+    raw: str
+    import_name: str
+    distribution: str
+    reason: str
+
+
+class ImportPrediction(BaseModel):
+    raw: str
+    import_name: str
+    classification: str
+    target_module: str | None = None
+    imported_symbol: str | None = None
+    distribution: str | None = None
+    reason: str | None = None
+
+
 class VerifyResult(BaseModel):
-    status: str = "not_implemented"
+    status: str = "ok"
     file: str
     planned_imports: list[str]
+    safe: list[ImportPrediction] = Field(default_factory=list)
+    review_needed: list[ImportPrediction] = Field(default_factory=list)
     hallucinated: list[HallucinatedImport] = Field(default_factory=list)
     cycles_introduced: list[CyclePrediction] = Field(default_factory=list)
     boundary_violations: list[BoundaryViolation] = Field(default_factory=list)
-    safe: list[str] = Field(default_factory=list)
+    missing_dependencies: list[MissingDependency] = Field(default_factory=list)
 
 
 class Classification(BaseModel):

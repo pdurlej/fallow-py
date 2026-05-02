@@ -1,5 +1,5 @@
 roots = ["src"]
-entry = ["src/pyfallow/__main__.py", "src/pyfallow/cli.py"]
+entry = ["src/pyfallow/__main__.py", "src/pyfallow/__init__.py", "src/pyfallow/cli.py"]
 include_tests = false
 
 [health]

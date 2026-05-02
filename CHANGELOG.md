@@ -11,6 +11,7 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 - `--format agent-fix-plan` for agent-native cleanup plans grouped as `auto_safe`, `review_needed`, `blocking`, and `manual_only`.
 - `schemas/pyfallow-fix-plan.schema.json` for the fix-plan contract.
 - Deterministic rule classification, investigation hints, and fix options for every pyfallow rule.
+- Pre-edit `verify_imports` prediction through the MCP package and core `pyfallow.verify_imports` API.
 
 ### Changed
 

@@ -54,11 +54,12 @@ pyfallow analyze --root . --since HEAD --format json --min-confidence medium
 ## Recommended Agent Workflow
 
 1. Call `pyfallow.analyze_diff(since="HEAD", min_confidence="medium")` before commit, or use the branch base ref for PR cleanup.
-2. For each finding, call `pyfallow.explain_finding`.
-3. Auto-fix only findings classified as `auto_safe`.
-4. Show `review_needed` findings to the user.
-5. Stop on `blocking` findings. Do not commit or claim completion.
-6. Re-run diff analysis after edits.
+2. Before adding uncertain imports, call `pyfallow.verify_imports(file=<path>, planned_imports=[...])`.
+3. For each finding, call `pyfallow.explain_finding`.
+4. Auto-fix only findings classified as `auto_safe`.
+5. Show `review_needed` findings to the user.
+6. Stop on `blocking` findings. Do not commit or claim completion.
+7. Re-run diff analysis after edits.
 
 Blocking findings include parse/config errors, missing runtime dependencies, circular dependencies, and architecture boundary violations.
 
@@ -68,7 +69,16 @@ Blocking findings include parse/config errors, missing runtime dependencies, cir
 - `agent_context`: concise project map for planning and review
 - `explain_finding`: remediation guidance and safety classification
 - `safe_to_remove`: conservative removal classification by fingerprint
-- `verify_imports`: current Sprint 2 stub returning `not_implemented`; full pre-edit verification is planned next
+- `verify_imports`: pre-edit prediction for planned imports; reports hallucinated modules/symbols, missing dependencies, introduced cycles, and boundary violations
+
+`verify_imports` returns:
+
+- `safe`: planned imports that are statically consistent with the current graph/dependency state
+- `hallucinated`: missing local modules or missing symbols/exports, with similar names when available
+- `missing_dependencies`: undeclared likely third-party imports
+- `cycles_introduced`: local import edges that would create a cycle
+- `boundary_violations`: local import edges that would violate configured architecture rules
+- `review_needed`: cases such as star imports that are too ambiguous for a safe prediction
 
 ## Release Assets
 

@@ -198,10 +198,21 @@ Available tools:
 - `analyze_diff`: diff-aware findings for agent cleanup loops
 - `agent_context`: structured project map for agents
 - `explain_finding`: remediation hints for a finding fingerprint
-- `verify_imports`: explicit stub until the Sprint 2 pre-edit verification implementation lands
+- `verify_imports`: pre-edit prediction for planned imports, including missing modules/symbols, undeclared third-party packages, cycles, and boundary violations
 - `safe_to_remove`: deterministic dead-code safety classification
 
 The MCP package also exposes report and module-graph resources plus `pre-commit-check` and `pr-cleanup` prompts.
+
+Before adding uncertain imports, agents can call:
+
+```text
+pyfallow.verify_imports(
+  file="src/orders.py",
+  planned_imports=["billing.compute_refund", "requests"]
+)
+```
+
+The result separates safe imports from hallucinated modules/symbols, introduced cycles, boundary violations, and missing dependency declarations.
 
 ## CI Workflow
 

@@ -18,6 +18,7 @@ from pyfallow.classify import agent_fix_plan, classify_finding
 from pyfallow.config import load_config
 from pyfallow.dependencies import parse_dependency_declarations
 from pyfallow.models import RULES, VERSION
+from pyfallow.predict import parse_import_spec, verify_imports
 from pyfallow.sarif import to_sarif
 
 
@@ -1684,7 +1685,7 @@ def test_agent_integration_examples_are_packaged() -> None:
     assert "pyfallow.analyze_diff" in skill_text
     assert "blocking" in skill_text
     assert "DO NOT mark the task complete" in workflow_text
-    assert "`not_implemented`" in workflow_text
+    assert "missing_dependencies" in workflow_text
     assert "alwaysApply: true" in cursor_text
 
     archives = {
@@ -1874,3 +1875,116 @@ def test_agent_fix_plan_cli_with_since_includes_diff_scope(tmp_path: Path) -> No
     )
     assert default_result.returncode == 0, default_result.stdout + default_result.stderr
     assert json.loads(default_result.stdout)["diff_scope"]["changed_files"] == ["src/changed.py"]
+
+
+def make_predict_project(tmp_path: Path) -> Path:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [project]
+        dependencies = []
+
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+
+        [[tool.pyfallow.boundaries.rules]]
+        name = "domain-no-infra"
+        from = "src/domain/**"
+        disallow = ["src/infra/**", "infra.*"]
+        severity = "error"
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    write(tmp_path / "src/billing.py", "def compute_total_with_refunds():\n    return 1\n")
+    write(tmp_path / "src/cart.py", "def cart_total():\n    return 1\n")
+    write(tmp_path / "src/checkout.py", "import cart\n\ndef checkout():\n    return cart.cart_total()\n")
+    write(tmp_path / "src/domain/service.py", "def service():\n    return 'ok'\n")
+    write(tmp_path / "src/infra/db.py", "def connect():\n    return 'db'\n")
+    write(
+        tmp_path / "src/pkg/__init__.py",
+        """
+        from .public import PublicThing
+        __all__ = ["PublicThing"]
+        """,
+    )
+    write(tmp_path / "src/pkg/public.py", "class PublicThing:\n    pass\n")
+    return tmp_path
+
+
+def test_parse_import_spec_supports_agent_import_forms() -> None:
+    specs = {
+        "os": ("os", None),
+        "requests as http": ("requests", "http"),
+        "billing.compute_refund": ("billing.compute_refund", None),
+        "billing.compute_refund as refund": ("billing.compute_refund", "refund"),
+        ".sibling.PublicThing": (".sibling.PublicThing", None),
+    }
+
+    for raw, expected in specs.items():
+        parsed = parse_import_spec(raw)
+        assert (parsed.name, parsed.alias) == expected
+
+
+def test_verify_imports_detects_hallucinated_module_and_symbol(tmp_path: Path) -> None:
+    root = make_predict_project(tmp_path)
+    config = load_config(root)
+
+    result = verify_imports(
+        config,
+        Path("src/app.py"),
+        ["nonexistent_module", "billing.compute_refund"],
+    )
+
+    reasons = {item.raw: item.reason for item in result.hallucinated}
+    assert "module 'nonexistent_module' not found" in reasons["nonexistent_module"]
+    assert reasons["billing.compute_refund"] == "module 'billing' has no symbol 'compute_refund'"
+    symbol = next(item for item in result.hallucinated if item.raw == "billing.compute_refund")
+    assert "compute_total_with_refunds" in symbol.similar
+
+
+def test_verify_imports_predicts_cycles_boundaries_and_missing_dependencies(tmp_path: Path) -> None:
+    root = make_predict_project(tmp_path)
+    config = load_config(root)
+
+    result = verify_imports(
+        config,
+        Path("src/cart.py"),
+        ["checkout", "requests", "os"],
+    )
+
+    assert result.status == "issues_found"
+    assert result.cycles_introduced[0].cycle_path == ["cart", "checkout", "cart"]
+    assert result.missing_dependencies[0].distribution == "requests"
+    assert {item.raw for item in result.safe} == {"os"}
+
+    boundary = verify_imports(config, Path("src/domain/service.py"), ["infra.db"])
+    assert boundary.boundary_violations
+    assert boundary.boundary_violations[0].rule == "domain-no-infra"
+
+
+def test_verify_imports_handles_reexports_relative_imports_and_new_files(tmp_path: Path) -> None:
+    root = make_predict_project(tmp_path)
+    config = load_config(root)
+
+    result = verify_imports(
+        config,
+        Path("src/pkg/new_feature.py"),
+        [".public.PublicThing", "pkg.PublicThing"],
+    )
+
+    assert result.status == "ok"
+    assert {item.raw for item in result.safe} == {".public.PublicThing", "pkg.PublicThing"}
+    assert not result.hallucinated
+
+
+def test_verify_imports_rejects_target_file_outside_root(tmp_path: Path) -> None:
+    root = make_predict_project(tmp_path)
+    config = load_config(root)
+
+    try:
+        verify_imports(config, Path("../outside.py"), ["os"])
+    except ValueError as exc:
+        assert "outside analysis root" in str(exc)
+    else:
+        raise AssertionError("verify_imports accepted a target outside the analysis root")

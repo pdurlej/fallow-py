@@ -24,3 +24,11 @@ Claude Code `mcp.json` example:
 ```
 
 The core `pyfallow` package remains stdlib-only. MCP dependencies live in this integration package.
+
+Tools:
+
+- `analyze_diff`: diff-aware pyfallow findings
+- `agent_context`: compact project map for coding agents
+- `explain_finding`: deterministic remediation guidance
+- `safe_to_remove`: conservative removal classification
+- `verify_imports`: pre-edit prediction for planned imports

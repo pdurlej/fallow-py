@@ -5,12 +5,14 @@ import json
 import subprocess
 import sys
 import textwrap
+import time
 from pathlib import Path
 from urllib.parse import quote
 
 from fastmcp import Client
 
 from pyfallow_mcp.server import build_server
+from pyfallow_mcp.tools import verify_imports_impl
 
 TIMEOUT = 15
 
@@ -161,17 +163,49 @@ def test_explain_finding_produces_remediation(tmp_path: Path) -> None:
     assert result["safety_notes"]
 
 
-def test_verify_imports_stub_returns_not_implemented(tmp_path: Path) -> None:
+def test_verify_imports_returns_pre_edit_prediction(tmp_path: Path) -> None:
+    root = make_repo(tmp_path)
     result = asyncio.run(
         call_tool(
             "verify_imports",
-            {"root": str(tmp_path), "file": "src/app.py", "planned_imports": ["billing.compute_refund"]},
+            {
+                "root": str(root),
+                "file": "src/app.py",
+                "planned_imports": ["pkg.PublicThing", "missing_local_symbol", "os"],
+            },
         )
     )
 
-    assert result["status"] == "not_implemented"
-    assert result["safe"] == []
-    assert result["planned_imports"] == ["billing.compute_refund"]
+    assert result["status"] == "issues_found"
+    assert {item["raw"] for item in result["safe"]} == {"pkg.PublicThing", "os"}
+    assert result["hallucinated"][0]["raw"] == "missing_local_symbol"
+    assert "module 'missing_local_symbol' not found" in result["hallucinated"][0]["reason"]
+    assert result["planned_imports"] == ["pkg.PublicThing", "missing_local_symbol", "os"]
+
+
+def test_verify_imports_uses_cached_report_for_second_call(tmp_path: Path) -> None:
+    root = make_repo(tmp_path)
+    first = normalize(verify_imports_impl(root, "src/app.py", ["os"]))
+    start = time.perf_counter()
+    second = normalize(verify_imports_impl(root, "src/app.py", ["json"]))
+
+    assert first["status"] == "ok"
+    assert second["status"] == "ok"
+    assert time.perf_counter() - start < 0.2
+
+
+def test_verify_imports_cache_detects_new_python_module(tmp_path: Path) -> None:
+    root = make_repo(tmp_path)
+    first = asyncio.run(
+        call_tool("verify_imports", {"root": str(root), "file": "src/app.py", "planned_imports": ["new_module"]})
+    )
+    write(root / "src/new_module.py", "VALUE = 1\n")
+    second = asyncio.run(
+        call_tool("verify_imports", {"root": str(root), "file": "src/app.py", "planned_imports": ["new_module"]})
+    )
+
+    assert first["hallucinated"][0]["raw"] == "new_module"
+    assert {item["raw"] for item in second["safe"]} == {"new_module"}
 
 
 def test_safe_to_remove_classifies_unknown_fingerprints_deterministically(tmp_path: Path) -> None:
