@@ -1,0 +1,11 @@
+[project]
+name = "pyfallow-demo-project"
+version = "0.1.0"
+dependencies = [
+  "requests",
+  "unusedlib",
+]
+
+[project.scripts]
+demo-app = "app.cli:main"
+

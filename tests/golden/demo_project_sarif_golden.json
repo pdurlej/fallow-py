@@ -1,0 +1,31 @@
+{
+  "automation_id": "pyfallow/python/",
+  "has_related": true,
+  "result_rule_ids": [
+    "PY011",
+    "PY020",
+    "PY030",
+    "PY031",
+    "PY040",
+    "PY049",
+    "PY050",
+    "PY060",
+    "PY061",
+    "PY070",
+    "PY090"
+  ],
+  "rule_ids": [
+    "PY011",
+    "PY020",
+    "PY030",
+    "PY031",
+    "PY040",
+    "PY049",
+    "PY050",
+    "PY060",
+    "PY061",
+    "PY070",
+    "PY090"
+  ],
+  "version": "2.1.0"
+}

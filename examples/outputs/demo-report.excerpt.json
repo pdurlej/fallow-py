@@ -1,0 +1,32 @@
+{
+  "tool": "fallow",
+  "language": "python",
+  "version": "0.1.0-alpha.1",
+  "schema_version": "1.0",
+  "summary_excerpt": {
+    "has_missing_runtime_dependency": true,
+    "has_unused_runtime_dependency": true,
+    "has_cycle": true,
+    "has_duplicate": true,
+    "has_complexity_hotspot": true,
+    "has_boundary_violation": true
+  },
+  "issue_examples": [
+    {
+      "id": "PY040",
+      "rule": "missing-runtime-dependency",
+      "severity": "error",
+      "confidence": "high",
+      "path": "src/app/main.py",
+      "message": "Imported third-party package 'missingdep' is not declared as a dependency."
+    },
+    {
+      "id": "PY020",
+      "rule": "circular-dependency",
+      "severity": "warning",
+      "confidence": "high",
+      "message": "Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a"
+    }
+  ]
+}
+

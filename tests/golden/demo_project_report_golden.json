@@ -1,0 +1,40 @@
+{
+  "edges": [
+    ["app.cycle_a", "app.cycle_b"],
+    ["app.cycle_b", "app.cycle_a"],
+    ["app.domain.service", "app.infra.db"],
+    ["app.main", "app.cycle_a"],
+    ["app.main", "app.domain.service"],
+    ["app.main", "app.dynamic_mod"]
+  ],
+  "rules": [
+    "boundary-violation",
+    "circular-dependency",
+    "duplicate-code",
+    "dynamic-import",
+    "high-cognitive-complexity",
+    "high-cyclomatic-complexity",
+    "missing-runtime-dependency",
+    "risky-hotspot",
+    "unused-module",
+    "unused-runtime-dependency",
+    "unused-symbol"
+  ],
+  "summary": {
+    "boundary_violations": 1,
+    "circular_dependencies": 1,
+    "complexity_hotspots": 3,
+    "config_errors": 0,
+    "duplicate_groups": 1,
+    "errors": 2,
+    "info": 2,
+    "missing_dependencies": 1,
+    "parse_errors": 0,
+    "stale_suppressions": 0,
+    "total_issues": 17,
+    "unused_dependencies": 1,
+    "unused_modules": 3,
+    "unused_symbols": 5,
+    "warnings": 13
+  }
+}

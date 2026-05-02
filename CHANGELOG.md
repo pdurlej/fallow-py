@@ -1,0 +1,37 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+This project follows the spirit of [Keep a Changelog](https://keepachangelog.com/) and uses semantic versioning while the public contract stabilizes.
+
+## 0.1.0-alpha.1 - 2026-05-02
+
+### Added
+
+- Standalone `pyfallow` Python package and CLI.
+- `fallow` compatibility console entry point for local workflows and future integration experiments.
+- Python source discovery, module resolution, AST indexing, import graph, cycles, dead-code candidates, dependency findings, duplicate detection, complexity metrics, boundary rules, suppressions, baselines, SARIF, and agent-context output.
+- JSON report schema and SARIF subset schema.
+- Fixture projects, golden tests, and CLI smoke coverage.
+- Release docs, examples, GitHub Actions CI, and community health files.
+
+### Changed
+
+- Version set to `0.1.0-alpha.1` to reflect early public API status.
+- Project metadata hardened for editable installs, source distributions, and wheels.
+- README rewritten for public release positioning and non-affiliation clarity.
+
+### Fixed
+
+- Parse-error modules no longer emit downstream dead-code, duplicate, or complexity findings.
+- SyntaxError line/column data is preserved in parse-error issues.
+- Test-scope references no longer mark production symbols as used when `include_tests=false`.
+- Low-confidence star exports lower unused-symbol confidence instead of fully suppressing findings.
+- SARIF fingerprints include source-line hashes when files are available.
+
+### Known Limitations
+
+- Python dynamic behavior means findings are advisory, not runtime proof.
+- Dynamic imports, monkey patching, plugin loading, reflection, dependency injection containers, runtime path mutation, and framework magic can hide real usage.
+- `--changed-only` is accepted for compatibility but currently falls back to full analysis with a warning.
+

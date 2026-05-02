@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fallow.tools/schemas/pyfallow-report.schema.json",
+  "title": "pyfallow report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "language", "version", "schema_version", "root", "config_path", "generated_at", "analysis", "summary", "issues", "metrics", "graphs", "config", "limitations"],
+  "properties": {
+    "tool": { "const": "fallow" },
+    "language": { "const": "python" },
+    "version": { "type": "string" },
+    "schema_version": { "type": "string" },
+    "root": { "type": "string" },
+    "config_path": { "type": ["string", "null"] },
+    "generated_at": { "type": ["string", "null"] },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files_analyzed", "modules_analyzed", "symbols_indexed", "imports_indexed", "entrypoints", "frameworks_detected", "source_roots", "dependency_files", "changed_only", "warnings", "module_ambiguities", "duration_ms"],
+      "properties": {
+        "files_analyzed": { "type": "integer", "minimum": 0 },
+        "modules_analyzed": { "type": "integer", "minimum": 0 },
+        "symbols_indexed": { "type": "integer", "minimum": 0 },
+        "imports_indexed": { "type": "integer", "minimum": 0 },
+        "entrypoints": { "type": "array", "items": { "type": "object" } },
+        "frameworks_detected": { "type": "array", "items": { "type": "string" } },
+        "source_roots": { "type": "array", "items": { "type": "string" } },
+        "dependency_files": { "type": "array", "items": { "type": "string" } },
+        "changed_only": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requested", "effective", "reason"],
+          "properties": {
+            "requested": { "type": "boolean" },
+            "effective": { "type": "boolean" },
+            "reason": { "type": ["string", "null"] }
+          }
+        },
+        "warnings": { "type": "array", "items": { "type": "object" } },
+        "module_ambiguities": { "type": "array", "items": { "type": "object" } },
+        "duration_ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_issues", "errors", "warnings", "info", "parse_errors", "config_errors", "unused_modules", "unused_symbols", "missing_dependencies", "unused_dependencies", "circular_dependencies", "duplicate_groups", "complexity_hotspots", "boundary_violations", "stale_suppressions"],
+      "properties": {
+        "total_issues": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 },
+        "info": { "type": "integer", "minimum": 0 },
+        "parse_errors": { "type": "integer", "minimum": 0 },
+        "config_errors": { "type": "integer", "minimum": 0 },
+        "unused_modules": { "type": "integer", "minimum": 0 },
+        "unused_symbols": { "type": "integer", "minimum": 0 },
+        "missing_dependencies": { "type": "integer", "minimum": 0 },
+        "unused_dependencies": { "type": "integer", "minimum": 0 },
+        "circular_dependencies": { "type": "integer", "minimum": 0 },
+        "duplicate_groups": { "type": "integer", "minimum": 0 },
+        "complexity_hotspots": { "type": "integer", "minimum": 0 },
+        "boundary_violations": { "type": "integer", "minimum": 0 },
+        "stale_suppressions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "rule", "category", "severity", "confidence", "path", "range", "symbol", "module", "message", "evidence", "actions", "fingerprint"],
+        "properties": {
+          "id": { "type": "string" },
+          "rule": { "type": "string" },
+          "category": { "type": "string" },
+          "severity": { "enum": ["info", "warning", "error"] },
+          "confidence": { "enum": ["low", "medium", "high"] },
+          "path": { "type": ["string", "null"] },
+          "range": { "$ref": "#/$defs/range" },
+          "symbol": { "type": ["string", "null"] },
+          "module": { "type": ["string", "null"] },
+          "message": { "type": "string" },
+          "evidence": { "type": "object" },
+          "actions": { "type": "array", "items": { "type": "object" } },
+          "fingerprint": { "type": "string" },
+          "baseline_status": { "type": "string" }
+        }
+      }
+    },
+    "metrics": { "type": "object" },
+    "graphs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modules", "edges", "cycles", "duplicate_groups", "exports"],
+      "properties": {
+        "modules": { "type": "array", "items": { "$ref": "#/$defs/module" } },
+        "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+        "cycles": { "type": "array", "items": { "type": "object" } },
+        "duplicate_groups": { "type": "array", "items": { "type": "object" } },
+        "exports": { "type": "array", "items": { "$ref": "#/$defs/export" } }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["boundary_rules_configured", "include_tests", "framework_heuristics"],
+      "properties": {
+        "boundary_rules_configured": { "type": "boolean" },
+        "include_tests": { "type": "boolean" },
+        "framework_heuristics": { "type": "boolean" }
+      }
+    },
+    "baseline": { "type": "object" },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line", "column"],
+      "properties": {
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "$ref": "#/$defs/position" },
+        "end": { "$ref": "#/$defs/position" }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reachable", "referenced", "public_api", "framework_managed", "entrypoint_managed", "dynamic_uncertain"],
+      "properties": {
+        "reachable": { "type": "boolean" },
+        "referenced": { "type": "boolean" },
+        "public_api": { "type": "boolean" },
+        "framework_managed": { "type": "boolean" },
+        "entrypoint_managed": { "type": "boolean" },
+        "dynamic_uncertain": { "type": "boolean" }
+      }
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "is_package_init", "is_test", "is_migration", "state", "exports", "symbols"],
+      "properties": {
+        "id": { "type": "string" },
+        "path": { "type": "string" },
+        "is_package_init": { "type": "boolean" },
+        "is_test": { "type": "boolean" },
+        "is_migration": { "type": "boolean" },
+        "state": { "$ref": "#/$defs/state" },
+        "exports": { "type": "array", "items": { "$ref": "#/$defs/exportBare" } },
+        "symbols": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "path", "target_path", "line", "imported_symbol", "kind", "confidence", "type_checking", "dynamic"],
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "path": { "type": "string" },
+        "target_path": { "type": ["string", "null"] },
+        "line": { "type": "integer", "minimum": 1 },
+        "imported_symbol": { "type": ["string", "null"] },
+        "kind": { "type": "string" },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "type_checking": { "type": "boolean" },
+        "dynamic": { "type": "boolean" }
+      }
+    },
+    "exportBare": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "line", "source", "confidence", "complete", "origin_module", "origin_symbol", "explicit"],
+      "properties": {
+        "name": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "source": { "type": "string" },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "complete": { "type": "boolean" },
+        "origin_module": { "type": ["string", "null"] },
+        "origin_symbol": { "type": ["string", "null"] },
+        "explicit": { "type": "boolean" }
+      }
+    },
+    "export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module", "path", "name", "line", "source", "confidence", "complete", "origin_module", "origin_symbol", "explicit"],
+      "properties": {
+        "module": { "type": "string" },
+        "path": { "type": "string" },
+        "name": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "source": { "type": "string" },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "complete": { "type": "boolean" },
+        "origin_module": { "type": ["string", "null"] },
+        "origin_symbol": { "type": ["string", "null"] },
+        "explicit": { "type": "boolean" }
+      }
+    }
+  }
+}

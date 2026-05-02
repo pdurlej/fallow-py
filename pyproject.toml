@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyfallow"
+version = "0.1.0-alpha.1"
+description = "Python-first static codebase intelligence for agents and reviewers."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "pyfallow contributors" }]
+keywords = [
+  "agents",
+  "architecture",
+  "code-intelligence",
+  "dead-code",
+  "dependencies",
+  "python",
+  "sarif",
+  "static-analysis",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/pd/fallow-python"
+Repository = "https://github.com/pd/fallow-python"
+Issues = "https://github.com/pd/fallow-python/issues"
+Changelog = "https://github.com/pd/fallow-python/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "pytest>=8",
+  "twine>=5",
+]
+
+[project.scripts]
+pyfallow = "pyfallow.cli:main"
+fallow = "pyfallow.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

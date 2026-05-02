@@ -1,0 +1,35 @@
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Build and package artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE and editor state
+.idea/
+.vscode/
+.claude/
+
+# OS files
+.DS_Store
+__MACOSX/
+
+# pyfallow generated outputs
+.fallow-baseline.json
+pyfallow-report.json
+pyfallow.sarif
+fallow-agent-context.md
+

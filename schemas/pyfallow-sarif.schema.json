@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fallow.tools/schemas/pyfallow-sarif.schema.json",
+  "title": "pyfallow SARIF subset",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "runs"],
+  "properties": {
+    "version": { "const": "2.1.0" },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["automationDetails", "tool", "results"],
+        "properties": {
+          "automationDetails": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "const": "pyfallow/python/" }
+            }
+          },
+          "tool": {
+            "type": "object",
+            "required": ["driver"],
+            "properties": {
+              "driver": {
+                "type": "object",
+                "required": ["name", "rules"],
+                "properties": {
+                  "name": { "const": "pyfallow" },
+                  "rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["id", "name", "properties"],
+                      "properties": {
+                        "id": { "type": "string" },
+                        "name": { "type": "string" },
+                        "properties": {
+                          "type": "object",
+                          "required": ["precision", "problem.severity"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["ruleId", "level", "message", "locations", "partialFingerprints"],
+              "properties": {
+                "ruleId": { "type": "string" },
+                "locations": { "type": "array" },
+                "partialFingerprints": {
+                  "type": "object",
+                  "required": ["pyfallowFingerprint", "primaryLocationLineHash"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
