@@ -642,6 +642,54 @@ def test_since_branch_ref_filters_multiple_changed_files(tmp_path: Path) -> None
     assert "src/stale.py" not in {issue["path"] for issue in payload["issues"]}
 
 
+def test_since_includes_uncommitted_modified_files(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    write(tmp_path / "src/changed.py", "VALUE = 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial")
+    write(tmp_path / "src/changed.py", "def changed_unused():\n    return 2\n")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "HEAD", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["analysis"]["diff_scope"]["changed_files"] == ["src/changed.py"]
+    assert payload["issues"]
+    assert {issue["path"] for issue in payload["issues"]} == {"src/changed.py"}
+
+
+def test_since_includes_untracked_python_files(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    write(tmp_path / "src/app.py", "def main():\n    return 1\n")
+    init_git_repo(tmp_path)
+    commit_all(tmp_path, "initial")
+    write(tmp_path / "src/new_unused.py", "def new_unused():\n    return 2\n")
+
+    result = run_cli(["analyze", "--root", str(tmp_path), "--since", "HEAD", "--format", "json"])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["analysis"]["diff_scope"]["changed_files"] == ["src/new_unused.py"]
+    assert payload["analysis"]["diff_scope"]["changed_modules"] == ["new_unused"]
+    assert payload["issues"]
+    assert {issue["path"] for issue in payload["issues"]} == {"src/new_unused.py"}
+
+
 def test_since_keeps_cycle_findings_when_one_member_changed(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
@@ -1601,3 +1649,4 @@ def test_json_schema_and_golden_fixture_contract() -> None:
     }
     golden = json.loads((ROOT / "tests/golden/demo_project_report_golden.json").read_text(encoding="utf-8"))
     assert actual == golden
+

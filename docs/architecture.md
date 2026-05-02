@@ -88,7 +88,7 @@ Stable ordering is preferred throughout the pipeline so reports are suitable for
 
 ## Diff-Aware Analysis
 
-`--since <ref>` resolves the ref with Git, discovers changed Python files using `git diff --name-only --find-renames --diff-filter=ACMR <ref>...HEAD`, and then runs the normal full analysis. Full analysis is still required so cycles, boundary violations, imports, exports, and dependency policies have repo-wide context.
+`--since <ref>` resolves the ref with Git, discovers changed Python files using `git diff --name-only --find-renames --diff-filter=ACMR <ref>...HEAD`, then adds staged, unstaged, and untracked Python files from the working tree. It then runs the normal full analysis. Full analysis is still required so cycles, boundary violations, imports, exports, and dependency policies have repo-wide context.
 
 After analysis, pyfallow filters findings to the diff scope:
 

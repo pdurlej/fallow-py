@@ -58,7 +58,9 @@ def resolve_since(root: Path, ref: str, ignore: list[str]) -> DiffResolution:
             message = f"{message} git said: {detail}"
         return _unavailable("since-not-available-git-error", message)
 
-    changed_files = _changed_python_files(root.resolve(), repo_root, diff.stdout.splitlines(), ignore)
+    changed_paths = diff.stdout.splitlines()
+    changed_paths.extend(_working_tree_paths(repo_root))
+    changed_files = _changed_python_files(root.resolve(), repo_root, changed_paths, ignore)
     return DiffResolution(changed_files=changed_files, since_resolved=resolved.stdout.strip())
 
 
@@ -73,6 +75,19 @@ def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str] | None:
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return None
+
+
+def _working_tree_paths(repo_root: Path) -> list[str]:
+    paths: list[str] = []
+    for args in [
+        ("diff", "--name-only", "--find-renames", "--diff-filter=ACMR", "HEAD", "--"),
+        ("diff", "--cached", "--name-only", "--find-renames", "--diff-filter=ACMR", "HEAD", "--"),
+        ("ls-files", "--others", "--exclude-standard"),
+    ]:
+        result = _git(repo_root, *args)
+        if result is not None and result.returncode == 0:
+            paths.extend(result.stdout.splitlines())
+    return paths
 
 
 def _changed_python_files(root: Path, repo_root: Path, paths: list[str], ignore: list[str]) -> list[str]:
