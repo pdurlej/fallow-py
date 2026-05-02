@@ -55,6 +55,8 @@ def discover_python_files(config: PythonConfig, source_roots: list[Path]) -> lis
                 continue
             if _ignored_by_parent(relative, config.ignore):
                 continue
+            if not config.namespace_packages and not _regular_package_path(path, source_root):
+                continue
             if not config.include_tests and is_test_path(relative):
                 # Tests are excluded from dead-code reporting by default, but dependency
                 # classification still benefits from seeing explicitly configured test roots.
@@ -67,3 +69,19 @@ def _ignored_by_parent(relative: str, patterns: list[str]) -> bool:
     parts = relative.split("/")
     prefixes = ["/".join(parts[:index]) + "/" for index in range(1, len(parts))]
     return any(matches_any(prefix, patterns) for prefix in prefixes)
+
+
+def _regular_package_path(path: Path, source_root: Path) -> bool:
+    parent = path.parent
+    if parent == source_root:
+        return True
+    try:
+        relative_parent = parent.relative_to(source_root)
+    except ValueError:
+        return False
+    current = source_root
+    for part in relative_parent.parts:
+        current = current / part
+        if not (current / "__init__.py").exists():
+            return False
+    return True

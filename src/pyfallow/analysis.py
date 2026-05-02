@@ -69,7 +69,7 @@ def analyze(config: PythonConfig) -> dict[str, Any]:
         for record in info.imports:
             resolver.resolve_import(record, info.is_package_init)
     _refresh_alias_maps(modules)
-    _build_export_records(modules)
+    _build_export_records(config, modules)
 
     all_imports = [record for info in modules.values() for record in info.imports]
     classify_imports(all_imports, config)
@@ -197,7 +197,8 @@ def _refresh_alias_maps(modules: dict[str, ModuleInfo]) -> None:
                 info.alias_to_module[local_name] = record.target_module
 
 
-def _build_export_records(modules: dict[str, ModuleInfo]) -> None:
+def _build_export_records(config: PythonConfig, modules: dict[str, ModuleInfo]) -> None:
+    init_export_confidence = config.dead_code.confidence_for_init_exports
     for info in modules.values():
         if not info.is_package_init or info.parse_error:
             continue
@@ -220,7 +221,7 @@ def _build_export_records(modules: dict[str, ModuleInfo]) -> None:
                                 name=target_export.name,
                                 line=record.line,
                                 source="star-reexport",
-                                confidence=target_export.confidence,
+                                confidence=_known_init_export_confidence(init_export_confidence, target_export.confidence),
                                 complete=target_export.complete,
                                 origin_module=target_export.origin_module,
                                 origin_symbol=target_export.origin_symbol,
@@ -236,7 +237,7 @@ def _build_export_records(modules: dict[str, ModuleInfo]) -> None:
                                 name=name,
                                 line=record.line,
                                 source="star-reexport",
-                                confidence="high",
+                                confidence=init_export_confidence,
                                 complete=True,
                                 origin_module=record.target_module,
                                 origin_symbol=name,
@@ -274,13 +275,19 @@ def _build_export_records(modules: dict[str, ModuleInfo]) -> None:
                     name=exported_name,
                     line=record.line,
                     source="direct-reexport",
-                    confidence="high" if exported_name in explicit_names else "medium",
+                    confidence=init_export_confidence,
                     complete=explicit_complete,
                     origin_module=record.target_module,
                     origin_symbol=record.imported_symbol,
                     explicit=exported_name in explicit_names,
                 ),
             )
+
+
+def _known_init_export_confidence(configured: str, inherited: str) -> str:
+    if CONFIDENCE_ORDER[configured] < CONFIDENCE_ORDER[inherited]:
+        return configured
+    return inherited
 
 
 def _add_export_record(info: ModuleInfo, modules: dict[str, ModuleInfo], export: ExportRecord) -> None:

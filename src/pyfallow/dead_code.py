@@ -237,9 +237,12 @@ def _skip_symbol(
 ) -> bool:
     if symbol.name in ignored_symbols:
         return True
-    if symbol.name.startswith("_"):
+    is_dunder = symbol.name.startswith("__") and symbol.name.endswith("__")
+    if is_dunder and config.dead_code.ignore_dunder_methods:
         return True
-    if symbol.name.startswith("__") and symbol.name.endswith("__"):
+    if symbol.name.startswith("_") and not is_dunder:
+        return True
+    if config.dead_code.ignore_protocol_methods and _is_protocol_symbol(symbol):
         return True
     if (symbol.public_api or symbol.exported) and CONFIDENCE_ORDER[symbol.public_api_confidence] >= CONFIDENCE_ORDER["medium"]:
         return True
@@ -254,6 +257,10 @@ def _skip_symbol(
     if symbol.entrypoint_managed:
         return True
     return False
+
+
+def _is_protocol_symbol(symbol) -> bool:
+    return symbol.kind == "class" and any(base == "Protocol" or base.endswith(".Protocol") for base in symbol.bases)
 
 
 def _local_prefix(module: str, modules: dict[str, ModuleInfo]) -> str | None:

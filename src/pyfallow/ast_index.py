@@ -140,11 +140,11 @@ class IndexVisitor(ast.NodeVisitor):
             decorators = [_decorator_name(item) for item in node.decorator_list]
             bases = [_expr_name(item) for item in node.bases]
             framework_managed = any(
-                name in {"BaseModel", "Protocol", "TypedDict"} or name.endswith(".Model")
+                name in {"BaseModel", "TypedDict"} or name.endswith(".Model")
                 for name in bases
                 if name
             ) or any(name in MODEL_DECORATORS for name in decorators if name)
-            self.info.symbols.append(_symbol(node, node.name, "class", bool(decorators), framework_managed))
+            self.info.symbols.append(_symbol(node, node.name, "class", bool(decorators), framework_managed, bases))
         self.scope_depth += 1
         self.generic_visit(node)
         self.scope_depth -= 1
@@ -296,7 +296,14 @@ class IndexVisitor(ast.NodeVisitor):
             )
 
 
-def _symbol(node: ast.AST, name: str, kind: str, decorated: bool, framework_managed: bool) -> SymbolRecord:
+def _symbol(
+    node: ast.AST,
+    name: str,
+    kind: str,
+    decorated: bool,
+    framework_managed: bool,
+    bases: list[str] | None = None,
+) -> SymbolRecord:
     return SymbolRecord(
         name=name,
         kind=kind,
@@ -304,6 +311,7 @@ def _symbol(node: ast.AST, name: str, kind: str, decorated: bool, framework_mana
         column=getattr(node, "col_offset", 0),
         end_line=getattr(node, "end_lineno", getattr(node, "lineno", 1)),
         end_column=getattr(node, "end_col_offset", getattr(node, "col_offset", 0)),
+        bases=bases or [],
         decorated=decorated,
         framework_managed=framework_managed,
     )

@@ -617,6 +617,9 @@ def test_reexports_and_from_package_submodule_alias_usage(tmp_path: Path) -> Non
         [tool.pyfallow]
         roots = ["src"]
         entry = ["src/main.py"]
+
+        [tool.pyfallow.dead_code]
+        confidence_for_init_exports = "high"
         """,
     )
     write(
@@ -674,6 +677,9 @@ def test_export_mutations_aliases_and_star_exports(tmp_path: Path) -> None:
         [tool.pyfallow]
         roots = ["src"]
         entry = ["src/main.py"]
+
+        [tool.pyfallow.dead_code]
+        confidence_for_init_exports = "high"
         """,
     )
     write(
@@ -797,6 +803,9 @@ def test_include_tests_false_does_not_leak_test_references_to_production(tmp_pat
         roots = ["src"]
         entry = ["src/app.py"]
         include_tests = false
+
+        [tool.pyfallow.dependencies]
+        include_dev = true
         """,
     )
     write(tmp_path / "src/app.py", "def main():\n    return 'ok'\n")
@@ -822,6 +831,9 @@ def test_production_importing_test_code_is_reported_without_graph_edge(tmp_path:
         roots = ["src"]
         entry = ["src/app.py"]
         include_tests = false
+
+        [tool.pyfallow.dependencies]
+        include_dev = true
         """,
     )
     write(tmp_path / "src/app.py", "from tests.helpers import helper\n\ndef main():\n    return helper()\n")
@@ -957,6 +969,9 @@ def test_dependency_policy_defaults(tmp_path: Path) -> None:
         roots = ["src"]
         entry = ["src/app.py"]
         include_tests = false
+
+        [tool.pyfallow.dependencies]
+        include_dev = true
         """,
     )
     write(
@@ -989,6 +1004,50 @@ def test_dependency_policy_defaults(tmp_path: Path) -> None:
     assert any(issue["evidence"]["distribution"] == "runtimeonly" and issue["evidence"]["policy"] == "test-only" for issue in unused)
 
 
+def test_dependency_include_optional_and_dev_knobs_are_observable(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [project.optional-dependencies]
+        speedups = ["orjson"]
+
+        [tool.poetry.group.dev.dependencies]
+        devonly = "*"
+
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+
+        [tool.pyfallow.dependencies]
+        include_optional = false
+        include_dev = false
+        """,
+    )
+    write(
+        tmp_path / "src/app.py",
+        """
+        import devonly
+        import orjson
+
+        def main():
+            return devonly.__name__, orjson.__name__
+        """,
+    )
+
+    result = analyze_fixture(tmp_path)
+    missing = {issue["evidence"]["distribution"] for issue in issues_for(result, "missing-runtime-dependency")}
+    assert {"devonly", "orjson"} <= missing
+    assert not issues_for(result, "dev-dependency-used-in-runtime")
+    assert not issues_for(result, "optional-dependency-used-in-runtime")
+
+    config = load_config(tmp_path)
+    config.dependencies.include_optional = True
+    config.dependencies.include_dev = True
+    included = analyze(config)
+    assert any(issue["evidence"]["distribution"] == "devonly" for issue in issues_for(included, "dev-dependency-used-in-runtime"))
+    assert any(issue["evidence"]["distribution"] == "orjson" for issue in issues_for(included, "optional-dependency-used-in-runtime"))
+
+
 def test_guarded_optional_import_does_not_count_as_runtime_violation(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
@@ -1017,6 +1076,77 @@ def test_guarded_optional_import_does_not_count_as_runtime_violation(tmp_path: P
     result = analyze_fixture(tmp_path)
     assert not issues_for(result, "optional-dependency-used-in-runtime")
     assert not issues_for(result, "missing-runtime-dependency")
+
+
+def test_namespace_protocol_dunder_and_init_export_knobs_are_observable(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        namespace_packages = false
+
+        [tool.pyfallow.dead_code]
+        ignore_protocol_methods = false
+        ignore_dunder_methods = false
+        confidence_for_init_exports = "medium"
+        """,
+    )
+    write(
+        tmp_path / "src/app.py",
+        """
+        import pkg
+
+        def main():
+            return pkg
+        """,
+    )
+    write(tmp_path / "src/ns/mod.py", "VALUE = 1\n")
+    write(tmp_path / "src/pkg/__init__.py", "from .model import Public\n__all__ = ['Public']\n")
+    write(
+        tmp_path / "src/pkg/model.py",
+        """
+        from typing import Protocol
+
+        class Public:
+            pass
+
+        class Service(Protocol):
+            pass
+
+        __magic__ = 1
+        """,
+    )
+
+    result = analyze_fixture(tmp_path)
+    modules = {node["id"] for node in result["graphs"]["modules"]}
+    assert "ns.mod" not in modules
+    unused = {(issue["module"], issue.get("symbol")) for issue in issues_for(result, "unused-symbol")}
+    assert ("pkg.model", "Public") not in unused
+    assert ("pkg.model", "Service") in unused
+    assert ("pkg.model", "__magic__") in unused
+    public = next(
+        symbol
+        for node in result["graphs"]["modules"]
+        if node["id"] == "pkg.model"
+        for symbol in node["symbols"]
+        if symbol["name"] == "Public"
+    )
+    assert public["state"]["public_api_confidence"] == "medium"
+
+
+def test_cli_debug_and_show_limitations_flags_are_observable(tmp_path: Path) -> None:
+    write(tmp_path / "app.py", "def main():\n    return 1\n")
+
+    debug_run = run_cli(["analyze", "--root", str(tmp_path), "--changed-only", "--debug", "--format", "json"])
+    assert debug_run.returncode == 0
+    assert "pyfallow DEBUG: analysis warning:" in debug_run.stderr
+
+    limitations_run = run_cli(["analyze", "--root", str(tmp_path), "--format", "text", "--show-limitations"])
+    assert limitations_run.returncode == 0
+    assert "Limitations:" in limitations_run.stdout
+    assert "Dynamic imports" in limitations_run.stdout
 
 
 def test_nested_function_complexity_does_not_inflate_parent(tmp_path: Path) -> None:

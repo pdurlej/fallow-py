@@ -123,7 +123,6 @@ class HealthConfig:
 @dataclass(slots=True)
 class BaselineConfig:
     path: str = ".fallow-baseline.json"
-    mode: str = "fingerprint"
 
 
 @dataclass(slots=True)
@@ -136,7 +135,6 @@ class PythonConfig:
     namespace_packages: bool = True
     framework_heuristics: bool = True
     frameworks: list[str] = field(default_factory=lambda: ["auto"])
-    output_paths: str = "relative"
     ignore: list[str] = field(default_factory=lambda: list(DEFAULT_IGNORE))
     dead_code: DeadCodeConfig = field(default_factory=DeadCodeConfig)
     dependencies: DependenciesConfig = field(default_factory=DependenciesConfig)
@@ -187,7 +185,6 @@ def build_config(root: Path, config_path: Path | None, data: dict[str, Any]) -> 
         "namespace_packages",
         "framework_heuristics",
         "frameworks",
-        "output_paths",
         "ignore",
     ):
         if key in data:
@@ -248,10 +245,15 @@ def _list_or_value(value: Any) -> list[str]:
 
 
 def _validate(cfg: PythonConfig) -> None:
-    _validate_choice(cfg, "output_paths", cfg.output_paths, {"relative"})
     for item in cfg.frameworks:
         if item not in {"auto", "django", "fastapi", "flask", "celery", "pytest", "click", "typer", "none"}:
             _config_error(cfg, "frameworks", f"Unsupported framework value: {item}")
+    _validate_choice(
+        cfg,
+        "dead_code.confidence_for_init_exports",
+        cfg.dead_code.confidence_for_init_exports,
+        {"low", "medium", "high"},
+    )
     if cfg.dupes.mode not in {"strict", "mild", "structural"}:
         _config_error(cfg, "dupes.mode", f"Unsupported duplicate mode: {cfg.dupes.mode}")
         cfg.dupes.mode = "mild"

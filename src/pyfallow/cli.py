@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any
 
-from .analysis import analyze, filter_result
+from .analysis import LIMITATIONS, analyze, filter_result
 from .baseline import compare_with_baseline, create_baseline, read_baseline, write_baseline
 from .config import load_config
 from .formatters import format_agent_context, format_result
@@ -35,6 +36,7 @@ def main(argv: list[str] | None = None) -> int:
         argv = ["analyze", *argv]
     parser = build_parser()
     args = parser.parse_args(argv)
+    _configure_logging(args.debug)
     try:
         if args.command == "baseline":
             return _run_baseline(args)
@@ -87,7 +89,6 @@ def _add_common(parser: argparse.ArgumentParser, agent_context: bool = False, gr
         choices=["auto", "django", "fastapi", "flask", "celery", "pytest", "click", "typer", "none"],
         default="auto",
     )
-    parser.add_argument("--explain", action="store_true")
     parser.add_argument("--show-limitations", action="store_true")
 
 
@@ -95,6 +96,7 @@ def _run_analysis(args: argparse.Namespace) -> int:
     config = load_config(args.root, args.config)
     _apply_cli_config(config, args)
     result = analyze(config)
+    _log_analysis_warnings(args, result)
     baseline = None
     if getattr(args, "baseline", None):
         baseline = read_baseline(args.baseline)
@@ -103,6 +105,7 @@ def _run_analysis(args: argparse.Namespace) -> int:
         result["baseline"] = comparison
     filtered = filter_result(result, args.min_confidence, args.severity_threshold)
     output = _format_for_command(filtered, args.command, args.format)
+    output = _with_limitations(output, args.format, args.show_limitations)
     _write_or_print(output, args.output)
     exit_result = (
         _focused_result(filtered, args.command)
@@ -116,6 +119,7 @@ def _run_baseline(args: argparse.Namespace) -> int:
     config = load_config(args.root, args.config)
     _apply_cli_config(config, args)
     result = analyze(config)
+    _log_analysis_warnings(args, result)
     if args.baseline_command == "create":
         baseline = create_baseline(result)
         output_path = args.output or config.baseline.path
@@ -130,8 +134,35 @@ def _run_baseline(args: argparse.Namespace) -> int:
     result["baseline"] = comparison
     filtered = filter_result(result, args.min_confidence, args.severity_threshold)
     output = format_result(filtered, args.format, "baseline")
+    output = _with_limitations(output, args.format, args.show_limitations)
     _write_or_print(output, args.output)
     return _exit_code(filtered, args.fail_on, baseline_active=True)
+
+
+def _configure_logging(debug: bool) -> None:
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.WARNING,
+        format="pyfallow %(levelname)s: %(message)s",
+    )
+
+
+def _log_analysis_warnings(args: argparse.Namespace, result: dict[str, Any]) -> None:
+    if not args.debug:
+        return
+    for warning in result.get("analysis", {}).get("warnings", []):
+        logging.debug("analysis warning: %s", warning)
+
+
+def _with_limitations(output: str, fmt: str, show_limitations: bool) -> str:
+    if not show_limitations or fmt not in {"text", "markdown"}:
+        return output
+    heading = "## Limitations" if fmt == "markdown" else "Limitations:"
+    lines = [output.rstrip(), "", heading]
+    if fmt == "markdown":
+        lines.extend(f"- {item}" for item in LIMITATIONS)
+    else:
+        lines.extend(f"- {item}" for item in LIMITATIONS)
+    return "\n".join(lines) + "\n"
 
 
 def _apply_cli_config(config, args: argparse.Namespace) -> None:

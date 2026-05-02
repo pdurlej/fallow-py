@@ -90,8 +90,16 @@ def dependency_issues(
     issues: list[Issue] = []
     ignored = {normalize_package_name(item) for item in config.dependencies.ignore}
     runtime = {normalize_package_name(name): source for name, source in declarations.runtime.items()}
-    optional = {normalize_package_name(name): source for name, source in declarations.optional.items()}
-    dev = {normalize_package_name(name): source for name, source in declarations.dev.items()}
+    optional = (
+        {normalize_package_name(name): source for name, source in declarations.optional.items()}
+        if config.dependencies.include_optional
+        else {}
+    )
+    dev = (
+        {normalize_package_name(name): source for name, source in declarations.dev.items()}
+        if config.dependencies.include_dev
+        else {}
+    )
     used: dict[str, list[ImportRecord]] = {}
     for record in records:
         if record.classification != "third-party" or not record.distribution:

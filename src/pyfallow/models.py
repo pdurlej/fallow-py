@@ -193,6 +193,7 @@ class SymbolRecord:
     column: int
     end_line: int
     end_column: int
+    bases: list[str] = field(default_factory=list)
     decorated: bool = False
     framework_managed: bool = False
     exported: bool = False
@@ -214,6 +215,7 @@ class SymbolRecord:
             "column": self.column + 1,
             "end_line": self.end_line,
             "end_column": self.end_column + 1,
+            "bases": list(self.bases),
             "decorated": self.decorated,
             "framework_managed": self.framework_managed,
             "exported": self.public_api or self.exported,
