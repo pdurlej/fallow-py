@@ -93,6 +93,44 @@ def make_cycle_repo(root: Path) -> Path:
     return root
 
 
+def make_grouped_repo(root: Path) -> Path:
+    write(
+        root / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+
+        [[tool.pyfallow.boundaries.rules]]
+        name = "domain-no-infra"
+        from = "src/domain/**"
+        disallow = ["src/infra/**", "infra.*"]
+        severity = "error"
+        """,
+    )
+    write(
+        root / "src/app.py",
+        """
+        import a
+        from domain.service import run
+
+        def main():
+            return a.VALUE, run()
+        """,
+    )
+    write(root / "src/a.py", "VALUE = 1\n")
+    write(root / "src/domain/service.py", "def run():\n    return 'ok'\n")
+    write(root / "src/infra/db.py", "def connect():\n    return 'ok'\n")
+    init_git_repo(root)
+    commit_all(root, "initial")
+    write(root / "src/a.py", "import b\nVALUE = b.VALUE\n")
+    write(root / "src/b.py", "import a\nVALUE = 1\n")
+    write(root / "src/domain/service.py", "from infra.db import connect\n\ndef run():\n    return connect()\n")
+    write(root / "src/unused.py", "def orphan():\n    return 1\n")
+    commit_all(root, "introduce graph findings")
+    return root
+
+
 async def call_tool(name: str, arguments: dict) -> dict:
     async with Client(build_server()) as client:
         result = await client.call_tool(name, arguments)
@@ -166,6 +204,48 @@ def test_mcp_classifies_runtime_cycles_like_agent_fix_plan(tmp_path: Path) -> No
 
     remediation = asyncio.run(call_tool("explain_finding", {"root": str(root), "fingerprint": cycle["fingerprint"]}))
     assert remediation["classification"] == "blocking"
+
+
+def test_analyze_diff_returns_grouped_classifications(tmp_path: Path) -> None:
+    root = make_grouped_repo(tmp_path)
+
+    result = asyncio.run(
+        call_tool(
+            "analyze_diff",
+            {"root": str(root), "since": "HEAD~1", "min_confidence": "medium", "max_findings": 20},
+        )
+    )
+
+    for group in ["auto_safe", "review_needed", "blocking", "manual_only"]:
+        assert isinstance(result[group], list)
+    assert {item["rule"] for item in result["blocking"]} == {"boundary-violation", "circular-dependency"}
+    assert any(item["rule"] == "unused-module" for item in result["review_needed"])
+    grouped = [
+        item
+        for group in ["auto_safe", "review_needed", "blocking", "manual_only"]
+        for item in result[group]
+    ]
+    assert len(grouped) == len(result["findings"])
+    assert [item["fingerprint"] for item in grouped] == [item["fingerprint"] for item in result["findings"]]
+
+
+def test_analyze_diff_grouped_truncation_keeps_flat_compatibility(tmp_path: Path) -> None:
+    root = make_grouped_repo(tmp_path)
+
+    result = asyncio.run(
+        call_tool(
+            "analyze_diff",
+            {"root": str(root), "since": "HEAD~1", "min_confidence": "medium", "max_findings": 1},
+        )
+    )
+
+    grouped_count = sum(len(result[group]) for group in ["auto_safe", "review_needed", "blocking", "manual_only"])
+    assert result["truncated"] is True
+    assert grouped_count == 1
+    assert len(result["findings"]) == 1
+    assert [item["fingerprint"] for group in ["auto_safe", "review_needed", "blocking", "manual_only"] for item in result[group]] == [
+        item["fingerprint"] for item in result["findings"]
+    ]
 
 
 def test_agent_context_includes_public_api_and_risk_sections(tmp_path: Path) -> None:

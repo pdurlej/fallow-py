@@ -42,8 +42,12 @@ class Finding(FlexibleModel):
 
 class AnalysisResult(BaseModel):
     summary: SummaryCounts
-    findings: list[Finding]
     diff_scope: DiffScope
+    auto_safe: list[Finding] = Field(default_factory=list)
+    review_needed: list[Finding] = Field(default_factory=list)
+    blocking: list[Finding] = Field(default_factory=list)
+    manual_only: list[Finding] = Field(default_factory=list)
+    findings: list[Finding]
     truncated: bool = False
     next_cursor: str | None = None
 

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
 
 from .models import CONFIDENCE_ORDER, RULES
 
 FIX_PLAN_SCHEMA_VERSION = "1.0"
+CLASSIFICATION_GROUPS = ("auto_safe", "review_needed", "blocking", "manual_only")
+
+T = TypeVar("T")
 
 BLOCKING_RULES = {
     "parse-error",
@@ -44,6 +48,21 @@ class ClassificationResult:
     fix_options: list[dict[str, str]]
 
 
+def group_by_classification(
+    issues: Iterable[dict[str, Any]],
+    item_factory: Callable[[dict[str, Any], ClassificationResult], T],
+) -> dict[str, list[T]]:
+    groups: dict[str, list[T]] = {name: [] for name in CLASSIFICATION_GROUPS}
+    for issue in issues:
+        classification = classify_finding(issue)
+        groups[classification.decision].append(item_factory(issue, classification))
+    return groups
+
+
+def flatten_classification_groups(groups: Mapping[str, Sequence[T]]) -> list[T]:
+    return [item for name in CLASSIFICATION_GROUPS for item in groups.get(name, [])]
+
+
 def classify_finding(issue: dict[str, Any]) -> ClassificationResult:
     rule = issue["rule"]
     decision, rationale = _decision_and_rationale(issue)
@@ -57,15 +76,8 @@ def classify_finding(issue: dict[str, Any]) -> ClassificationResult:
 
 
 def agent_fix_plan(result: dict[str, Any]) -> dict[str, Any]:
-    groups: dict[str, list[dict[str, Any]]] = {
-        "auto_safe": [],
-        "review_needed": [],
-        "blocking": [],
-        "manual_only": [],
-    }
-    for issue in result["issues"]:
-        classification = classify_finding(issue)
-        groups[classification.decision].append(_plan_item(issue, classification))
+    groups = group_by_classification(result["issues"], _plan_item)
+    plan_items = flatten_classification_groups(groups)
 
     plan: dict[str, Any] = {
         "schema_version": FIX_PLAN_SCHEMA_VERSION,
@@ -77,7 +89,7 @@ def agent_fix_plan(result: dict[str, Any]) -> dict[str, Any]:
             "review_needed_count": len(groups["review_needed"]),
             "blocking_count": len(groups["blocking"]),
             "manual_only_count": len(groups["manual_only"]),
-            "total": len(result["issues"]),
+            "total": len(plan_items),
         },
         "auto_safe": groups["auto_safe"],
         "review_needed": groups["review_needed"],

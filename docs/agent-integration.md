@@ -55,11 +55,12 @@ pyfallow analyze --root . --since HEAD --format json --min-confidence medium
 
 1. Call `pyfallow.analyze_diff(since="HEAD", min_confidence="medium")` before commit, or use the branch base ref for PR cleanup.
 2. Before adding uncertain imports, call `pyfallow.verify_imports(file=<path>, planned_imports=[...])`.
-3. Use each finding's `classification`; call `pyfallow.explain_finding` when you need remediation details.
-4. Auto-fix only findings classified as `auto_safe`.
-5. Show `review_needed` findings to the user.
-6. Stop on `blocking` findings. Do not commit or claim completion.
-7. Re-run diff analysis after edits.
+3. Read `analyze_diff.blocking`, `analyze_diff.review_needed`, `analyze_diff.auto_safe`, and `analyze_diff.manual_only`.
+4. Call `pyfallow.explain_finding` when you need remediation details.
+5. Auto-fix only findings classified as `auto_safe`.
+6. Show `review_needed` findings to the user.
+7. Stop on `blocking` findings. Do not commit or claim completion.
+8. Re-run diff analysis after edits.
 
 Blocking findings include parse/config errors, missing runtime dependencies, circular dependencies, and architecture boundary violations.
 
@@ -70,6 +71,16 @@ Blocking findings include parse/config errors, missing runtime dependencies, cir
 - `explain_finding`: remediation guidance and safety classification
 - `safe_to_remove`: conservative removal classification by fingerprint
 - `verify_imports`: pre-edit prediction for planned imports; reports hallucinated modules/symbols, missing dependencies, introduced cycles, and boundary violations
+
+`analyze_diff` returns grouped findings using the same action policy as CLI `--format agent-fix-plan`:
+
+- `blocking`: findings that should stop commit/ship flows unless resolved or explicitly waived
+- `review_needed`: deterministic signals that need project judgment
+- `auto_safe`: narrow low-risk cleanup candidates
+- `manual_only`: low-confidence or informational findings
+
+The response also keeps a flat `findings` list for backward compatibility. New integrations should consume
+the grouped fields directly so agents do not reimplement classification grouping.
 
 `verify_imports` returns:
 
