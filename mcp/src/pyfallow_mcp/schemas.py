@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
+from pyfallow.classify import CLASSIFICATION_GROUPS
 from pydantic import BaseModel, ConfigDict, Field
+
+ClassificationDecision = Literal[*CLASSIFICATION_GROUPS]
 
 
 class FlexibleModel(BaseModel):
@@ -28,7 +31,7 @@ class DiffScope(FlexibleModel):
 class Finding(FlexibleModel):
     id: str
     rule: str
-    classification: Literal["auto_safe", "review_needed", "blocking", "manual_only"] | None = None
+    classification: ClassificationDecision | None = None
     severity: str
     confidence: str
     path: str | None = None
@@ -108,7 +111,7 @@ class FixOption(BaseModel):
 
 class Remediation(BaseModel):
     finding: Finding
-    classification: Literal["auto_safe", "review_needed", "blocking", "manual_only"]
+    classification: ClassificationDecision
     one_liner: str
     investigation_hints: list[str]
     fix_options: list[FixOption]
@@ -168,5 +171,5 @@ class VerifyResult(BaseModel):
 
 class Classification(BaseModel):
     fingerprint: str
-    decision: Literal["safe-auto", "review-needed", "manual-only"]
+    decision: ClassificationDecision
     rationale: str

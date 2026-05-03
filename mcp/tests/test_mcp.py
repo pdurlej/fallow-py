@@ -330,7 +330,7 @@ def test_safe_to_remove_classifies_unknown_fingerprints_deterministically(tmp_pa
     result = asyncio.run(call_tool("safe_to_remove", {"root": str(tmp_path), "fingerprints": fingerprints}))
 
     assert sorted(result) == fingerprints
-    assert {item["decision"] for item in result.values()} == {"manual-only"}
+    assert {item["decision"] for item in result.values()} == {"manual_only"}
 
 
 def test_resources_return_report_and_module_graph(tmp_path: Path) -> None:
