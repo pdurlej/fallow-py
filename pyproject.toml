@@ -34,10 +34,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://example.invalid/TBD"
-Repository = "https://example.invalid/TBD"
-Issues = "https://example.invalid/TBD"
-Changelog = "https://example.invalid/TBD"
+Homepage = "https://git.pdurlej.com/pdurlej/pyfallow"
+Repository = "https://git.pdurlej.com/pdurlej/pyfallow"
+Issues = "https://git.pdurlej.com/pdurlej/pyfallow/issues"
+Changelog = "https://git.pdurlej.com/pdurlej/pyfallow/src/branch/main/CHANGELOG.md"
+Mirror = "https://github.com/pdurlej/pyfallow"
 
 [project.optional-dependencies]
 dev = [
