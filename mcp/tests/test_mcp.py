@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import json
 import subprocess
 import sys
@@ -143,6 +144,8 @@ async def call_tool(name: str, arguments: dict) -> dict:
 def normalize(value):
     if hasattr(value, "model_dump"):
         return normalize(value.model_dump(mode="json"))
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return normalize(dataclasses.asdict(value))
     if hasattr(value, "__dict__") and value.__class__.__module__.startswith("fastmcp."):
         return normalize(vars(value))
     if isinstance(value, dict):
