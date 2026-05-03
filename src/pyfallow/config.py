@@ -49,6 +49,10 @@ DEFAULT_IMPORT_MAP = {
 }
 
 
+class ConfigError(ValueError):
+    """User-supplied pyfallow configuration or contract data is malformed."""
+
+
 @dataclass(slots=True)
 class BoundaryRule:
     name: str
