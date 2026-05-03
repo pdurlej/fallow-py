@@ -244,6 +244,8 @@ def _skip_symbol(
         return True
     if config.dead_code.ignore_protocol_methods and _is_protocol_symbol(symbol):
         return True
+    if "/management/commands/" in f"/{module.path}" and symbol.name in {"Command", "handle"}:
+        return True
     if (symbol.public_api or symbol.exported) and CONFIDENCE_ORDER[symbol.public_api_confidence] >= CONFIDENCE_ORDER["medium"]:
         return True
     if symbol.framework_managed:

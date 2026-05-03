@@ -1,0 +1,7 @@
+{
+  "max_errors": 0,
+  "forbidden_findings": [
+    {"rule": "optional-dependency-used-in-runtime", "distribution": "orjson"},
+    {"rule": "missing-runtime-dependency", "distribution": "orjson"}
+  ]
+}

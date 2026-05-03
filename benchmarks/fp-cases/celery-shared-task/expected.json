@@ -1,0 +1,10 @@
+{
+  "max_errors": 0,
+  "required_frameworks": ["celery"],
+  "forbidden_findings": [
+    {"rule": "unused-symbol", "path": "src/tasks.py", "symbol": "work"}
+  ],
+  "max_confidence_findings": [
+    {"rule": "unused-module", "path": "src/tasks.py", "max_confidence": "low"}
+  ]
+}

@@ -1,0 +1,3 @@
+[tool.pyfallow]
+roots = ["."]
+entry = ["manage.py"]

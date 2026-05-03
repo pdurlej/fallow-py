@@ -1,0 +1,3 @@
+[tool.pyfallow]
+roots = ["src"]
+entry = ["src/app.py"]

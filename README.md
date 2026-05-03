@@ -350,6 +350,17 @@ The default CI workflow does not upload SARIF. Enable code scanning intentionall
 - [`examples/demo_project/`](examples/demo_project/) contains a small project with missing dependencies, an unused dependency, a cycle, a duplicate, a complexity hotspot, a boundary violation, suppressions, and public API reexports.
 - [`examples/outputs/`](examples/outputs/) contains short output excerpts for README and release notes.
 
+## False-Positive Corpus
+
+[`benchmarks/fp-cases/`](benchmarks/fp-cases/) contains checked-in minimal projects for common
+false-positive surfaces: Django management commands, FastAPI routes, package public APIs, optional
+imports, type-only imports, namespace package ambiguity, Protocol classes, dataclasses, and Celery
+tasks.
+
+Each case has machine-readable expectations and a short human explanation. The corpus is not
+exhaustive; if pyfallow misclassifies your project, submit the smallest reproducible case there before
+changing analyzer behavior.
+
 ## Limitations
 
 Static Python analysis is approximate. Known limits include dynamic imports, monkey patching, reflection, dependency injection containers, framework magic, plugin entry points, namespace package ambiguity, generated code, runtime path mutation, conditional imports, and public API that may be consumed outside the repository.

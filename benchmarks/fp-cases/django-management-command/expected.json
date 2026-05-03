@@ -1,0 +1,9 @@
+{
+  "max_errors": 0,
+  "required_frameworks": ["django"],
+  "forbidden_findings": [
+    {"rule": "unused-module", "path": "myapp/management/commands/cleanup.py"},
+    {"rule": "unused-symbol", "path": "myapp/management/commands/cleanup.py", "symbol": "Command"},
+    {"rule": "unused-symbol", "path": "myapp/management/commands/cleanup.py", "symbol": "handle"}
+  ]
+}

@@ -61,6 +61,26 @@ The soak harness in `benchmarks/soak/` exists to calibrate these surfaces on rea
 
 If a rule shows more than a 30% false-positive rate during calibration, lower severity/confidence or document a targeted heuristic before presenting the rule as a CI blocker.
 
+## Checked False-Positive Cases
+
+The fixed corpus in [`benchmarks/fp-cases/`](../benchmarks/fp-cases/) turns common false-positive
+surfaces into regression tests. Each case has a minimal project, `expected.json`, and `EXPECTED.md`.
+
+| Case | Surface | Expected calibration |
+| --- | --- | --- |
+| [`django-management-command`](../benchmarks/fp-cases/django-management-command/) | Django filesystem command discovery | Command module and command entry symbols are not dead code. |
+| [`fastapi-route`](../benchmarks/fp-cases/fastapi-route/) | Decorator route registration | Route handler is framework-managed. |
+| [`package-public-api`](../benchmarks/fp-cases/package-public-api/) | `__init__.py` reexport and `__all__` | Public export suppresses origin unused-symbol. |
+| [`optional-dependency-guard`](../benchmarks/fp-cases/optional-dependency-guard/) | Guarded optional import | No runtime or optional dependency violation. |
+| [`type-checking-only-import`](../benchmarks/fp-cases/type-checking-only-import/) | `TYPE_CHECKING` import | Missing dependency is low-confidence type scope only. |
+| [`namespace-package-ambiguity`](../benchmarks/fp-cases/namespace-package-ambiguity/) | PEP 420 multi-root ambiguity | Ambiguity is explicit; related dead-code stays low confidence. |
+| [`protocol-class`](../benchmarks/fp-cases/protocol-class/) | Structural typing protocol | Protocol class is not unused implementation code. |
+| [`dataclass-only-fields`](../benchmarks/fp-cases/dataclass-only-fields/) | Dataclass model shape | Data model class is framework/model managed. |
+| [`celery-shared-task`](../benchmarks/fp-cases/celery-shared-task/) | Celery task autodiscovery | Task function is framework-managed; module uncertainty is low. |
+
+This corpus is not exhaustive. New false positives should be reported with a minimal case that can be
+added here before changing confidence, suppression, or framework heuristics.
+
 ## Recommended Interpretation
 
 - Treat high-confidence findings as review priorities.

@@ -1,0 +1,4 @@
+[tool.pyfallow]
+roots = ["src", "alt"]
+entry = ["src/app.py"]
+namespace_packages = true
