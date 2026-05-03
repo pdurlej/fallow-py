@@ -1,6 +1,6 @@
 """MCP server integration for pyfallow."""
 
-VERSION = "0.1.0-alpha.1"
+VERSION = "0.1.0a2"
 
 __version__ = VERSION
 

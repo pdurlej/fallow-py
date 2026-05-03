@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 This project follows the spirit of [Keep a Changelog](https://keepachangelog.com/) and uses semantic versioning while the public contract stabilizes.
 
+## 0.3.0a2 / 0.1.0a2 mcp - 2026-05-04
+
+### Added
+
+- Drift detection tests for the MCP classification namespace.
+- Forgejo Actions self-CI workflow mirroring the Python/MCP validation matrix.
+- `pyfallow --version` for release install smoke tests.
+
+### Changed
+
+- **BREAKING (MCP):** `safe_to_remove` now returns `decision` values from the underscore namespace (`auto_safe`, `review_needed`, `manual_only`) used by the rest of the agent-facing API. Earlier alpha builds returned hyphen-separated values (`safe-auto`, `review-needed`, `manual-only`).
+- `pyfallow-mcp` now depends on `pyfallow>=0.3.0a2` so the MCP package and core classification contract stay in lockstep.
+
+### Fixed
+
+- `read_baseline()` validates baseline JSON shape on load and raises `ConfigError` for malformed data instead of surfacing cryptic comparison errors later.
+- Forgejo CI examples no longer run Python inside a container that breaks JavaScript-based Actions such as `actions/checkout`.
+- MCP tests pass on Python 3.11 by normalizing FastMCP dataclass response wrappers in the test helper.
+
 ## 0.3.0-alpha.1 - TBD
 
 ### Added

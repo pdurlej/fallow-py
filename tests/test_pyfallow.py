@@ -495,8 +495,12 @@ def test_output_formats_baseline_and_agent_context(tmp_path: Path) -> None:
 def test_release_metadata_version_schema_and_readme_examples() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyfallow.__version__ == pyproject["project"]["version"] == VERSION
-    assert pyproject["project"]["version"] == "0.3.0-alpha.1"
+    assert pyproject["project"]["version"] == "0.3.0a2"
     assert pyproject["project"]["dependencies"] == []
+
+    version_run = run_cli(["--version"])
+    assert version_run.returncode == 0
+    assert version_run.stdout.strip() == "pyfallow 0.3.0a2"
 
     for path in [
         ROOT / "schemas/pyfallow-report.schema.json",

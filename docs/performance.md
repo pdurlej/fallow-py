@@ -23,7 +23,7 @@ Tool versions:
 - `ruff 0.15.12`
 - `vulture 2.16`
 - `deptry 0.25.1`
-- `pyfallow 0.3.0-alpha.1`
+- `pyfallow 0.3.0a2`
 
 Local benchmark environment:
 

@@ -8,7 +8,7 @@ It builds a static picture of imports, dependencies, complexity, duplication, ar
 
 ## Status
 
-Current release target: `0.3.0-alpha.1`.
+Current release target: `0.3.0a2`.
 
 Runtime dependencies are stdlib-only on Python 3.11+. Development and packaging tools are optional extras.
 

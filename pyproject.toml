@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyfallow"
-version = "0.3.0-alpha.1"
+version = "0.3.0a2"
 description = "Python-first static codebase intelligence for agents and reviewers."
 readme = "README.md"
 requires-python = ">=3.11"
