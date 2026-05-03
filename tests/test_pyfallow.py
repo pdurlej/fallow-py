@@ -1727,7 +1727,10 @@ def test_ci_templates_are_packaged_and_platform_neutral() -> None:
         assert "render_pyfallow_comment.py" in text
         assert "pyfallow-report.json" in text
 
-    assert "runs-on: docker" in templates["forgejo"].read_text(encoding="utf-8")
+    forgejo_text = templates["forgejo"].read_text(encoding="utf-8")
+    assert "runs-on: ubuntu-latest" in forgejo_text
+    assert "container:" not in forgejo_text
+    assert "actions/setup-python@v5" in forgejo_text
     assert "runs-on: ubuntu-latest" in templates["github"].read_text(encoding="utf-8")
     assert "image: python:3.12" in templates["gitlab"].read_text(encoding="utf-8")
     assert "reports:" not in templates["gitlab"].read_text(encoding="utf-8")
