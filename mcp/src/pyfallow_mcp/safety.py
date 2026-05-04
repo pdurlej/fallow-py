@@ -20,12 +20,12 @@ def safe_to_remove_impl(root: str | Path, fingerprints: list[str]) -> dict[str, 
 
 def safe_classification(fingerprint: str, issue: dict[str, Any] | None) -> Classification:
     if not issue:
-        return Classification(fingerprint=fingerprint, decision="manual-only", rationale="Fingerprint was not found.")
+        return Classification(fingerprint=fingerprint, decision="manual_only", rationale="Fingerprint was not found.")
     if safe_auto_issue(issue):
-        return Classification(fingerprint=fingerprint, decision="safe-auto", rationale="High-confidence dead-code finding without unsafe state evidence.")
+        return Classification(fingerprint=fingerprint, decision="auto_safe", rationale="High-confidence dead-code finding without unsafe state evidence.")
     if issue.get("confidence") == "medium":
-        return Classification(fingerprint=fingerprint, decision="review-needed", rationale="Medium-confidence finding requires review.")
-    return Classification(fingerprint=fingerprint, decision="manual-only", rationale="Low confidence, dynamic uncertainty, public API, or non-dead-code rule.")
+        return Classification(fingerprint=fingerprint, decision="review_needed", rationale="Medium-confidence finding requires review.")
+    return Classification(fingerprint=fingerprint, decision="manual_only", rationale="Low confidence, dynamic uncertainty, public API, or non-dead-code rule.")
 
 
 def safe_auto_issue(issue: dict[str, Any]) -> bool:

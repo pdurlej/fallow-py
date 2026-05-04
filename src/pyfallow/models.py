@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-VERSION = "0.3.0-alpha.1"
+VERSION = "0.3.0a2"
 SCHEMA_VERSION = "1.2"
 
 

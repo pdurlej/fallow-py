@@ -11,7 +11,7 @@ from .analysis import LIMITATIONS, analyze, filter_result
 from .baseline import compare_with_baseline, create_baseline, read_baseline, write_baseline
 from .config import load_config
 from .formatters import format_agent_context, format_result
-from .models import CONFIDENCE_ORDER, SEVERITY_ORDER
+from .models import CONFIDENCE_ORDER, SEVERITY_ORDER, VERSION
 from .summary import summary_from_issue_dicts
 
 TEXT_LIMITATION_FORMATS = {"text", "markdown"}
@@ -25,6 +25,9 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == "python":
         argv = argv[1:]
+    if argv in (["--version"], ["-V"]):
+        print(f"pyfallow {VERSION}")
+        return 0
     if not argv or argv[0].startswith("-"):
         argv = ["analyze", *argv]
     parser = build_parser()

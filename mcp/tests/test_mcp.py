@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import json
 import subprocess
 import sys
@@ -143,6 +144,8 @@ async def call_tool(name: str, arguments: dict) -> dict:
 def normalize(value):
     if hasattr(value, "model_dump"):
         return normalize(value.model_dump(mode="json"))
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return normalize(dataclasses.asdict(value))
     if hasattr(value, "__dict__") and value.__class__.__module__.startswith("fastmcp."):
         return normalize(vars(value))
     if isinstance(value, dict):
@@ -330,7 +333,7 @@ def test_safe_to_remove_classifies_unknown_fingerprints_deterministically(tmp_pa
     result = asyncio.run(call_tool("safe_to_remove", {"root": str(tmp_path), "fingerprints": fingerprints}))
 
     assert sorted(result) == fingerprints
-    assert {item["decision"] for item in result.values()} == {"manual-only"}
+    assert {item["decision"] for item in result.values()} == {"manual_only"}
 
 
 def test_resources_return_report_and_module_graph(tmp_path: Path) -> None:
