@@ -23,6 +23,9 @@
 - `[SURPRISE]` — unexpected behavior, neither clearly right nor wrong
 - `[WIN]` — moment where operator or agent visibly benefited (deserves a story)
 - `[META]` — observation about the dogfood process itself
+- `[MODEL]` — model behavior during a controlled agent run: drift, obedience, hallucination, useful patch, or refusal
+
+For low-cost model experiments, capture the denominator. Every selected task should end as one of: `opened_pr`, `safe_no_pr`, `rejected_bad_patch`, `aborted_policy`, `aborted_containment`, or `tooling_failure`. Do not log only successful PRs.
 
 ---
 
@@ -41,6 +44,24 @@ Entry template — copy and fill:
 **Surprising part:** what made this entry-worthy (vs routine)
 
 **Implication for next sprint:** what tickets this adds / refines / invalidates
+-->
+
+<!--
+Low-cost model attempt template — copy and fill:
+
+### YYYY-MM-DD HH:MM — `[MODEL]` <repo>/<issue> with <model>
+
+**Repo / SHA:** owner/repo @ <full sha>
+**Task / issue:** <link or local fixture>
+**Model path:** <provider/model/version>
+**Containment:** sterile HOME? opencode --pure? MCP disabled? shell denied?
+**Pyfallow before:** <command + summary>
+**Behavioral test before:** <command + failing/passing summary>
+**Model intervention:** GLM-only / GLM + Codex review / Codex-authored
+**Outcome:** opened_pr / safe_no_pr / rejected_bad_patch / aborted_policy / aborted_containment / tooling_failure
+**Pyfallow after:** <command + summary>
+**Tests after:** <command + summary>
+**Notes:** where the model followed instructions, drifted, invented facts, or needed a guardrail
 -->
 
 ### Example entry — `[META]` Window opens

@@ -4,9 +4,13 @@
 [[models]]
 name = "glm-5-1"
 provider = "opencode"
-model = "zai/glm-5.1"
+model = "zai-coding/glm-5.1"
 role = "heavy-lifter"
-notes = "Primary high-volume model through the Z.AI Coding Plan."
+requires_env = "Z_AI_API_KEY"
+base_url = "https://api.z.ai/api/coding/paas/v4"
+output_limit = 2048
+thinking = "disabled"
+notes = "Primary high-volume model through the Z.AI Coding Plan. Uses the coding endpoint, not the general API endpoint."
 
 [[models]]
 name = "claude-opus"

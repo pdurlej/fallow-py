@@ -221,6 +221,20 @@ If you're confident pyfallow **missed** a real structural problem:
 1. Same — open an issue, but with the reverse: "this committed code has structural issue X, pyfallow didn't flag it, expected behavior?"
 2. Phase B already has tickets for known gaps (SQLAlchemy declarative_base, async generators, descriptors with `__set_name__`). Check `.codex/MASTER/PHASE-B/` first.
 
+## Using low-cost coding models safely
+
+The dogfood thesis includes cheap or mid-tier models using pyfallow feedback, but those models are not allowed to become unsupervised maintainers. For GLM-5.1 on Z.ai Coding Plan and similar models, use this containment pattern:
+
+1. Run the model in a sterile local environment: temporary `HOME`, `opencode --pure`, `share: disabled`, no MCP servers, no global plugins.
+2. Deny shell, web fetch/search, and external-directory access for the first pass. A supervisor runs pyfallow and tests, then feeds back bounded excerpts.
+3. Treat model output as a candidate patch. Codex/human review decides whether it is safe to apply.
+4. Require a behavioral reproducer before public PRs. A pyfallow warning reduction alone is not evidence that the bug is fixed.
+5. Keep the PR small and disclose AI assistance if the upstream project allows it.
+
+Stop immediately if the model asks to inspect secrets, home directories, shell history, cloud config, browser state, package credentials, CI secrets, or anything outside the checked-out public repository. Also stop if it tries to touch CI, packaging, dependency locks, auth, crypto, subprocess invocation, release automation, or network behavior without an issue explicitly asking for that surface.
+
+For repeatable soak runs, prefer [`benchmarks/soak/run.py`](../benchmarks/soak/run.py). It writes a sterile OpenCode config per run and records artifacts under `benchmarks/soak/results/`.
+
 ## References
 
 - [`docs/philosophy.md`](philosophy.md) — why pyfallow exists in this shape
