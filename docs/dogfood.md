@@ -1,6 +1,6 @@
 # Dogfood — pyfallow in your project's CI
 
-**Audience:** operator (`pdurlej`) integrating pyfallow into other repositories he owns (`pdurlej/platform`, `pdurlej/hermes-agency`, `pdurlej/iskra-openclaw`, etc.) or any agent setting up such a CI pipeline.
+**Audience:** maintainers integrating pyfallow into Python repositories, plus agents setting up such a CI pipeline.
 
 **Status:** v1, written 2026-05-04. Tested against pyfallow `0.3.0a2` on TestPyPI.
 
@@ -33,9 +33,9 @@ The agent that opened the PR (Codex, Claude, etc.) gets a deterministic answer t
 Create `.forgejo/workflows/pyfallow.yml` in your project's repo. Start from the pyfallow-shipped template:
 
 ```bash
-# In your project root (e.g., pdurlej/platform)
+# In your project root
 mkdir -p .forgejo/workflows
-curl -sSL https://git.pdurlej.com/pdurlej/pyfallow/raw/branch/main/examples/ci/forgejo-actions.yml \
+curl -sSL https://raw.githubusercontent.com/pdurlej/pyfallow/main/examples/ci/forgejo-actions.yml \
   -o .forgejo/workflows/pyfallow.yml
 ```
 
@@ -157,13 +157,13 @@ If your platform has a "next-agent picks up here" pattern (e.g., Codex reading P
 
 An agent acting on this: iterate through `auto_safe` and apply patches; iterate through `blocking` and fix the root cause; surface `review_needed` to operator.
 
-## Identity-isolation for agents (per platform AGENTS.md)
+## Identity-isolation for agents
 
-If an agent is committing to a repo that integrates pyfallow's CI workflow, it must commit with **its own identity**, not the operator's. Per `pdurlej/platform/AGENTS.md` § "Identity-isolation":
+If an agent is committing to a repo that integrates pyfallow's CI workflow, it should commit with **its own identity**, not a shared maintainer identity:
 
-- Agent commits use `git config user.email "<actor>@noreply.git.pdurlej.com"` and `user.name "<actor>"`
-- Agent pushes use the actor's PAT (from BW vault, item `git.pdurlej.com (<actor>)`, custom field `PAT`)
-- Agent-created PRs use the actor's PAT in the `Authorization: token` header on the Forgejo API call — NOT the global Forgejo MCP (which is configured with operator's PAT)
+- Agent commits use an actor-specific `user.name` and `user.email`
+- Agent pushes use actor-scoped credentials from your team's approved secret store
+- Agent-created PRs use the same actor identity that produced the commit
 
 This applies recursively: any new pyfallow-integrated repo inherits this convention. Pyfallow does not enforce it (out of scope), but if it's violated, audit logs will lie.
 
@@ -198,7 +198,7 @@ For agents that use MCP, `verify_imports` is the highest-leverage tool: catch a 
 
 Operator's strategic decision (chat log 2026-05-04, refined in ADR 0008 on 2026-05-05): pyfallow does **not** push to Show HN until we have evidence from real-world dogfood. The window is evidence-bounded, not calendar-bounded:
 
-- Pyfallow `0.3.0a2` integrated into `pdurlej/platform` first, then other Piotr's projects (`hermes-agency`, `iskra-openclaw`, etc.) as appetite allows
+- Pyfallow `0.3.0a2` integrated into real repositories first, starting with the operator's own working repos and expanding as appetite allows
 - Operator and agents log surprising findings, FPs, missed real bugs, friction in a dogfood log (template at [`docs/dogfood-log-template.md`](dogfood-log-template.md)) in the **pyfallow** repo
 - Phase B/C starts only after the evidence threshold is met: at least 100 pyfallow CI runs across integrated repos, at least 20 meaningful dogfood log entries, and the operator's qualitative read. Plans in `.codex/MASTER/PHASE-B/` and `PHASE-C/` are not deleted — they are **subjected to evidence** before execution
 
@@ -209,7 +209,7 @@ This is anti-AI-slop posture: don't polish from imagination, polish from logs.
 If you're confident pyfallow flagged something incorrectly:
 
 1. Add `# fallow: ignore[<rule>]` on the line, with a comment explaining why
-2. Open an issue at https://git.pdurlej.com/pdurlej/pyfallow/issues with:
+2. Open an issue in the pyfallow issue tracker with:
    - Link to the suppressed line
    - Reasoning why it's a false positive
    - The rule code (e.g. `PY031`)
@@ -228,7 +228,7 @@ If you're confident pyfallow **missed** a real structural problem:
 - Full rule reference — Phase C ticket; not yet present as a live docs page
 - [`examples/ci/forgejo-actions.yml`](../examples/ci/forgejo-actions.yml) — the workflow template
 - [`examples/ci/README.md`](../examples/ci/README.md) — multi-platform CI guide (Forgejo, GitHub, GitLab)
-- `pdurlej/platform/AGENTS.md` — identity-isolation, 3+3 canary review (governance context)
+- Local `AGENTS.md` — identity-isolation and review expectations for this repository
 - a dogfood log (template at [`docs/dogfood-log-template.md`](dogfood-log-template.md)) — log template for evidence collection
 
 ---
