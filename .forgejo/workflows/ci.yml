@@ -4,10 +4,12 @@ on:
   push:
   pull_request:
 
+enable-email-notifications: false
+
 jobs:
   test:
     name: Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -15,56 +17,25 @@ jobs:
 
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: https://data.forgejo.org/actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: https://data.forgejo.org/actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+      - name: Run Python CI and write agent feedback
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: python scripts/ci/run_python_ci.py
 
-      - name: Compile
-        run: python -m compileall -q src tests mcp/src mcp/tests
-
-      - name: Test
-        run: python -m pytest -q
-
-      - name: Self-audit gate
-        run: python -m pyfallow analyze --root . --fail-on warning --min-confidence medium
-
-      - name: CLI smoke
-        run: |
-          python -m pyfallow --format json --root . --output /tmp/pyfallow-report.json
-          python -m pyfallow analyze --format text --root .
-          python -m pyfallow analyze --format sarif --root . --output /tmp/pyfallow.sarif
-          python -m pyfallow agent-context --format markdown --root . --output /tmp/pyfallow-agent-context.md
-          python -m pyfallow baseline create --root . --output /tmp/pyfallow-baseline.json
-          python -m pyfallow baseline compare --root . --baseline /tmp/pyfallow-baseline.json
-
-      - name: Install MCP package
-        run: python -m pip install -e ./mcp
-
-      - name: MCP tests
-        run: PYTHONPATH="src:mcp/src" python -m pytest -q mcp/tests
-
-      - name: MCP self-audit gate
-        run: PYTHONPATH="src:mcp/src" python -m pyfallow analyze --root mcp --fail-on warning --min-confidence medium
-
-      - name: MCP smoke
-        run: python -m pyfallow_mcp --help
-
-      - name: Build
-        run: python -m build
-
-      - name: Check package
-        run: python -m twine check dist/*
-
-      - name: Build MCP package
-        run: |
-          cd mcp
-          python -m build
-          python -m twine check dist/*
+      - name: Upload CI artifacts
+        if: always()
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: python-ci-${{ matrix.python-version }}
+          path: ci-artifacts/
+          if-no-files-found: ignore
