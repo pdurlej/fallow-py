@@ -1,0 +1,26 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "automationDetails": {
+        "id": "pyfallow/python/"
+      },
+      "tool": {
+        "driver": {
+          "name": "pyfallow",
+          "rules_excerpt": ["PY020", "PY040", "PY050", "PY060", "PY070"]
+        }
+      },
+      "results_excerpt": [
+        {
+          "ruleId": "PY040",
+          "level": "error",
+          "message": {
+            "text": "Imported third-party package 'missingdep' is not declared as a dependency."
+          }
+        }
+      ]
+    }
+  ]
+}
+

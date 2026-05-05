@@ -1,0 +1,9 @@
+{
+  "max_errors": 0,
+  "required_findings": [
+    {"rule": "missing-type-dependency", "distribution": "pandas", "confidence": "low", "severity": "info"}
+  ],
+  "forbidden_findings": [
+    {"rule": "missing-runtime-dependency", "distribution": "pandas"}
+  ]
+}

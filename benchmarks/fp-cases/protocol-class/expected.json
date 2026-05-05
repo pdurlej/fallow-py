@@ -1,0 +1,6 @@
+{
+  "max_errors": 0,
+  "forbidden_findings": [
+    {"rule": "unused-symbol", "path": "src/app.py", "symbol": "Service"}
+  ]
+}

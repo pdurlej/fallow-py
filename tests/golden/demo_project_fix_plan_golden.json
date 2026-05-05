@@ -1,0 +1,25 @@
+{
+  "auto_safe_rules": [],
+  "blocking_rules": [
+    "boundary-violation",
+    "circular-dependency",
+    "missing-runtime-dependency"
+  ],
+  "review_needed_rules": [
+    "duplicate-code",
+    "dynamic-import",
+    "high-cognitive-complexity",
+    "high-cyclomatic-complexity",
+    "risky-hotspot",
+    "unused-module",
+    "unused-runtime-dependency",
+    "unused-symbol"
+  ],
+  "summary": {
+    "auto_safe_count": 0,
+    "blocking_count": 3,
+    "manual_only_count": 1,
+    "review_needed_count": 13,
+    "total": 17
+  }
+}

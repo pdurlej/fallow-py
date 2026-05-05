@@ -1,0 +1,19 @@
+roots = ["src"]
+entry = ["src/app/main.py"]
+include_tests = false
+
+[dupes]
+min_lines = 3
+min_tokens = 10
+
+[health]
+max_cyclomatic = 3
+max_cognitive = 4
+hotspot_score_threshold = 20
+
+[[boundaries.rules]]
+name = "domain-no-infra"
+from = "src/app/domain/**"
+disallow = ["src/app/infra/**"]
+severity = "error"
+

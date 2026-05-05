@@ -1,0 +1,6 @@
+[project]
+dependencies = ["fastapi"]
+
+[tool.pyfallow]
+roots = ["app"]
+entry = ["app/main.py"]

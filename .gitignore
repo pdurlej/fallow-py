@@ -1,0 +1,47 @@
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Build and package artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE and editor state
+.idea/
+.vscode/
+.claude/
+.codex/
+
+# OS files
+.DS_Store
+__MACOSX/
+
+# pyfallow generated outputs
+.fallow-baseline.json
+pyfallow-report.json
+pyfallow.sarif
+fallow-agent-context.md
+
+# opencode local config (test stack — not for public repo)
+opencode.json
+
+# soak benchmark generated checkouts and run artifacts
+benchmarks/soak/workspace/
+benchmarks/soak/results/
+
+# complementary benchmark generated checkouts, environments, and run artifacts
+benchmarks/comparison/workspace/
+benchmarks/comparison/venvs/
+benchmarks/comparison/results/

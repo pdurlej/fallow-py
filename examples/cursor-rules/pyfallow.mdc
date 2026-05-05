@@ -1,0 +1,44 @@
+---
+description: pyfallow static analysis - call before claiming Python code tasks complete
+globs: ["**/*.py"]
+alwaysApply: true
+---
+
+# pyfallow Code Review Rules
+
+When you finish editing Python code, before responding "done" or running `git commit`:
+
+1. Use the pyfallow MCP server if available and call `analyze_diff(since="HEAD")` before commit, or `since="main"` for PR cleanup.
+2. Group findings as `auto_safe`, `review_needed`, and `blocking`.
+3. Auto-fix only `auto_safe` findings.
+4. Surface `review_needed` findings to the user with confidence and a one-line remediation.
+5. Block if `blocking` is not empty. Do not commit, push, or claim completion.
+
+If pyfallow MCP is not available, run:
+
+```bash
+pyfallow analyze --root . --since HEAD --format json --min-confidence medium
+```
+
+Apply the same classification logic manually.
+
+## Blocking By Default
+
+- `parse-error`
+- `config-error`
+- `missing-runtime-dependency`
+- `circular-dependency`
+- `boundary-violation`
+
+## Common Slop Patterns This Catches
+
+- Imports that do not exist or are not declared as dependencies
+- Helpers defined but never called from the main flow
+- Duplicate logic that already lives in another module
+- Circular imports
+- Functions over configured complexity thresholds
+- Architecture boundary violations
+
+## Pre-Edit Import Checks
+
+Use `verify_imports` before adding uncertain imports. Treat hallucinated imports, introduced cycles, enforced boundary violations, and missing runtime dependencies as blockers, then run `analyze_diff` after edits.

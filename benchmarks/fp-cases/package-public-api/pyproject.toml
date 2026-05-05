@@ -1,0 +1,6 @@
+[tool.pyfallow]
+roots = ["src"]
+entry = ["src/app.py"]
+
+[tool.pyfallow.dead_code]
+confidence_for_init_exports = "medium"

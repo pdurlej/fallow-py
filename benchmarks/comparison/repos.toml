@@ -1,0 +1,37 @@
+# First-five subset of benchmarks/soak/repos.toml for complementary stack benchmarks.
+# Commits were resolved with `git ls-remote <url> HEAD` on 2026-05-02.
+
+[[repos]]
+name = "requests"
+url = "https://github.com/psf/requests.git"
+commit = "8f6cda9969f4a98c45ea2922f6bcbefc02256202"
+since = "HEAD~5"
+category = "canonical-library"
+
+[[repos]]
+name = "fastapi"
+url = "https://github.com/fastapi/fastapi.git"
+commit = "e0a2c75b1a980c52c336cfefd12f2277238c4e8f"
+since = "HEAD~5"
+category = "framework"
+
+[[repos]]
+name = "flask"
+url = "https://github.com/pallets/flask.git"
+commit = "7374c85ddefc3f4b177a698ab9f0cbb6a5c0b392"
+since = "HEAD~5"
+category = "framework"
+
+[[repos]]
+name = "pydantic"
+url = "https://github.com/pydantic/pydantic.git"
+commit = "597fa692eaaa90132f683e88ca994f28e185463b"
+since = "HEAD~5"
+category = "typed-models"
+
+[[repos]]
+name = "httpx"
+url = "https://github.com/encode/httpx.git"
+commit = "b5addb64f0161ff6bfe94c124ef76f6a1fba5254"
+since = "HEAD~5"
+category = "canonical-library"

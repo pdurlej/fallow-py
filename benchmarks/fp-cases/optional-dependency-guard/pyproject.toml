@@ -1,0 +1,6 @@
+[project.optional-dependencies]
+fast = ["orjson"]
+
+[tool.pyfallow]
+roots = ["src"]
+entry = ["src/app.py"]

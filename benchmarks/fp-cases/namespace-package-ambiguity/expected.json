@@ -1,0 +1,7 @@
+{
+  "max_errors": 0,
+  "required_module_ambiguities": ["pkg.amb"],
+  "max_confidence_findings": [
+    {"rule": "unused-symbol", "symbol": "VALUE", "max_confidence": "low"}
+  ]
+}

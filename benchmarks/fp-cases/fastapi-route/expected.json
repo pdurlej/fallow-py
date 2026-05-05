@@ -1,0 +1,7 @@
+{
+  "max_errors": 0,
+  "required_frameworks": ["fastapi"],
+  "forbidden_findings": [
+    {"rule": "unused-symbol", "path": "app/main.py", "symbol": "list_items"}
+  ]
+}

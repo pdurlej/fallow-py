@@ -1,0 +1,59 @@
+stages:
+  - quality
+
+pyfallow:
+  stage: quality
+  image: python:3.12
+  before_script:
+    - pip install pyfallow
+  script:
+    - |
+      set +e
+      if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]; then
+        pyfallow analyze \
+          --root . \
+          --since "$CI_MERGE_REQUEST_DIFF_BASE_SHA" \
+          --format agent-fix-plan \
+          --output pyfallow-report.json \
+          --fail-on warning \
+          --min-confidence medium
+      else
+        pyfallow analyze \
+          --root . \
+          --format agent-fix-plan \
+          --output pyfallow-report.json \
+          --fail-on warning \
+          --min-confidence medium
+      fi
+      status="$?"
+      echo "$status" > pyfallow-exit-code.txt
+      python examples/ci/render_pyfallow_comment.py pyfallow-report.json > pyfallow-comment.md
+      if [ -n "${CI_MERGE_REQUEST_IID:-}" ] && [ -n "${PYFALLOW_GITLAB_TOKEN:-}" ]; then
+        python - <<'PY'
+      import json
+      from pathlib import Path
+      Path("pyfallow-comment.json").write_text(
+          json.dumps({"body": Path("pyfallow-comment.md").read_text(encoding="utf-8")}) + "\n",
+          encoding="utf-8",
+      )
+      PY
+        curl -fsS \
+          -X POST \
+          -H "PRIVATE-TOKEN: ${PYFALLOW_GITLAB_TOKEN}" \
+          -H "Content-Type: application/json" \
+          --data @pyfallow-comment.json \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes" \
+          || echo "GitLab comment post failed; pyfallow-report.json remains available as an artifact."
+      else
+        echo "Set PYFALLOW_GITLAB_TOKEN to post merge-request comments."
+      fi
+      exit "$status"
+  artifacts:
+    when: always
+    paths:
+      - pyfallow-report.json
+      - pyfallow-comment.md
+      - pyfallow-exit-code.txt
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

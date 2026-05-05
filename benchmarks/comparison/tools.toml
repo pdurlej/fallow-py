@@ -1,0 +1,26 @@
+# Tool versions for complementary stack benchmarks.
+# PyPI availability was checked on 2026-05-02 with `pip index versions`.
+
+[[tools]]
+name = "ruff"
+package = "ruff==0.15.12"
+version = "0.15.12"
+best_at = "Style, formatting, import sorting, and fast per-file lint rules."
+
+[[tools]]
+name = "vulture"
+package = "vulture==2.16"
+version = "2.16"
+best_at = "Battle-tested dead-code heuristics."
+
+[[tools]]
+name = "deptry"
+package = "deptry==0.25.1"
+version = "0.25.1"
+best_at = "Dependency declaration versus observed imports."
+
+[[tools]]
+name = "pyfallow"
+package = "-e ."
+version = "0.3.0-alpha.1"
+best_at = "Repo-wide graph, confidence-carrying cleanup findings, and agent-native output."

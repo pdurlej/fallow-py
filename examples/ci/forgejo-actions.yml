@@ -1,0 +1,76 @@
+name: pyfallow
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  pyfallow-cleanup:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Check out
+        uses: https://data.forgejo.org/actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: https://data.forgejo.org/actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pyfallow
+        run: pip install pyfallow
+
+      - name: Run pyfallow
+        shell: bash
+        run: |
+          set +e
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pyfallow analyze \
+              --root . \
+              --since "${{ github.event.pull_request.base.sha }}" \
+              --format agent-fix-plan \
+              --output pyfallow-report.json \
+              --fail-on warning \
+              --min-confidence medium
+          else
+            pyfallow analyze \
+              --root . \
+              --format agent-fix-plan \
+              --output pyfallow-report.json \
+              --fail-on warning \
+              --min-confidence medium
+          fi
+          echo "$?" > pyfallow-exit-code.txt
+          exit 0
+
+      - name: Render pyfallow comment
+        if: always()
+        shell: bash
+        run: |
+          if [ -f pyfallow-report.json ]; then
+            python examples/ci/render_pyfallow_comment.py pyfallow-report.json > pyfallow-comment.md
+          else
+            echo "## pyfallow analysis" > pyfallow-comment.md
+            echo "" >> pyfallow-comment.md
+            echo "pyfallow did not produce a JSON report. Check the CI logs." >> pyfallow-comment.md
+          fi
+
+      - name: Upload pyfallow artifacts
+        if: always()
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: pyfallow
+          path: |
+            pyfallow-report.json
+            pyfallow-comment.md
+            pyfallow-exit-code.txt
+          if-no-files-found: ignore
+
+      - name: Fail on blocking pyfallow findings
+        if: always()
+        shell: bash
+        run: exit "$(cat pyfallow-exit-code.txt 2>/dev/null || echo 0)"

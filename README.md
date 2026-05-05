@@ -1,0 +1,397 @@
+# pyfallow
+
+[![CI](https://github.com/pd/fallow-python/actions/workflows/ci.yml/badge.svg)](https://github.com/pd/fallow-python/actions/workflows/ci.yml)
+
+`pyfallow` is an early Python-first codebase intelligence tool for agents and reviewers.
+
+It builds a static picture of imports, dependencies, complexity, duplication, architecture boundaries, and likely dead code without importing or executing the project under analysis. Python is dynamic, so findings carry confidence, evidence, and suggested actions instead of pretending to be runtime truth.
+
+## Status
+
+Current release target: `0.3.0a2`.
+
+Runtime dependencies are stdlib-only on Python 3.11+. Development and packaging tools are optional extras.
+
+## For Agents
+
+Use pyfallow as a pre-completion checkpoint for Python edits:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pip install -e ./mcp
+pyfallow-mcp --root /path/to/repo
+```
+
+Then install the bundled agent instructions:
+
+- Claude Code skill: [`examples/claude-skill/pyfallow-cleanup/`](examples/claude-skill/pyfallow-cleanup/)
+- Cursor rule mirror: [`examples/cursor-rules/pyfallow.mdc`](examples/cursor-rules/pyfallow.mdc)
+
+See [`docs/agent-integration.md`](docs/agent-integration.md) for MCP setup, trigger rules, and the blocking/review/auto-fix workflow.
+
+## Performance
+
+pyfallow is meant to complement ruff, vulture, deptry, mypy/pyright, and security scanners rather than replace them. The benchmark harness in [`benchmarks/comparison/`](benchmarks/comparison/) compares runtime and finding categories across a small pinned repo set.
+
+See [`docs/performance.md`](docs/performance.md) for the current methodology, local timing table, and "best at / add pyfallow when" guidance for each tool.
+
+## Why pyfallow?
+
+- Built for code agents and human reviewers.
+- Project-wide graph analysis, not file-local linting.
+- Deterministic JSON for automation.
+- SARIF 2.1.0 for code scanning consumers.
+- Baselines for CI adoption with existing debt.
+- Conservative Python static analysis with confidence and evidence.
+
+## What It Checks
+
+`pyfallow` currently reports:
+
+- Python source discovery and module resolution
+- local import graph edges and circular dependencies
+- likely unused modules and top-level symbols
+- declared-but-unused runtime dependencies
+- missing runtime, test-only, type-only, dev-only, and optional dependency scope issues
+- duplicate code blocks using normalized token windows
+- cyclomatic and cognitive complexity hotspots
+- configured architecture boundary violations
+- parse/config errors
+- stale suppressions
+
+It also emits graph data, baseline comparisons, SARIF, compact agent-context reports, and agent fix plans.
+
+## Quickstart
+
+From a fresh clone:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m pyfallow analyze --root examples/demo_project --format text
+```
+
+Without installing:
+
+```bash
+PYTHONPATH=src python -m pyfallow analyze --root examples/demo_project --format text
+```
+
+Generate machine-readable output:
+
+```bash
+python -m pyfallow analyze --root examples/demo_project --format json --output /tmp/pyfallow-report.json
+python -m pyfallow analyze --root examples/demo_project --format sarif --output /tmp/pyfallow.sarif
+python -m pyfallow agent-context --root examples/demo_project --format markdown --output /tmp/pyfallow-agent-context.md
+```
+
+Analyze only findings relevant to files changed since a Git ref:
+
+```bash
+python -m pyfallow analyze --root . --since HEAD~1 --format text
+python -m pyfallow analyze --root . --since main --format json
+```
+
+Installed console scripts:
+
+```bash
+pyfallow --format json --root .
+fallow --format json --root .
+fallow analyze --language python --format json --root .
+fallow python --format json --root .
+```
+
+The `fallow` command is a compatibility bridge for local workflows and possible future integration. It does not mean this project is official Fallow.
+
+## 30-Second Demo
+
+Run the bundled demo project:
+
+```bash
+python -m pyfallow analyze --root examples/demo_project --format text
+```
+
+Example text output excerpt:
+
+```text
+PY040 error high examples/demo_project/src/app/main.py:3 Imported third-party package 'missingdep' is not declared as a dependency.
+PY020 warning high examples/demo_project/src/app/cycle_a.py:1 Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
+PY070 error high examples/demo_project/src/app/domain/service.py:1 Import violates architecture boundary rule 'domain-no-infra'.
+```
+
+Short checked-in excerpts live in [`examples/outputs/`](examples/outputs/).
+
+## Agent Workflow
+
+Use `agent-context` before broad edits:
+
+```bash
+python -m pyfallow agent-context --root . --format markdown --output /tmp/pyfallow-agent-context.md
+```
+
+Recommended workflow:
+
+1. Inspect parse errors and config errors first.
+2. Inspect missing runtime dependencies, boundary violations, and cycles before refactors.
+3. Review hotspots before changing shared modules.
+4. Treat high-confidence dead modules as candidates, not deletion instructions.
+5. Do not auto-delete low-confidence or framework-adjacent dead code.
+6. Rerun pyfallow after edits and compare new/resolved findings.
+
+## Agent Fix-Plan Format
+
+Use `agent-fix-plan` when an AI agent needs a native cleanup plan rather than the full report:
+
+```bash
+python -m pyfallow analyze --root . --since HEAD --format agent-fix-plan
+```
+
+The plan groups findings by action policy:
+
+- `auto_safe`: deterministic low-risk cleanup candidates; pyfallow currently emits a concrete minimal patch only for stale suppressions.
+- `review_needed`: useful structural signals that need human or agent reasoning with project context.
+- `blocking`: parse/config errors, missing runtime dependencies, enforced boundary violations, unresolved imports, and runtime import cycles.
+- `manual_only`: low-confidence or informational findings that should not drive automated edits.
+
+This format is meant to work alongside ruff, mypy/pyright, tests, and human review. It is not a replacement for those tools; it gives agents a deterministic slop-prevention checklist before they claim work is done.
+
+## Diff-Aware Analysis
+
+Use `--since <git-ref>` when an agent or reviewer only needs findings related to a current change:
+
+```bash
+python -m pyfallow analyze --root . --since HEAD~1 --format json
+```
+
+`pyfallow` still rebuilds the full module graph, then filters findings to files changed between the ref and `HEAD`, plus staged, unstaged, and untracked Python files in the working tree:
+
+- issues whose primary `path` is a changed Python file
+- import cycles involving a changed module
+- boundary violations involving a changed importer or imported module
+- duplicate groups with at least one changed fragment
+
+The JSON report includes `analysis.diff_scope` with the requested ref, resolved commit SHA, changed files, changed modules, and whether filtering was active.
+
+`--changed-only` remains as a deprecated alias for `--since HEAD~1`; new integrations should use `--since` directly. In non-Git workspaces, `--since` emits a warning and falls back to full analysis.
+
+## MCP Server
+
+Sprint 1 adds a separate MCP integration package so agent tools can call pyfallow directly while the core package remains stdlib-only.
+
+Install from a checkout:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pip install -e ./mcp
+pyfallow-mcp --root /path/to/repo
+```
+
+Claude Code `mcp.json` example:
+
+```json
+{
+  "mcpServers": {
+    "pyfallow": {
+      "command": "pyfallow-mcp",
+      "args": ["--root", "/path/to/repo"]
+    }
+  }
+}
+```
+
+Available tools:
+
+- `analyze_diff`: diff-aware findings for agent cleanup loops, including the same classification used by `agent-fix-plan`
+- `agent_context`: structured project map for agents
+- `explain_finding`: remediation hints for a finding fingerprint
+- `verify_imports`: pre-edit prediction for planned imports, including missing modules/symbols, undeclared third-party packages, cycles, and boundary violations
+- `safe_to_remove`: deterministic dead-code safety classification
+
+The MCP package also exposes report and module-graph resources plus `pre-commit-check` and `pr-cleanup` prompts.
+
+Before adding uncertain imports, agents can call:
+
+```text
+pyfallow.verify_imports(
+  file="src/orders.py",
+  planned_imports=["billing.compute_refund", "requests"]
+)
+```
+
+The result separates safe imports from hallucinated modules/symbols, introduced cycles, boundary violations, and missing dependency declarations.
+
+## CI Workflow
+
+Create a baseline for existing debt:
+
+```bash
+python -m pyfallow baseline create --root . --output .fallow-baseline.json
+```
+
+Gate on new findings:
+
+```bash
+python -m pyfallow analyze --root . \
+  --baseline .fallow-baseline.json \
+  --fail-on warning \
+  --min-confidence medium
+```
+
+Exit codes:
+
+- `0`: no blocking issues under the active thresholds
+- `1`: blocking issues found under `--fail-on`
+- `2`: tool, config, or runtime error
+- `3`: parse errors severe enough to invalidate analysis
+
+The included GitHub Actions workflow gates pyfallow's own code with `--fail-on warning --min-confidence medium`.
+
+## Add to Your CI
+
+Drop-in examples live in [`examples/ci/`](examples/ci/). They are platform-neutral by design and use the same `agent-fix-plan` comment renderer on every platform.
+
+- Forgejo Actions: [`examples/ci/forgejo-actions.yml`](examples/ci/forgejo-actions.yml)
+- GitHub Actions: [`examples/ci/github-actions.yml`](examples/ci/github-actions.yml)
+- GitLab CI: [`examples/ci/gitlab-ci.yml`](examples/ci/gitlab-ci.yml)
+
+The templates run `pyfallow analyze --since <base> --format agent-fix-plan --fail-on warning --min-confidence medium` for PR/MR diffs, upload `pyfallow-report.json`, and post a grouped cleanup comment when a platform token is available.
+
+See [`examples/ci/README.md`](examples/ci/README.md) for copy paths, token notes, and the shared comment format.
+
+## Configuration
+
+Supported config files:
+
+- `.fallow.toml`
+- `.pyfallow.toml`
+- `pyproject.toml` under `[tool.fallow.python]` or `[tool.pyfallow]`
+
+Minimal example:
+
+```toml
+[tool.pyfallow]
+roots = ["src"]
+entry = ["src/app/main.py"]
+include_tests = false
+
+[tool.pyfallow.dupes]
+min_lines = 6
+min_tokens = 40
+
+[tool.pyfallow.health]
+max_cyclomatic = 10
+max_cognitive = 15
+
+[[tool.pyfallow.boundaries.rules]]
+name = "domain-no-infra"
+from = "src/app/domain/**"
+disallow = ["src/app/infra/**"]
+severity = "error"
+```
+
+See [`examples/demo_project/.pyfallow.toml`](examples/demo_project/.pyfallow.toml) for a compact working configuration.
+
+## Suppressions
+
+Supported prefixes:
+
+```python
+# fallow: ignore
+# fallow: ignore[unused-symbol]
+# fallow: ignore[unused-module]
+# fallow: ignore[missing-runtime-dependency]
+# fallow: ignore[unused-runtime-dependency]
+# fallow: ignore[missing-dependency]  # legacy alias for split dependency rules
+# fallow: ignore[unused-dependency]   # legacy alias for split dependency rules
+# fallow: ignore[duplicate-code]
+# fallow: ignore[high-complexity]
+# fallow: expected-unused
+
+# pyfallow: ignore[unused-symbol]
+```
+
+Suppressions apply to the same line, symbol definition lines, or the whole file when placed near the top of the file. Stale suppressions are reported when practical.
+
+## Output Formats
+
+- `text`: compact human-readable diagnostics
+- `json`: deterministic machine-readable report
+- `agent-fix-plan`: classified JSON for agent cleanup loops
+- `sarif`: SARIF 2.1.0 for code scanning consumers
+- `markdown`: used by `agent-context`
+- `mermaid` and `dot`: graph command output
+
+JSON reports include summary, issues, metrics, graph data, config metadata, and limitations. `evidence` and `actions` are intentionally extensible.
+
+## Baseline Usage
+
+```bash
+python -m pyfallow baseline create --root . --output .fallow-baseline.json
+python -m pyfallow baseline compare --root . --baseline .fallow-baseline.json --format json
+python -m pyfallow analyze --root . --baseline .fallow-baseline.json --fail-on warning --min-confidence medium
+```
+
+When a baseline is active, CI failure considers only new findings.
+
+## GitHub Code Scanning / SARIF
+
+Generate SARIF:
+
+```bash
+python -m pyfallow analyze --root . --format sarif --output pyfallow.sarif
+```
+
+SARIF includes rule metadata, levels mapped from pyfallow severity, result confidence, stable fingerprints, source-line hashes where files are available, and capped related locations for cycles and duplicate groups.
+
+The default CI workflow does not upload SARIF. Enable code scanning intentionally after repository permissions and retention expectations are clear.
+
+## Examples Directory
+
+- [`examples/demo_project/`](examples/demo_project/) contains a small project with missing dependencies, an unused dependency, a cycle, a duplicate, a complexity hotspot, a boundary violation, suppressions, and public API reexports.
+- [`examples/outputs/`](examples/outputs/) contains short output excerpts for README and release notes.
+
+## False-Positive Corpus
+
+[`benchmarks/fp-cases/`](benchmarks/fp-cases/) contains checked-in minimal projects for common
+false-positive surfaces: Django management commands, FastAPI routes, package public APIs, optional
+imports, type-only imports, namespace package ambiguity, Protocol classes, dataclasses, and Celery
+tasks.
+
+Each case has machine-readable expectations and a short human explanation. The corpus is not
+exhaustive; if pyfallow misclassifies your project, submit the smallest reproducible case there before
+changing analyzer behavior.
+
+## Limitations
+
+Static Python analysis is approximate. Known limits include dynamic imports, monkey patching, reflection, dependency injection containers, framework magic, plugin entry points, namespace package ambiguity, generated code, runtime path mutation, conditional imports, and public API that may be consumed outside the repository.
+
+See [`docs/limitations.md`](docs/limitations.md) for details.
+
+## Relationship To fallow-rs/fallow
+
+`pyfallow` is inspired by [`fallow-rs/fallow`](https://github.com/fallow-rs/fallow), but it is not currently an official fallow-rs/fallow project and does not imply endorsement or affiliation.
+
+This repository follows the standalone integration path: a Python package and CLI with stable JSON/SARIF output that could later be called by a broader Fallow CLI. The installed `fallow` console entry point is a compatibility bridge for future integration and local workflows.
+
+See [`docs/fallow-integration.md`](docs/fallow-integration.md).
+
+## Development
+
+```bash
+python -m pip install -e ".[dev]"
+python -m compileall -q src tests
+python -m pytest -q
+python -m pyfallow analyze --root examples/demo_project --format json
+python -m build
+python -m twine check dist/*
+```
+
+Runtime code must remain stdlib-only and must never execute analyzed project code.
+
+## Contributing
+
+Contributions are welcome. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md), especially the guidance on false positives, fixtures, golden outputs, and the no-runtime-execution safety rule.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+enable-email-notifications: false
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Check out
+        uses: https://data.forgejo.org/actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: https://data.forgejo.org/actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run Python CI and write agent feedback
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: python scripts/ci/run_python_ci.py
+
+      - name: Upload CI artifacts
+        if: always()
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: python-ci-${{ matrix.python-version }}
+          path: ci-artifacts/
+          if-no-files-found: ignore
