@@ -1,9 +1,11 @@
 # 0003 — Forgejo runner = ubuntu-latest, not docker:python
 
 **Date:** 2026-05-04
-**Status:** accepted
+**Status:** partially superseded by [0011](0011-forgejo-native-ci-pattern.md) (2026-05-05)
 **Phase:** A3
 **Authors:** Claude Opus 4.7 (orchestrator), Codex (executor)
+
+> **Supersession note (2026-05-05):** The runner-image fix (drop `container: python:3.12` directive, use `ubuntu-latest`) is correct and **stays accepted**. ADR 0011 supersedes the *workflow-shape* portion (now uses Forgejo-native action URLs `https://data.forgejo.org/...`, `ubuntu-22.04` explicit pin, `persist-credentials: false`, dedicated Python runner script `scripts/ci/run_python_ci.py`) per operator decision 2026-05-05 to adopt the parallel Codex thread's stash pattern. Reason: parity with `pdurlej/platform/.forgejo/workflows/python-ci.yml`, and convergent independent design (two agents arrived at same pattern without coordination = strong signal it's right).
 
 ## Context
 

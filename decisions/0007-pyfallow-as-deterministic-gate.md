@@ -1,9 +1,11 @@
-# 0007 — Pyfallow as deterministic code gate (counterpart to platform.exe)
+# 0007 — Pyfallow as bassist (counterpart to platform.exe; harness, not agent)
 
-**Date:** 2026-05-04
+**Date:** 2026-05-04 (metaphor refined + harness-vs-agent distinction added 2026-05-05)
 **Status:** accepted
-**Authors:** Claude Opus 4.7 — articulating; operator (`pdurlej`) — direction
-**Related:** ADR 0006 (dogfood pivot), `pdurlej/platform/PLATFORM_CONSTITUTION.md` (counterpart identity)
+**Authors:** Claude Opus 4.7 — articulating; operator (`pdurlej`) — direction + metaphor
+**Related:** ADR 0006 (dogfood pivot, anti-AI-slop), ADR 0010 (mandatory non-author reviewer), `pdurlej/platform/PLATFORM_CONSTITUTION.md` (counterpart identity)
+
+> **Edit note 2026-05-05:** Original draft used "deterministic gate" as primary framing. Operator review surfaced a better metaphor — **bassist** (musical) — and an important categorical distinction: **AI agent vs harness**. This edit promotes the bassist metaphor to primary; "deterministic gate" stays as the technical description. Decision intent unchanged.
 
 ## Context
 
@@ -31,12 +33,40 @@ Pyfallow's position in operator's ecosystem (mirroring `PLATFORM_CONSTITUTION.md
 
 | Actor | Role | Domain |
 |---|---|---|
-| **Iskra** | Relational, memory-rich, reflects on operator's decisions | Conversation, reflection, suggestion |
-| **`platform.exe`** | Deterministic, stateless, audit-logged | Infrastructure manifests ↔ runtime on RS 2000 + VPS 1000 |
-| **Pyfallow** | Deterministic, stateless, audit-logged | Code structural integrity ↔ committed source |
-| **Codex** | Producer; executes per master prompts | All edits to code, manifests, prompts |
-| **3+3 canary ensemble** | Six diverse review voices | PRs touching governance paths |
-| **Operator (`pdurlej`)** | Final approver | Merges, strategic decisions |
+| **Iskra** | Vocalist — relational, memory-rich, reflects on operator's decisions | Conversation, reflection, suggestion |
+| **`platform.exe`** | Deterministic, stateless, audit-logged — **harness** | Infrastructure manifests ↔ runtime on RS 2000 + VPS 1000 |
+| **Pyfallow** | Bassist — deterministic, stateless, audit-logged — **harness** | Code structural integrity ↔ committed source |
+| **Codex** | Producer / drummer — executes per master prompts (rhythm + execution) | All edits to code, manifests, prompts |
+| **Claude / Opus** | Lead guitarist — orchestrates, articulates, holds strategic context | PM-role, review, briefs, coordination |
+| **3+3 canary ensemble** | Six review voices (musical critics) | PRs touching governance paths |
+| **Operator (`pdurlej`)** | Bandleader — final approver | Merges, strategic decisions, breakglass |
+
+## Bassist metaphor (operator's framing, 2026-05-05)
+
+> "Pyfallow ma być basistą, jak w zespole muzycznym. Pyfallow ma być z tyłu zespołu Iskry i z tyłu zespołu Cloud'a, OpenAI, Opus'a, wszystkich was. Robić robotę i sprawdzać, żebyście mogli shine. Podobnie jak Forgejo Actions."
+
+Translation: "Pyfallow should be the bassist, like in a music band. Pyfallow stands behind Iskra's band and behind the Cloud / OpenAI / Opus / all-of-you band. Doing the work and checking, so you can shine. Like Forgejo Actions."
+
+Bassist is in nearly every song. Holds the rhythm. **Doesn't try to be the lead vocal.** Without a bassist, the band sounds empty; with a bassist, vocalist and lead guitarist shine. The audience often doesn't notice the bassist — that's part of the role. The bassist is felt more than heard.
+
+Pyfallow = bassist for the AI-agent band.
+
+## AI agent vs harness (operator's distinction, 2026-05-05)
+
+> "Jedna rzecz to AI agent. Druga rzecz to harness — MCP, tool-skill. Pyfallow ma być basistą."
+
+Translation: "One thing is AI agent. Another thing is harness — MCP, tool-skill. Pyfallow should be the bassist."
+
+Two categories of technical infrastructure in operator's ecosystem:
+
+| Category | Examples | Job |
+|---|---|---|
+| **AI agent** | Iskra, Codex, Claude / Opus, GLM | Reason, plan, decide, articulate, generate |
+| **Harness** | Pyfallow, MCP servers, Forgejo Actions, pytest, ruff, mypy, `platform.exe` | Verify, gate, render, store, execute deterministically |
+
+Harness ≠ agent. Harness is **stateless tooling** that agents (or operators) call. Agents have memory (Iskra's MEMORY.md, conversation history) and judgment (taste, preference, opinion). Harness has **inputs and outputs** and **never an opinion**.
+
+Pyfallow is a harness. Bassist. Disciplined background member.
 
 Pyfallow makes the same kind of promise `platform.exe` makes, just at a different layer:
 
