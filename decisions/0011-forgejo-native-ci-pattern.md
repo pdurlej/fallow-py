@@ -55,7 +55,7 @@ Components:
 
 4. `examples/ci/README.md` updated with instructions for the new shape.
 
-Authorship of the resulting commit credits the parallel Codex thread via `Co-Authored-By: codex <codex@noreply.git.pdurlej.com>` trailer; primary author is the orchestrator (`claude`) since this orchestrator is performing the unstashing-and-cleanup. Authentic attribution.
+Authorship of the resulting commit credits the parallel Codex thread via a `Co-Authored-By` trailer; primary author is the orchestrator (`claude`) since this orchestrator is performing the unstashing-and-cleanup. Authentic attribution.
 
 ADR 0003's runner-image-fix (drop `container:` directive, use `ubuntu-latest`) is **kept** — that was the immediate blocker fix and remains correct conceptually. ADR 0011 supersedes the *workflow-shape* part of 0003 with the more refined pattern. ADR 0003 stays in history with status `partially superseded by 0011`.
 
