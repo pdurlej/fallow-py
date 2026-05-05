@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import importlib.util
 import os
 import subprocess
 import sys
@@ -2117,6 +2118,10 @@ def test_soak_matrix_is_reproducible_and_pinned() -> None:
         assert len(repo["commit"]) == 40
         assert all(character in "0123456789abcdef" for character in repo["commit"])
         assert repo["since"] == "HEAD~5"
+    glm = next(model for model in models if model["name"] == "glm-5-1")
+    assert glm["model"] == "zai-coding/glm-5.1"
+    assert glm["requires_env"] == "Z_AI_API_KEY"
+    assert glm["base_url"] == "https://api.z.ai/api/coding/paas/v4"
 
     result = subprocess.run(
         [sys.executable, "benchmarks/soak/run.py", "--list"],
@@ -2167,9 +2172,112 @@ def test_soak_dry_run_writes_plan_without_cloning(tmp_path: Path) -> None:
     assert plan["commands"]["pyfallow"][1:4] == ["-m", "pyfallow", "analyze"]
     assert "--since" in plan["commands"]["pyfallow"]
     assert "agent-fix-plan" in plan["commands"]["pyfallow"]
-    assert "opencode" == plan["commands"]["opencode"][0]
+    assert plan["commands"]["opencode"][:4] == ["opencode", "--log-level", "WARN", "--pure"]
+    assert "run" in plan["commands"]["opencode"]
+    assert "--dir" in plan["commands"]["opencode"]
+    assert "--format" in plan["commands"]["opencode"]
+    assert plan["guardrails"]
+    assert "Do not open pull requests" in "\n".join(plan["guardrails"])
+    assert "candidate generator" in (result_dir / "prompt.md").read_text(encoding="utf-8")
     assert (result_dir / "human_classification.md").exists()
     assert not (workspace / "requests").exists()
+
+
+def test_soak_glm_plan_uses_coding_endpoint_and_sterile_paths(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    results = tmp_path / "results"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "benchmarks/soak/run.py",
+            "--repo",
+            "requests",
+            "--model",
+            "glm-5-1",
+            "--dry-run",
+            "--workspace",
+            str(workspace),
+            "--results",
+            str(results),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    result_dir = results / "requests/glm-5-1"
+    plan = json.loads((result_dir / "plan.json").read_text(encoding="utf-8"))
+    assert plan["model"]["model"] == "zai-coding/glm-5.1"
+    assert plan["model"]["requires_env"] == "Z_AI_API_KEY"
+    assert plan["paths"]["opencode_home"].endswith("opencode-home")
+    assert plan["paths"]["opencode_events"].endswith("opencode-events.jsonl")
+    assert "api/coding/paas/v4" in plan["model"]["base_url"]
+    assert "Do not touch CI, packaging" in "\n".join(plan["guardrails"])
+
+
+def test_soak_prompt_summarizes_pyfallow_evidence_without_full_context(tmp_path: Path) -> None:
+    spec = importlib.util.spec_from_file_location("soak_run", ROOT / "benchmarks/soak/run.py")
+    assert spec and spec.loader
+    soak_run = importlib.util.module_from_spec(spec)
+    sys.modules["soak_run"] = soak_run
+    spec.loader.exec_module(soak_run)
+
+    findings = {
+        "summary": {"blocking_count": 1, "review_needed_count": 1},
+        "blocking": [
+            {
+                "fingerprint": "abc",
+                "rule": "missing-runtime-dependency",
+                "id": "PY040",
+                "file": "src/app.py",
+                "line": 3,
+                "message": "Runtime import uses missing dependency.",
+                "evidence": {"large": "not copied into prompt"},
+            }
+        ],
+        "review_needed": [
+            {
+                "fingerprint": "def",
+                "rule": "unused-symbol",
+                "file": "src/util.py",
+                "symbol": "helper",
+                "confidence": "medium",
+                "message": "Potential unused helper.",
+            }
+        ],
+        "auto_safe": [],
+        "manual_only": [],
+        "limitations": ["Dynamic imports are approximate."],
+    }
+    path = tmp_path / "findings.json"
+    path.write_text(json.dumps(findings), encoding="utf-8")
+
+    summary = soak_run.summarize_agent_fix_plan(path)
+
+    assert summary["available"] is True
+    assert summary["total_findings"] == 2
+    assert summary["findings"][0]["bucket"] == "blocking"
+    assert summary["findings"][0]["rule"] == "missing-runtime-dependency"
+    assert "evidence" not in summary["findings"][0]
+    assert summary["limitations"] == ["Dynamic imports are approximate."]
+
+    config = soak_run.safe_opencode_config(
+        {
+            "model": "zai-coding/glm-5.1",
+            "base_url": "https://api.z.ai/api/coding/paas/v4",
+            "output_limit": 2048,
+        }
+    )
+    assert config["share"] == "disabled"
+    assert config["mcp"] == {}
+    assert config["permission"]["bash"] == "deny"
+    assert config["permission"]["webfetch"] == "deny"
+    assert config["permission"]["external_directory"] == "deny"
+    assert config["provider"]["zai-coding"]["options"]["baseURL"].endswith("/api/coding/paas/v4")
 
 
 def test_comparison_benchmark_matrix_and_docs_are_complementary() -> None:
