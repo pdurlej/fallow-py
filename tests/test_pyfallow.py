@@ -1732,9 +1732,16 @@ def test_ci_templates_are_packaged_and_platform_neutral() -> None:
         assert "pyfallow-report.json" in text
 
     forgejo_text = templates["forgejo"].read_text(encoding="utf-8")
-    assert "runs-on: ubuntu-latest" in forgejo_text
+    # ADR 0011: Forgejo template uses Forgejo-native action URLs +
+    # explicit ubuntu-22.04 pin (parity with pdurlej/platform/.forgejo
+    # convention). ADR 0003's `runs-on: ubuntu-latest` was correct
+    # conceptually for unblocking Phase A but partially superseded.
+    assert "runs-on: ubuntu-22.04" in forgejo_text
     assert "container:" not in forgejo_text
-    assert "actions/setup-python@v5" in forgejo_text
+    assert "https://data.forgejo.org/actions/setup-python@v5" in forgejo_text
+    assert "https://data.forgejo.org/actions/checkout@v4" in forgejo_text
+    # GitHub template still uses canonical `ubuntu-latest` + `actions/...`
+    # URLs since it runs on github.com infrastructure, no rate-limit concern.
     assert "runs-on: ubuntu-latest" in templates["github"].read_text(encoding="utf-8")
     assert "image: python:3.12" in templates["gitlab"].read_text(encoding="utf-8")
     assert "reports:" not in templates["gitlab"].read_text(encoding="utf-8")
