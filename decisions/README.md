@@ -23,11 +23,14 @@ When a decision in `.codex/DECISIONS.md` matures (settled, applied, observable i
 
 | # | Title | Status |
 |---|-------|--------|
-| 0001 | [Classification namespace = underscore](0001-classification-namespace-underscore.md) | accepted |
+| 0001 | [Classification namespace = underscore](0001-classification-namespace-underscore.md) | superseded by 0009 |
 | 0002 | [Baseline JSON validation raises ConfigError](0002-baseline-validation-config-error.md) | accepted |
-| 0003 | [Forgejo runner = ubuntu-latest, not docker:python](0003-forgejo-runner-ubuntu-latest.md) | accepted |
+| 0003 | [Forgejo runner = ubuntu-latest, not docker:python](0003-forgejo-runner-ubuntu-latest.md) | partially superseded by 0011 |
 | 0004 | [Test `normalize()` handles FastMCP dataclass wrapping](0004-test-normalize-dataclass-branch.md) | accepted |
 | 0005 | [Alpha-incremental release strategy](0005-alpha-incremental-release.md) | accepted |
-| 0006 | [Dogfood-first, Show-HN-later (anti-AI-slop)](0006-dogfood-pivot-anti-slop.md) | accepted |
-| 0007 | [Pyfallow as deterministic code gate (counterpart to platform.exe)](0007-pyfallow-as-deterministic-gate.md) | accepted |
-| 0008 | [Phase B/C execution gated on dogfood evidence](0008-phase-b-c-evidence-gated.md) | accepted |
+| 0006 | [Dogfood-first, Show-HN-later (anti-AI-slop)](0006-dogfood-pivot-anti-slop.md) | accepted (transcription corrected 2026-05-05) |
+| 0007 | [Pyfallow as bassist (counterpart to platform.exe; harness, not agent)](0007-pyfallow-as-deterministic-gate.md) | accepted (metaphor refined 2026-05-05) |
+| 0008 | [Phase B/C execution gated on dogfood evidence](0008-phase-b-c-evidence-gated.md) | accepted (evidence-bounded refinement 2026-05-05) |
+| 0009 | [Three-bucket classification with mandatory product-language explanations](0009-three-bucket-classification.md) | accepted |
+| 0010 | [Mandatory non-author AI reviewer + branch protection on every PR](0010-mandatory-non-author-reviewer.md) | accepted |
+| 0011 | [Adopt Forgejo-native CI pattern (from parallel Codex thread's stash)](0011-forgejo-native-ci-pattern.md) | accepted |

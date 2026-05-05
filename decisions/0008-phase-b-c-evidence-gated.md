@@ -1,9 +1,11 @@
 # 0008 — Phase B/C execution gated on dogfood evidence
 
-**Date:** 2026-05-04
+**Date:** 2026-05-04 (window definition refined 2026-05-05)
 **Status:** accepted
 **Authors:** operator (`pdurlej`) — direction; Claude Opus 4.7 — recording
-**Related:** ADR 0006 (dogfood pivot), ADR 0007 (deterministic gate identity)
+**Related:** ADR 0006 (dogfood pivot), ADR 0007 (bassist metaphor / harness identity), ADR 0010 (mandatory non-author reviewer)
+
+> **Edit note 2026-05-05:** Original draft fixed the dogfood window to 2026-05-04 → 2026-06-15 (4-6 weeks). Operator review surfaced that **time is the wrong axis** — what matters is evidence count, not calendar date. This edit replaces fixed-date window with evidence-bounded definition. Plus adds infrastructure dependency (cron job on rs2000) per operator's voice.
 
 ## Context
 
@@ -25,7 +27,43 @@ Tickets remain **open but unstarted** until the dogfood window closes (~2026-06-
 2. Each project's daily Codex/operator workflow accumulates evidence in a `.codex/DOGFOOD-LOG.md` (gitignored per `docs/dogfood-log-template.md`)
 3. **Phase B/C tickets do not get worked on**, even if Codex has spare capacity. Polishing from imagination defeats the purpose.
 
-At end of window, evidence triages tickets:
+## Evidence-bounded window (refined 2026-05-05)
+
+Operator's voice 2026-05-05:
+
+> "W zależności od tego jak dużo tokenów spalę, będziemy w stanie określić, jak szybko wyśliemy sobie, że pyfallow dobrze działa. Jeśli spalę setki tysięcy tokenów, to będziemy wiedzieli dość dobrze. Jeśli będę bardzo mało używał, to nie będziemy wiedzieli czy działa. Tutaj chodzi o liczbę logów. Powinniśmy zależeć nie od czasu."
+
+Translation: "Depending on how many tokens I burn, we'll be able to determine how quickly we know pyfallow works. If I burn hundreds of thousands of tokens, we'll know pretty well. If I use very little, we won't know if it works. It's about the number of logs. We should depend not on time."
+
+The window has **no fixed end date**. Window closes when **sufficient evidence count** is reached — measured by:
+
+1. **Number of pyfallow CI runs across integrated repos** — proxy for how many opportunities pyfallow had to surface findings
+2. **Number of dogfood log entries** of class `[TP]`, `[FP]`, `[FN]`, or `[FRICTION]` — proxy for how many findings were notable enough to record
+3. **Token spend on pyfallow-gated commits** — proxy for operator's actual usage intensity
+
+Loose threshold (re-evaluated as evidence accumulates): when there are **at least 100 pyfallow CI runs total across all integrated repos AND at least 20 dogfood log entries** with category breakdown that's not dominated by `[FRICTION]` only (we want to see real `[TP]`/`[FP]` signal), the orchestrator + operator do the triage session.
+
+If after several months no integrated repo accumulates that volume, that itself is evidence: pyfallow isn't getting enough use to claim usefulness. Different decision required (drop project, pivot, or restart with more aggressive integration).
+
+## Infrastructure dependency
+
+Evidence collection requires aggregation infrastructure. Operator's decision (voice 2026-05-05): **cron job on rs2000** (operator's primary server, where Forgejo runs).
+
+Cron job specs (tracked as Forgejo issue #29):
+- Weekly schedule (Sunday 04:00 — operator-attention-friendly)
+- Fetches all completed pyfallow CI workflow runs across operator's integrated repos
+- Downloads `pyfallow-report.json` artifacts
+- Aggregates findings by rule, by repo, by week-over-week trend
+- Posts as comment on a separate Forgejo issue tagged `pyfallow-dogfood-evidence-inbox` (ever-open issue, single source of truth for aggregated evidence)
+- Identity: cron runs as `claude` user (orchestrator role), claude PAT from rs2000 secrets store
+
+Without this aggregator, evidence collection becomes 30+ artifact downloads after months of dogfood = friction = operator skips analysis = decision blind. With aggregator, evidence is delivered ready-to-read.
+
+Implementation lands within first 2-3 weeks of dogfood window opening (i.e., before evidence really accumulates and the manual aggregation pain becomes acute).
+
+## Triage trigger
+
+When the evidence threshold is reached, evidence triages tickets:
 
 | Evidence | Effect on ticket |
 |---|---|
@@ -46,8 +84,9 @@ After triage, Codex executes a fresh wave of master prompts based on the **re-pr
 - New observations during dogfood window can open new issues that compete for priority with Phase B/C tickets on equal footing.
 
 **Negative:**
-- 4-6 weeks of "plans in storage." Risk: planning effort decay. Mitigation: briefs are written down (`.codex/MASTER/`) and cross-referenced from issue bodies; no work is lost, just deferred.
-- Operator must actually do the dogfood logging. Mitigation: documented protocol, calendar reminder via Iskra Inbox notatka.
+- Several months of "plans in storage." Risk: planning effort decay. Mitigation: briefs are written down (`.codex/MASTER/`) and cross-referenced from issue bodies; no work is lost, just deferred.
+- Operator must actually do the dogfood logging. Mitigation: cron aggregator (issue #29) + Iskra Inbox notatka with reminder.
+- Evidence-bounded means uncertainty: we don't know in advance when window closes. Mitigation: weekly cron aggregation gives operator a continuous read on accumulated evidence; threshold judgment can be made any week.
 
 **Neutral:**
 - Issue migration was carried out by `claude` (orchestrator) on 2026-05-05 using a Python script (`/tmp/issue_migration.py`) calling Forgejo API with claude PAT. 22 issues created (#4-#25). Each issue body links to the local `.codex/MASTER/PHASE-?/...` brief and explains the dogfood gating.

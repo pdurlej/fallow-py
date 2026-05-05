@@ -1,18 +1,38 @@
 # 0006 — Dogfood-first, Show-HN-later (anti-AI-slop)
 
-**Date:** 2026-05-04
+**Date:** 2026-05-04 (transcription corrected + thesis added 2026-05-05)
 **Status:** accepted
 **Authors:** operator (`pdurlej`) — decision-maker; Claude Opus 4.7 — recording
+
+> **Edit note 2026-05-05:** Operator-corrected the original Whisper transcription (which was garbled with two contradicting clauses) and added a stronger founding thesis. Decision intent unchanged; the corrected text below is canonical.
 
 ## Context
 
 Pre-decision plan (orchestrator's draft) was: Phase A → Phase B (engineering hardening) → Phase C (Show HN polish) → Show HN within ~2 weeks. Tickets in `.codex/MASTER/PHASE-B/` and `PHASE-C/` were ready for Codex execution.
 
-Operator pushed back with strategic redirection during chat 2026-05-04 (transcribed):
+Operator pushed back with strategic redirection during chat 2026-05-04. Operator-corrected canonical version (2026-05-05):
 
-> "zdecydowanie jestem vibe coderem, który musi to przetestować. Musimy sami zrobić dogfooding i wrzucić do tego tematu za miesiąc czy dwa w takim tempie kodowania. I tutaj poprosić wszystkich agentów, którzy współpracują na platformie, żeby zrobili audyt i uważają, że pyfallow naprawdę im pomaga. Jeśli tak, super. Jeśli nie, niefajnie. (...) Jest teraz bardzo dużo AI-slopu, a my nie chcemy już chcemy AI-slopowo zrobić naprawdę perełkę."
+> "Zdecydowanie jestem vibe coderem, który musi to przetestować. Musimy sami zrobić dogfooding i wrzucić do tego tematu za miesiąc czy dwa w takim tempie kodowania. I tutaj poprosić wszystkich agentów, którzy współpracują na platformie, żeby zrobili audyt i uważają, że pyfallow naprawdę im pomaga. Jeśli tak, super. Jeśli nie, niefajnie. (...)
+>
+> Jest teraz bardzo dużo AI-slopu, a my chcemy! **Nie AI-slopowo, czyli myśląc AI-em, używając mądrzej AI-a, zrobić naprawdę perełkę.**"
 
-Translation: "I'm a vibe coder who has to test this. We need to dogfood ourselves first, come back to it in a month or two at this coding pace. Ask all agents working on the platform to audit, see if pyfallow actually helps them. If yes, great. If not, not-so-great. (...) There's a lot of AI-slop right now and we don't want to AI-slop our way to a real gem."
+Translation (operator-corrected): "I'm a vibe coder who has to test this. We need to dogfood ourselves first, come back to it in a month or two at this coding pace. Ask all agents working on the platform to audit, see if pyfallow actually helps them. (...) There's a lot of AI-slop right now and we want — not in an AI-slop way, but **by thinking with AI, using AI more wisely** — to make something genuinely a gem."
+
+The original Whisper transcription had garbled the second sentence as "a my nie chcemy już chcemy AI-slopowo" (two contradicting clauses). The corrected version above is canonical.
+
+### Founding thesis (added 2026-05-05)
+
+Subsequent voice review surfaced a stronger formulation that anchors pyfallow's positioning:
+
+> "AI z dyscypliną — zajebista sprawa. AI bez dyscypliny — to jest szum. Signal vs noise nic nie zmienia w historii ludzkości, tylko zmieniają się narzędzia."
+
+Translation: "AI with discipline is a brilliant thing. AI without discipline is noise. Signal vs noise doesn't change in human history — only the tools change."
+
+This is the differentiator. Pyfallow is **not anti-AI**; pyfallow is **the discipline that turns AI from slop into signal**. Bassist (per ADR 0007 edit 2026-05-05) for the AI-agent band. The narrative for Show HN, when it eventually comes, builds on this thesis.
+
+### Window length (clarified 2026-05-05)
+
+Operator clarified the dogfood window is "kilka miesięcy" (several months), not 4-6 weeks as originally drafted. Combined with operator's voice on evidence-bounded triage (recorded in ADR 0008 edit 2026-05-05), the window is no longer time-bounded at all — it ends when sufficient evidence count is reached, not on a calendar date.
 
 Plus the operator's **founding principle** (recorded earlier same day, also transcribed):
 

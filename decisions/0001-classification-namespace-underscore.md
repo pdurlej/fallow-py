@@ -1,9 +1,11 @@
 # 0001 — Classification namespace = underscore
 
 **Date:** 2026-05-04
-**Status:** accepted
+**Status:** superseded by [0009](0009-three-bucket-classification.md) (2026-05-05)
 **Phase:** A1
 **Authors:** Claude Opus 4.7 (orchestrator), Codex (executor)
+
+> **Supersession note (2026-05-05):** ADR 0001 unified the namespace correctly (silent bug resolved), but the four-bucket model itself was unexamined. Operator review 2026-05-05 surfaced that `manual_only` violates pyfallow's mission (asks non-technical operator to flip a coin) and `review_needed` is mis-named (programmer-language, not product-language). ADR 0009 supersedes with three-bucket model: `auto_safe` / `decision_needed` / `blocking` with mandatory product-language `trade_offs` explainability. The namespace-unification work in this ADR (Phase A commit `771c628`) stays — no code is reverted; ADR 0009 specifies the next migration in Phase B (issue #27).
 
 ## Context
 
