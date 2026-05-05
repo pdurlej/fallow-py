@@ -194,13 +194,13 @@ Wire into your agent's MCP config (Claude Code example):
 
 For agents that use MCP, `verify_imports` is the highest-leverage tool: catch a hallucinated import **before** the edit lands, so you don't even need a second turn to fix it.
 
-## Dogfood expectations (4-6 week window starting 2026-05-04)
+## Dogfood expectations (evidence-bounded window)
 
-Operator's strategic decision (chat log 2026-05-04): pyfallow does **not** push to Show HN until we have evidence from real-world dogfood. For the next 4-6 weeks:
+Operator's strategic decision (chat log 2026-05-04, refined in ADR 0008 on 2026-05-05): pyfallow does **not** push to Show HN until we have evidence from real-world dogfood. The window is evidence-bounded, not calendar-bounded:
 
 - Pyfallow `0.3.0a2` integrated into `pdurlej/platform` first, then other Piotr's projects (`hermes-agency`, `iskra-openclaw`, etc.) as appetite allows
 - Operator and agents log surprising findings, FPs, missed real bugs, friction in a dogfood log (template at [`docs/dogfood-log-template.md`](dogfood-log-template.md)) in the **pyfallow** repo
-- After 4-6 weeks, log content drives Phase B/C ticket prioritization. Plans in `.codex/MASTER/PHASE-B/` and `PHASE-C/` are not deleted — they are **subjected to evidence** before execution
+- Phase B/C starts only after the evidence threshold is met: at least 100 pyfallow CI runs across integrated repos, at least 20 meaningful dogfood log entries, and the operator's qualitative read. Plans in `.codex/MASTER/PHASE-B/` and `PHASE-C/` are not deleted — they are **subjected to evidence** before execution
 
 This is anti-AI-slop posture: don't polish from imagination, polish from logs.
 
@@ -225,7 +225,7 @@ If you're confident pyfallow **missed** a real structural problem:
 
 - [`docs/philosophy.md`](philosophy.md) — why pyfallow exists in this shape
 - [`docs/limitations.md`](limitations.md) — what pyfallow does NOT catch (Phase C ticket)
-- [`docs/rules.md`](rules.md) — full rule reference (Phase C ticket)
+- Full rule reference — Phase C ticket; not yet present as a live docs page
 - [`examples/ci/forgejo-actions.yml`](../examples/ci/forgejo-actions.yml) — the workflow template
 - [`examples/ci/README.md`](../examples/ci/README.md) — multi-platform CI guide (Forgejo, GitHub, GitLab)
 - `pdurlej/platform/AGENTS.md` — identity-isolation, 3+3 canary review (governance context)

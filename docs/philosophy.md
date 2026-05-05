@@ -90,11 +90,11 @@ If you are an LLM-based agent acting on a codebase that has pyfallow integrated:
 
 ## How the operator should treat pyfallow
 
-1. **Do not memorize pyfallow's rules.** That's the analyzer's job. Read the [Rule reference](rules.md) (Phase C ticket) when you need to understand a specific code; otherwise ignore.
+1. **Do not memorize pyfallow's rules.** That's the analyzer's job. Phase C will add a full rule reference when the rule docs are ready; until then, use the finding's evidence, confidence, and suggested actions.
 
 2. **Do treat pyfallow CI failures as legitimate signal.** If a PR is red on pyfallow's gate, the AI agent that produced it ran sloppy. Send it back. The point of having this layer is to **stop trusting that an agent did its homework**.
 
-3. **Do log surprising findings.** False positives, missed real bugs, friction points — log to a dogfood log (template at [`docs/dogfood-log-template.md`](dogfood-log-template.md)). After 4-6 weeks of dogfood across `pdurlej/platform`, `pdurlej/hermes-agency`, etc., the log becomes evidence for what to fix in Phase B/C. Without the log, "we'll improve later" becomes "we'll polish from imagination."
+3. **Do log surprising findings.** False positives, missed real bugs, friction points — log to a dogfood log (template at [`docs/dogfood-log-template.md`](dogfood-log-template.md)). Per ADR 0008, Phase B/C starts only after enough evidence accumulates across real projects: at least 100 pyfallow CI runs, at least 20 meaningful dogfood log entries, and the operator's qualitative read. Without the log, "we'll improve later" becomes "we'll polish from imagination."
 
 ## How this document evolves
 

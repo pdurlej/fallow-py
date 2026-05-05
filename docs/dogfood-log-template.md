@@ -4,7 +4,7 @@
 
 **Why this is a template, not a live log:** the active dogfood log lives outside git because the operator and agents add raw, half-formed observations they wouldn't want preserved as repo history. The template here gives you the shape; the content is yours.
 
-**Recommended window length:** 4-6 weeks of real use across multiple projects, then end-of-window analysis.
+**Recommended window close condition:** evidence-bounded, not calendar-bounded. ADR 0008 uses at least 100 pyfallow CI runs across integrated repos, at least 20 meaningful dogfood log entries, and the operator's qualitative read as the loose threshold for triage.
 
 **Purpose:** capture concrete findings from real day-to-day work with pyfallow integrated into projects you actually edit. After the window closes, log content drives the next sprint's ticket prioritization. Without this log, polish becomes imagination-based ("we should add X" with no evidence vs "we saw FP on SQLAlchemy 4 times this week, refine the framework heuristic").
 
@@ -58,7 +58,7 @@ Entry template — copy and fill:
 
 <!-- Add entries above this line -->
 
-## End-of-window analysis (fill at ~2026-06-15)
+## End-of-window analysis (fill when the evidence threshold is met)
 
 When the window closes, the orchestrator (or operator + Codex) reads through this log and produces:
 
