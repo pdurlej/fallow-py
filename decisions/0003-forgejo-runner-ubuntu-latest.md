@@ -5,7 +5,7 @@
 **Phase:** A3
 **Authors:** Claude Opus 4.7 (orchestrator), Codex (executor)
 
-> **Supersession note (2026-05-05):** The runner-image fix (drop `container: python:3.12` directive, use `ubuntu-latest`) is correct and **stays accepted**. ADR 0011 supersedes the *workflow-shape* portion (now uses Forgejo-native action URLs `https://data.forgejo.org/...`, `ubuntu-22.04` explicit pin, `persist-credentials: false`, dedicated Python runner script `scripts/ci/run_python_ci.py`) per operator decision 2026-05-05 to adopt the parallel Codex thread's stash pattern. Reason: parity with `pdurlej/platform/.forgejo/workflows/python-ci.yml`, and convergent independent design (two agents arrived at same pattern without coordination = strong signal it's right).
+> **Supersession note (2026-05-05):** The runner-image fix (drop `container: python:3.12` directive, use `ubuntu-latest`) is correct and **stays accepted**. ADR 0011 supersedes the *workflow-shape* portion (now uses Forgejo-native action URLs `https://data.forgejo.org/...`, `ubuntu-22.04` explicit pin, `persist-credentials: false`, dedicated Python runner script `scripts/ci/run_python_ci.py`) per operator decision 2026-05-05 to adopt the parallel Codex thread's stash pattern. Reason: parity with the operator's existing Forgejo-native CI pattern, and convergent independent design (two agents arrived at same pattern without coordination = strong signal it's right).
 
 ## Context
 
@@ -21,7 +21,7 @@ jobs:
 
 Live PR test on 2026-05-03 (PR #1, since reverted) confirmed: every job failed at step 1 ("Check out") because `actions/checkout@v4` requires Node.js, and the `python:3.12` Docker image has no Node.js installed.
 
-Additionally, after the live-validation PR was reverted, pyfallow's own Forgejo CI was empty — `.forgejo/workflows/ci.yml` was deleted in the revert. The Forgejo Actions runner on rs2000 was registered but had nothing to run. GitHub CI continued working but Forgejo (operator's primary remote) was effectively dark.
+Additionally, after the live-validation PR was reverted, pyfallow's own Forgejo CI was empty — `.forgejo/workflows/ci.yml` was deleted in the revert. The Forgejo Actions runner was registered but had nothing to run. GitHub CI continued working but Forgejo (operator's primary remote) was effectively dark.
 
 ## Decision
 
@@ -40,7 +40,7 @@ Live verification was a release blocker for closure: PR #2 on Forgejo triggered 
 ## Consequences
 
 **Positive:**
-- Forgejo CI works end-to-end on rs2000 runner. Live evidence captured as run id 39.
+- Forgejo CI works end-to-end on the configured runner. Live evidence captured as run id 39.
 - GitHub ↔ Forgejo CI parity: same matrix, same steps, same runner-style. Future updates touch both files in lockstep.
 - Forgejo PR template now matches what users on Forgejo Actions runners actually need (no GitHub-only assumptions).
 

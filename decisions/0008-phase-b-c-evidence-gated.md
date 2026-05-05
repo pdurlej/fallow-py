@@ -2,10 +2,10 @@
 
 **Date:** 2026-05-04 (window definition refined 2026-05-05)
 **Status:** accepted
-**Authors:** operator (`pdurlej`) — direction; Claude Opus 4.7 — recording
+**Authors:** operator — direction; Claude Opus 4.7 — recording
 **Related:** ADR 0006 (dogfood pivot), ADR 0007 (bassist metaphor / harness identity), ADR 0010 (mandatory non-author reviewer)
 
-> **Edit note 2026-05-05:** Original draft fixed the dogfood window to 2026-05-04 → 2026-06-15 (4-6 weeks). Operator review surfaced that **time is the wrong axis** — what matters is evidence count, not calendar date. This edit replaces fixed-date window with evidence-bounded definition. Plus adds infrastructure dependency (cron job on rs2000) per operator's voice.
+> **Edit note 2026-05-05:** Original draft fixed the dogfood window to 2026-05-04 → 2026-06-15 (4-6 weeks). Operator review surfaced that **time is the wrong axis** — what matters is evidence count, not calendar date. This edit replaces fixed-date window with evidence-bounded definition and records the need for lightweight aggregation infrastructure.
 
 ## Context
 
@@ -19,11 +19,11 @@ ADR 0006 established the dogfood-first strategy. This ADR formalizes the **execu
 
 ## Decision
 
-Phase B and Phase C tickets are migrated to **Forgejo issues** (`pdurlej/pyfallow` issues #4-#25, labels `phase:b` / `phase:c` plus severity + area) so they're discoverable from the project board and don't disappear with session context.
+Phase B and Phase C tickets are migrated to **Forgejo issues** (issues #4-#25, labels `phase:b` / `phase:c` plus severity + area) so they're discoverable from the project board and don't disappear with session context.
 
-Tickets remain **open but unstarted** until the dogfood window closes (~2026-06-15, re-evaluated at that date). During the window:
+Tickets remain **open but unstarted** until the evidence-bounded dogfood window closes. During the window:
 
-1. Pyfallow is integrated into operator's other repos as a Forgejo Actions gate (first integration: `pdurlej/platform` PR #71)
+1. Pyfallow is integrated into real repositories as a Forgejo Actions gate.
 2. Each project's daily Codex/operator workflow accumulates evidence in a `.codex/DOGFOOD-LOG.md` (gitignored per `docs/dogfood-log-template.md`)
 3. **Phase B/C tickets do not get worked on**, even if Codex has spare capacity. Polishing from imagination defeats the purpose.
 
@@ -47,7 +47,7 @@ If after several months no integrated repo accumulates that volume, that itself 
 
 ## Infrastructure dependency
 
-Evidence collection requires aggregation infrastructure. Operator's decision (voice 2026-05-05): **cron job on rs2000** (operator's primary server, where Forgejo runs).
+Evidence collection requires aggregation infrastructure. Operator's decision (voice 2026-05-05): use a lightweight scheduled job on the existing CI infrastructure.
 
 Cron job specs (tracked as Forgejo issue #29):
 - Weekly schedule (Sunday 04:00 — operator-attention-friendly)
@@ -55,7 +55,7 @@ Cron job specs (tracked as Forgejo issue #29):
 - Downloads `pyfallow-report.json` artifacts
 - Aggregates findings by rule, by repo, by week-over-week trend
 - Posts as comment on a separate Forgejo issue tagged `pyfallow-dogfood-evidence-inbox` (ever-open issue, single source of truth for aggregated evidence)
-- Identity: cron runs as `claude` user (orchestrator role), claude PAT from rs2000 secrets store
+- Identity: scheduled job runs under an actor-scoped automation identity from the approved secret store
 
 Without this aggregator, evidence collection becomes 30+ artifact downloads after months of dogfood = friction = operator skips analysis = decision blind. With aggregator, evidence is delivered ready-to-read.
 
@@ -80,16 +80,16 @@ After triage, Codex executes a fresh wave of master prompts based on the **re-pr
 
 **Positive:**
 - Forces evidence-driven engineering. Avoids the trap of "we have plans, we should execute the plans" without verifying the plans are still relevant.
-- Issues are public (well, `pdurlej/pyfallow` is private but visible to the operator's own contributing identities) and reference-able from PR descriptions, dogfood log entries, etc.
+- Issues are reference-able from PR descriptions, dogfood log entries, etc.
 - New observations during dogfood window can open new issues that compete for priority with Phase B/C tickets on equal footing.
 
 **Negative:**
 - Several months of "plans in storage." Risk: planning effort decay. Mitigation: briefs are written down (`.codex/MASTER/`) and cross-referenced from issue bodies; no work is lost, just deferred.
-- Operator must actually do the dogfood logging. Mitigation: cron aggregator (issue #29) + Iskra Inbox notatka with reminder.
+- Operator must actually do the dogfood logging. Mitigation: cron aggregator (issue #29) plus lightweight reminders.
 - Evidence-bounded means uncertainty: we don't know in advance when window closes. Mitigation: weekly cron aggregation gives operator a continuous read on accumulated evidence; threshold judgment can be made any week.
 
 **Neutral:**
-- Issue migration was carried out by `claude` (orchestrator) on 2026-05-05 using a Python script (`/tmp/issue_migration.py`) calling Forgejo API with claude PAT. 22 issues created (#4-#25). Each issue body links to the local `.codex/MASTER/PHASE-?/...` brief and explains the dogfood gating.
+- Issue migration was carried out by `claude` (orchestrator) on 2026-05-05 using a transient local script and actor-scoped Forgejo API credentials. 22 issues created (#4-#25). Each issue body links to the local `.codex/MASTER/PHASE-?/...` brief and explains the dogfood gating.
 
 ## References
 
@@ -98,4 +98,4 @@ After triage, Codex executes a fresh wave of master prompts based on the **re-pr
 - `docs/dogfood-log-template.md` — evidence collection protocol
 - ADR 0006 — strategic context (dogfood-first decision)
 - ADR 0007 — pyfallow's identity that informs ticket scope checks
-- Migration script: `/tmp/issue_migration.py` (transient; operation logged here)
+- Migration script: transient local script; operation logged here

@@ -3,13 +3,13 @@
 **Date:** 2026-05-05
 **Status:** accepted
 **Supersedes (partially):** [0003](0003-forgejo-runner-ubuntu-latest.md) — workflow shape is upgraded; runner-image fix from 0003 stays accepted
-**Authors:** operator (`pdurlej`) — decision-maker; Claude Opus 4.7 — recording
+**Authors:** operator — decision-maker; Claude Opus 4.7 — recording
 
 ## Context
 
-ADR 0003 fixed the immediate Phase A blocker (`container: image: python:3.12` lacked Node.js, breaking `actions/checkout@v4`). The fix used `runs-on: ubuntu-latest` + `actions/checkout@v4` + `actions/setup-python@v5` — same shape as `.github/workflows/ci.yml`. That was sufficient to unblock A3 and produced live-verified green CI run on rs2000 (Forgejo Actions run id 39).
+ADR 0003 fixed the immediate Phase A blocker (`container: image: python:3.12` lacked Node.js, breaking `actions/checkout@v4`). The fix used `runs-on: ubuntu-latest` + `actions/checkout@v4` + `actions/setup-python@v5` — same shape as `.github/workflows/ci.yml`. That was sufficient to unblock A3 and produced live-verified green CI run on the Forgejo runner (run id 39).
 
-In parallel during Phase A, a **separate Codex thread** (operator was working on platform on a different session simultaneously) developed a **better** pattern on the same `feat/phase-a-ship-blockers` worktree. The work was uncommitted and ended up in `stash@{0}` after orchestrator stashed it for clean Phase A merge:
+In parallel during Phase A, a **separate Codex thread** developed a **better** pattern on the same `feat/phase-a-ship-blockers` worktree. The work was uncommitted and ended up in `stash@{0}` after orchestrator stashed it for clean Phase A merge:
 
 > `stash@{0}: CI refactor work from parallel Codex thread (2026-05-04)`
 
@@ -19,7 +19,7 @@ The stash contains:
 - `persist-credentials: false` on checkout (security default)
 - `enable-email-notifications: false` on workflow header (ergonomics)
 - New `scripts/ci/run_python_ci.py` (~131 lines) — Python runner script that owns the CI logic (install / compile / test / self-audit / CLI smoke / MCP / build) and produces structured `ci-artifacts/ci-report.json` + `ci-feedback.md`. Workflow YAML becomes a thin wrapper invoking the script.
-- `examples/ci/forgejo-actions.yml` updated with same Forgejo-native shape (template for users matches what platform actually uses)
+- `examples/ci/forgejo-actions.yml` updated with same Forgejo-native shape (template for users matches what pyfallow actually uses)
 - `examples/ci/README.md` updated with new instructions
 
 ADR 0003 noted this stash as "not needed for basic CI to work — the simple A3 fix was sufficient" and treated it as optional Phase B/C refinement.
@@ -28,17 +28,17 @@ ADR 0003 noted this stash as "not needed for basic CI to work — the simple A3 
 
 When walked through this trade-off during Phase A retrospective voice review, operator decided:
 
-> "Skoro Codex sam wpadł nie planując, no to ja uważam, że powinniśmy to używać i włączyć. (...) Sposób tworzenia kodów platform powinien być uniwersalnym źródłem wszystkich mikroprojektów."
+> "Skoro Codex sam wpadł nie planując, no to ja uważam, że powinniśmy to używać i włączyć. (...) Wspólny sposób tworzenia kodu powinien być źródłem dla mikroprojektów."
 
-Translation: "Since Codex independently arrived at this pattern without prior planning, I think we should use it and enable it. (...) The way platform builds code should be the universal source for all microprojects."
+Translation: "Since Codex independently arrived at this pattern without prior planning, I think we should use it and enable it. (...) The shared way of building code should be the source for microprojects."
 
 Two reasons to adopt:
-1. **Platform parity.** `pdurlej/platform/.forgejo/workflows/python-ci.yml` already uses this exact pattern — Forgejo-native URLs, `ubuntu-22.04`, `persist-credentials: false`, `enable-email-notifications: false`. Pyfallow workflow trailing platform's pattern is drift; pyfallow leading or matching is consistency.
-2. **Convergent design.** Two independent agents (the parallel Codex thread + this orchestrator's later platform PR #71) arrived at the same pattern when given the same problem (Forgejo runner CI) without coordination. That's a strong signal the pattern is right.
+1. **Shared-pattern parity.** The operator's existing Forgejo-native CI pattern already uses this shape — Forgejo-native URLs, `ubuntu-22.04`, `persist-credentials: false`, `enable-email-notifications: false`. Pyfallow trailing the shared pattern is drift; pyfallow matching it is consistency.
+2. **Convergent design.** Two independent agents arrived at the same pattern when given the same problem (Forgejo runner CI) without coordination. That's a strong signal the pattern is right.
 
 ## Decision
 
-Stash content gets unstashed and merged into `pdurlej/pyfallow/main` via a new branch `feat/forgejo-native-ci-from-stash` and PR (forthcoming, sister to this ADR's PR).
+Stash content gets unstashed and merged into `main` via a new branch `feat/forgejo-native-ci-from-stash` and PR (forthcoming, sister to this ADR's PR).
 
 Components:
 
@@ -62,7 +62,7 @@ ADR 0003's runner-image-fix (drop `container:` directive, use `ubuntu-latest`) i
 ## Consequences
 
 **Positive:**
-- Platform ↔ pyfallow CI shape parity. Future updates touch both repos with identical patterns.
+- Shared Forgejo CI shape parity. Future updates touch downstream repos with the same pattern.
 - Forgejo-native URLs avoid GitHub rate-limit on Forgejo runners (intermittent issue in heavier CI usage).
 - Python runner script (`scripts/ci/run_python_ci.py`) makes CI logic testable — orchestrator can run the same script locally as a pre-PR check, no need to push to verify CI shape.
 - `ci-artifacts/ci-report.json` schema is consumable by next-agent-in-chain (Codex iterating after CI feedback).
@@ -78,7 +78,5 @@ ADR 0003's runner-image-fix (drop `container:` directive, use `ubuntu-latest`) i
 
 - ADR 0003 — predecessor that fixed the immediate runner blocker (partially superseded by this ADR)
 - `stash@{0}` (now applied) — original parallel-thread work, attribution preserved via Co-Authored-By
-- `pdurlej/platform/.forgejo/workflows/python-ci.yml` — pattern source / parity target
-- `pdurlej/platform` PR #71 — first instance of orchestrator using the same pattern in another repo (convergent independent design)
 - Forgejo Actions documentation for `data.forgejo.org` action mirrors
 - Forgejo issue (forthcoming on `feat/forgejo-native-ci-from-stash` branch's PR) — implementation ticket

@@ -3,7 +3,7 @@
 **Date:** 2026-05-04
 **Status:** accepted
 **Phase:** A5
-**Authors:** Claude Opus 4.7 (orchestrator), Codex (executor), operator (`pdurlej`) decision-maker
+**Authors:** Claude Opus 4.7 (orchestrator), Codex (executor), operator decision-maker
 
 ## Context
 
@@ -35,14 +35,14 @@ Subsequent releases follow the same pattern (a3, a4, ...) until Phase B/C land b
 - README and changelog can honestly say "alpha — fixes incoming during dogfood window."
 
 **Negative:**
-- Production PyPI publish is intentionally not done yet. Users wanting to install pyfallow from pypi.org will get the stale `0.1.0` (whoever previously held the name; pdurlej confirmed account ownership). Workaround: pin from TestPyPI per `docs/dogfood.md` until `0.3.0` stable lands.
+- Production PyPI publish is intentionally not done yet. Users wanting to install pyfallow from pypi.org will get the stale `0.1.0` until ownership and release timing are confirmed. Workaround: pin from TestPyPI per `docs/dogfood.md` until `0.3.0` stable lands.
 
 **Neutral:**
-- BW vault item for TestPyPI token (`test.pypi.org`, custom field `API token`) was retrieved by orchestrator with operator's explicit BW_SESSION authorization in chat. Production PyPI publish remains operator's manual click; orchestrator does not handle the prod-PyPI flow.
+- TestPyPI upload used an operator-authorized token from the approved local secret store. Production PyPI publish remains operator-controlled; orchestrator does not handle the prod-PyPI flow.
 
 ## References
 
 - Implementation: PR #2 (Forgejo) — commit `11c0a31`, branch `feat/phase-a-ship-blockers`
-- TestPyPI upload: orchestrator night shift 2026-05-04, BW item `test.pypi.org`
+- TestPyPI upload: orchestrator night shift 2026-05-04
 - Smoke verification: PR #1 + PR #2 comments by `claude` user
 - Phase B issues #4-#15 (Forgejo) — what's blocking the alpha→stable transition

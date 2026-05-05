@@ -1,9 +1,9 @@
-# 0007 — Pyfallow as bassist (counterpart to platform.exe; harness, not agent)
+# 0007 — Pyfallow as bassist (deterministic harness, not agent)
 
 **Date:** 2026-05-04 (metaphor refined + harness-vs-agent distinction added 2026-05-05)
 **Status:** accepted
-**Authors:** Claude Opus 4.7 — articulating; operator (`pdurlej`) — direction + metaphor
-**Related:** ADR 0006 (dogfood pivot, anti-AI-slop), ADR 0010 (mandatory non-author reviewer), `pdurlej/platform/PLATFORM_CONSTITUTION.md` (counterpart identity)
+**Authors:** Claude Opus 4.7 — articulating; operator — direction + metaphor
+**Related:** ADR 0006 (dogfood pivot, anti-AI-slop), ADR 0010 (mandatory non-author reviewer)
 
 > **Edit note 2026-05-05:** Original draft used "deterministic gate" as primary framing. Operator review surfaced a better metaphor — **bassist** (musical) — and an important categorical distinction: **AI agent vs harness**. This edit promotes the bassist metaphor to primary; "deterministic gate" stays as the technical description. Decision intent unchanged.
 
@@ -15,7 +15,7 @@ Pyfallow's identity has been **emerging implicitly** — a Python static analyze
 2. Operator can't reference a single canonical document when integrating pyfallow into other repos
 3. Show HN positioning is unclear (yet another linter? agent-native? deterministic governance?)
 
-`pdurlej/platform` provides a clean precedent: `PLATFORM_CONSTITUTION.md` declares `platform.exe` as **deterministic operator** for infrastructure manifests. Pure function, no memory between invocations, audit-logged, no opinions. Counterpart to Iskra (the operator's relational, memory-rich AI partner). This split — relational AI for navigation, deterministic operator for execution — is the operator's working architecture.
+The operator's broader workflow provides a clean precedent: deterministic gates check declared intent against reality. Pure function, no memory between invocations, audit-logged, no opinions. This split — relational AI for navigation, deterministic tools for execution — is the operator's working architecture.
 
 Pyfallow has the same shape, but for **code** instead of **infra manifests**.
 
@@ -29,23 +29,23 @@ Pyfallow's role is articulated in `docs/philosophy.md` (committed in `docs/dogfo
 >
 > That posture is the feature, not a limitation.
 
-Pyfallow's position in operator's ecosystem (mirroring `PLATFORM_CONSTITUTION.md`'s position):
+Pyfallow's position in the operator's ecosystem:
 
 | Actor | Role | Domain |
 |---|---|---|
-| **Iskra** | Vocalist — relational, memory-rich, reflects on operator's decisions | Conversation, reflection, suggestion |
-| **`platform.exe`** | Deterministic, stateless, audit-logged — **harness** | Infrastructure manifests ↔ runtime on RS 2000 + VPS 1000 |
+| **Relational assistant** | Vocalist — memory-rich, reflects on operator decisions | Conversation, reflection, suggestion |
+| **Infrastructure gate** | Deterministic, stateless, audit-logged — **harness** | Declared infrastructure intent ↔ runtime reality |
 | **Pyfallow** | Bassist — deterministic, stateless, audit-logged — **harness** | Code structural integrity ↔ committed source |
 | **Codex** | Producer / drummer — executes per master prompts (rhythm + execution) | All edits to code, manifests, prompts |
 | **Claude / Opus** | Lead guitarist — orchestrates, articulates, holds strategic context | PM-role, review, briefs, coordination |
 | **3+3 canary ensemble** | Six review voices (musical critics) | PRs touching governance paths |
-| **Operator (`pdurlej`)** | Bandleader — final approver | Merges, strategic decisions, breakglass |
+| **Operator** | Bandleader — final approver | Merges, strategic decisions, breakglass |
 
 ## Bassist metaphor (operator's framing, 2026-05-05)
 
-> "Pyfallow ma być basistą, jak w zespole muzycznym. Pyfallow ma być z tyłu zespołu Iskry i z tyłu zespołu Cloud'a, OpenAI, Opus'a, wszystkich was. Robić robotę i sprawdzać, żebyście mogli shine. Podobnie jak Forgejo Actions."
+> "Pyfallow ma być basistą, jak w zespole muzycznym. Pyfallow ma być z tyłu zespołu agentów. Robić robotę i sprawdzać, żebyście mogli shine. Podobnie jak Forgejo Actions."
 
-Translation: "Pyfallow should be the bassist, like in a music band. Pyfallow stands behind Iskra's band and behind the Cloud / OpenAI / Opus / all-of-you band. Doing the work and checking, so you can shine. Like Forgejo Actions."
+Translation: "Pyfallow should be the bassist, like in a music band. Pyfallow stands behind the agent band. Doing the work and checking, so you can shine. Like Forgejo Actions."
 
 Bassist is in nearly every song. Holds the rhythm. **Doesn't try to be the lead vocal.** Without a bassist, the band sounds empty; with a bassist, vocalist and lead guitarist shine. The audience often doesn't notice the bassist — that's part of the role. The bassist is felt more than heard.
 
@@ -61,16 +61,16 @@ Two categories of technical infrastructure in operator's ecosystem:
 
 | Category | Examples | Job |
 |---|---|---|
-| **AI agent** | Iskra, Codex, Claude / Opus, GLM | Reason, plan, decide, articulate, generate |
-| **Harness** | Pyfallow, MCP servers, Forgejo Actions, pytest, ruff, mypy, `platform.exe` | Verify, gate, render, store, execute deterministically |
+| **AI agent** | Codex, Claude / Opus, GLM, and peers | Reason, plan, decide, articulate, generate |
+| **Harness** | Pyfallow, MCP servers, Forgejo Actions, pytest, ruff, mypy, infrastructure gates | Verify, gate, render, store, execute deterministically |
 
-Harness ≠ agent. Harness is **stateless tooling** that agents (or operators) call. Agents have memory (Iskra's MEMORY.md, conversation history) and judgment (taste, preference, opinion). Harness has **inputs and outputs** and **never an opinion**.
+Harness ≠ agent. Harness is **stateless tooling** that agents (or operators) call. Agents have memory and judgment (taste, preference, opinion). Harness has **inputs and outputs** and **never an opinion**.
 
 Pyfallow is a harness. Bassist. Disciplined background member.
 
-Pyfallow makes the same kind of promise `platform.exe` makes, just at a different layer:
+Pyfallow makes the same kind of promise infrastructure gates make, just at a different layer:
 
-- `platform.exe`: "what's in the manifest is what's running and nothing more"
+- infrastructure gate: "declared state matches runtime state"
 - pyfallow: "what the agent claims it edited is what's structurally consistent in the repository graph"
 
 ## Promises pyfallow makes (consequence of identity)
@@ -95,7 +95,7 @@ Codified in `docs/philosophy.md` § "What pyfallow promises":
 
 **Positive:**
 - New agents joining (and old agents resuming after compaction) have a single canonical document to ground their behavior on `pyfallow`. No more drift across `VISION.md`, README, chat logs.
-- Operator's pitch for Show HN (when it happens) is clear: "deterministic gate that makes budget AI models ship structurally clean code; counterpart to my deterministic infra operator." Stronger than "yet another Python linter."
+- Operator's pitch for Show HN (when it happens) is clear: "deterministic gate that makes budget AI models ship structurally clean code." Stronger than "yet another Python linter."
 - Phase B / C ticket prioritization can refer back to "does this serve pyfallow's promises in `docs/philosophy.md`" as a sanity check.
 
 **Negative:**
@@ -108,6 +108,5 @@ Codified in `docs/philosophy.md` § "What pyfallow promises":
 
 - `docs/philosophy.md` — full text of pyfallow's role (committed in PR #3 by `claude`)
 - `docs/dogfood.md` — operational counterpart (how to integrate pyfallow into a project)
-- `pdurlej/platform/PLATFORM_CONSTITUTION.md` — `platform.exe` identity that this ADR mirrors for code
 - ADR 0001 (single source of truth) — Promise #2 mechanically enforced
 - ADR 0002 (baseline validation) — Promise #6 mechanically enforced

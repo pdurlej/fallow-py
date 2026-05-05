@@ -1,18 +1,18 @@
 # AGENTS.md — Repo Runbook for Agents
 
-**Audience:** orchestrator (`claude` — Pan Herbata / Claude Opus 4.7), producer (`codex` — Codex CLI), reviewers (3+3 ensemble: claude/codex/glm × tech/product), operator (`pdurlej`) reads as observer.
+**Audience:** orchestrator (`claude`), producer (`codex`), reviewers (multi-model tech/product reviewers), and the human operator.
 
 **Purpose:** reduce low-quality iterations from missing context. If you're an agent acting on this repo — **read this first**. The rules here override defaults.
 
-**Pattern source:** mirrors `pdurlej/platform/AGENTS.md` (see ADR 0010 in `decisions/0010-mandatory-non-author-reviewer.md` and platform issue #75 for the global escalation). Microproject-local rules **add**, never subtract from platform contract.
+**Pattern source:** mirrors the operator's shared agent-runbook pattern (see ADR 0010 in `decisions/0010-mandatory-non-author-reviewer.md`). Microproject-local rules **add**, never subtract from the shared contract.
 
 ---
 
 ## What this repo is
 
-`pdurlej/pyfallow` (git.pdurlej.com primary; github.com/pdurlej/pyfallow mirror) is a **deterministic Python static analyzer** that AI agents call on themselves before commit. The thesis (per ADR 0006, ADR 0007, `docs/philosophy.md`):
+`pyfallow` is a **deterministic Python static analyzer** that AI agents call on themselves before commit. The thesis (per ADR 0006, ADR 0007, `docs/philosophy.md`):
 
-> Pyfallow is the **bassist** for the AI-agent band. Iskra is the vocalist (relational, memory-rich, makes the band's voice). Codex is the drummer (rhythm + execution). Claude / Opus is the lead guitarist (orchestrating, articulating). Pyfallow is bassist — disciplined background member, holds the rhythm, lets the vocalist and lead shine. **Without bassist, the band sounds empty; with bassist, audience often doesn't notice the bassist — and that's part of the role.**
+> Pyfallow is the **bassist** for the AI-agent band: disciplined background structure, rhythm, and timing. It lets creative and orchestration agents move faster without turning every change into a trust fall. **Without bassist, the band sounds empty; with bassist, the audience often does not notice the bassist — and that is part of the role.**
 
 Pyfallow is a **harness** (deterministic tool), not an **agent** (reasoning, opinion-having entity). Categorical distinction enforced.
 
@@ -27,7 +27,7 @@ The repo holds:
 - **Templates + benchmarks** in `examples/` and `benchmarks/`
 - **Working notes (gitignored)** in `.codex/` — orchestrator's planning, Phase B/C briefs, handoffs, dogfood log
 
-**This repo is operator-owned.** Operator (`pdurlej`) is the merger; orchestrator is PM; Codex is producer; 3+3 ensemble are reviewers. See ADR 0010 for the role formalization.
+**This repo is operator-owned.** The human operator is the merger; orchestrator is PM; Codex is producer; reviewer ensemble validates changes. See ADR 0010 for the role formalization.
 
 ---
 
@@ -44,43 +44,37 @@ Phase A (5 ship-blocker tickets A1-A5) merged on `main` via PR #2 on 2026-05-04.
 
 Until that threshold, Codex does **not** execute on Phase B/C tickets. Working on them anyway is process violation — surfaces as a blocked PR review.
 
-Active work: dogfood integration into operator's other repos (`pdurlej/platform`, `hermes-agency`, `iskra-openclaw`, ...) and infrastructure for evidence collection (issue #29: cron aggregator on rs2000).
+Active work: dogfood integration into real operator-owned repositories and infrastructure for evidence collection.
 
 ---
 
 ## Conventions
 
-### Identity-isolation (per platform AGENTS.md § Identity-isolation)
+### Identity-isolation
 
-Every actor has a separate Forgejo identity + PAT (in BW under `git.pdurlej.com (<actor>)` items, custom field `PAT`):
+Every actor uses its own repository identity and actor-scoped credential:
 
-- **`claude`** (orchestrator, this prose; user id 3 on Forgejo)
-- **`codex`** (producer; user id from platform's setup, see platform AGENTS.md)
+- **`claude`** (orchestrator)
+- **`codex`** (producer)
 - **`glm`** (z.ai reviewer; when present)
-- **`pdurlej`** (operator; user id 1; merge gate)
+- **human operator** (merge gate)
 
 When an agent commits / pushes / opens PRs, it MUST use its own identity:
 
 ```bash
 # Set git config in worktree:
-git config user.email "<actor>@noreply.git.pdurlej.com"
+git config user.email "<actor>@users.noreply.example"
 git config user.name "<actor>"
 
-# Push with PAT (extract from BW custom field):
-ACTOR_PAT=$(bw get item "git.pdurlej.com (<actor>)" | python3 -c "
-import json, sys
-item = json.load(sys.stdin)
-for f in item.get('fields', []):
-    if f.get('name') == 'PAT': print(f['value'])
-")
-git -c http.extraheader="Authorization: token $ACTOR_PAT" push
+# Push with an actor-scoped credential from the approved local secret store:
+git push
 
 # PR creation via Forgejo API:
-curl -sX POST -H "Authorization: token $ACTOR_PAT" -H "Content-Type: application/json" \
-  https://git.pdurlej.com/api/v1/repos/pdurlej/pyfallow/pulls -d @pr-body.json
+curl -sX POST -H "Authorization: token <actor-token>" -H "Content-Type: application/json" \
+  https://<forgejo-host>/api/v1/repos/<owner>/pyfallow/pulls -d @pr-body.json
 ```
 
-**Anti-pattern:** pushing as operator (`pdurlej`) when you are claude/codex/glm. Audit trail lies. Caught in pyfallow PR #2 comment review 2026-05-04 (Klaud's first comment was posted as `pdurlej` via shared MCP, deleted and reposted as `claude` per identity isolation).
+**Anti-pattern:** pushing as the human operator when you are an agent. Audit trail lies. If it happens, delete/repost with the correct identity and record the correction.
 
 ### Mandatory non-author reviewer (ADR 0010)
 
@@ -96,13 +90,13 @@ Branch protection rule on `main` mechanically enforces:
 
 The rule was enabled by operator on 2026-05-05 via Forgejo Settings UI. Live test: PR #30 (`decisions/post-operator-review-2026-05-05`) was the first PR governed by the new rule.
 
-### PR size classes (per platform AGENTS.md § PR size classes)
+### PR size classes
 
 | Size | Definition | Review | Iter cap | Context Pack |
 |---|---|---|---|---|
 | Small | Single file, docs-only, narrow non-runtime; no security/deploy/restore/exposure change | 1 reviewer (any role); iter cap 1 | 1 (unless HIGH/CRITICAL) | Shortened: product story + what changed + why safe lightly |
 | Medium | Touches CI, runtime evidence, recovery notes, exposure classification, schema, multi-file refactor | Full canary 3+3 | 3 (hard) | Full pack |
-| Large | ADR, governance doc, platform.exe-equivalent, restore path, deploy semantics, security boundary, workflow rule, multi-subsystem | Full canary 3+3; owner-facing in Owner Action Board | 3 (hard) | Full pack |
+| Large | ADR, governance doc, deterministic-gate equivalent, restore path, deploy semantics, security boundary, workflow rule, multi-subsystem | Full canary 3+3; owner-facing in Owner Action Board | 3 (hard) | Full pack |
 | Batch | Multiple Small PRs from same wave / bounded path | Light per-PR + Night Review | per-PR 1; batch 1 | Per-PR shortened |
 
 **Rule:** PR sharding does NOT bypass review. Accumulated small changes → Night Review.
@@ -166,7 +160,7 @@ Every State of Pyfallow / strategic stop / multi-decision report MUST start with
 - BLOCKED: <thing> until <condition>
 ```
 
-Owner-facing question: "does this need Piotr's attention now, yes or no?" Verbs: CLICK / CHOOSE / DEFAULT / TASK / BLOCKED. Simple. Mobile-scannable.
+Owner-facing question: "does this need operator attention now, yes or no?" Verbs: CLICK / CHOOSE / DEFAULT / TASK / BLOCKED. Simple. Mobile-scannable.
 
 ### Model / emotional signal note (≤280 chars)
 
@@ -181,7 +175,7 @@ Example: `Yellow→green. Phase A grew from "fix some bugs" to "global governanc
 - **Fingerprint stability across runs**: don't assume; verify with `pyfallow analyze --format json` twice and compare.
 - **Classification semantics**: don't trust your memory; read `src/pyfallow/classify.py` and `decisions/0001-*.md` + `decisions/0009-*.md`.
 - **Test coverage on a module**: don't assume covered if file exists in `tests/`; check actual collection (`pytest --co tests/test_<module>.py`).
-- **Forgejo runner availability**: don't assume rs2000 is up; verify via Forgejo Actions API or operator confirmation.
+- **Forgejo runner availability**: don't assume the runner is up; verify via Forgejo Actions API or operator confirmation.
 - **PyPI vs TestPyPI state**: don't assume any version is current; `pip index versions pyfallow` or curl pypi.org JSON API.
 - **MCP wire format on a given pyfallow version**: don't assume namespace; check the installed package's `Classification` model.
 
@@ -193,7 +187,7 @@ Example: `Yellow→green. Phase A grew from "fix some bugs" to "global governanc
 
 Operator's observation 2026-05-05 (translated, condensed):
 
-> "Agent if asked something will always answer and always strive for the largest possible response and the largest amount of noise to show how important and smart and wonderful it is. (...) Need very firm boundaries so it doesn't create the largest madness. (...) If you look at platform's history of 3+3 canary, it ended in real tragedies — continuous over-elaboration."
+> "Agent if asked something will always answer and always strive for the largest possible response and the largest amount of noise to show how important and smart and wonderful it is. (...) Need very firm boundaries so it doesn't create the largest madness. (...) Long-running multi-agent review without strict boundaries can end in continuous over-elaboration."
 
 **Defenses:**
 
@@ -204,7 +198,7 @@ Operator's observation 2026-05-05 (translated, condensed):
 
 ### Producer-mode regression (from platform's history)
 
-Pre-canary platform Codex was producing many PRs without canary, ending each turn with options-list, treating amendment iteration as the work itself. Counter-pattern: **canary-first** before opening PR; **answer the question, then stop**.
+Pre-canary Codex produced PRs without enough reviewer separation, ended each turn with an options-list, and treated amendment iteration as the work itself. Counter-pattern: **canary-first** before opening PR; **answer the question, then stop**.
 
 ### Manual-state in prose-only open loops
 
@@ -239,7 +233,7 @@ If reviewing and the diff is insufficient:
 If executing (Codex/orchestrator) and a master prompt is insufficient:
 
 1. Read referenced ADRs + relevant `decisions/` entries.
-2. Read 1-2 example PRs from canary-validated patterns (PR #2 Phase A, PR #71 platform integration, PR #30 governance ADR migration).
+2. Read 1-2 example PRs from canary-validated patterns (for example Phase A and governance ADR migrations).
 3. If still ambiguous, **surface ambiguity with proposed default + consequence + fallback** — do not silently default, do not block on operator without showing your reasoning. Format: "Proposing default X because Y; consequence if wrong is Z; fallback is W. Proceeding unless objected." Operator can object before any irreversible step; until then, don't stall.
 
 ---
@@ -251,7 +245,7 @@ If executing (Codex/orchestrator) and a master prompt is insufficient:
 - Mark the evidence gap explicitly
 - Move forward within the iteration cap
 - Don't leave important work as prose-only open loops
-- Don't make Piotr infer what needs his attention
+- Don't make the operator infer what needs attention
 
 **Success metric:** less owner ambiguity, more autonomous high-quality progress.
 
@@ -260,12 +254,11 @@ If executing (Codex/orchestrator) and a master prompt is insufficient:
 ## References
 
 - `decisions/` directory — all ADRs (numbered Nygard format); start with README.md for index
-- `docs/philosophy.md` — pyfallow's role as bassist + harness (counterpart to platform.exe for code)
+- `docs/philosophy.md` — pyfallow's role as bassist + deterministic harness
 - `docs/dogfood.md` — concrete how-to integrate pyfallow into a Forgejo Actions CI in another project
 - `docs/dogfood-log-template.md` — evidence collection protocol
-- `pdurlej/platform/AGENTS.md` — global pattern source; this file mirrors with pyfallow-specific adaptations
-- `pdurlej/platform/PLATFORM_CONSTITUTION.md` — `platform.exe` identity counterpart to pyfallow's identity
-- `pdurlej/platform` issue #75 — escalation of mandatory-non-author-reviewer pattern to platform-level governance
+- ADR 0010 — mandatory non-author reviewer
+- ADR 0011 — Forgejo-native CI pattern
 
 ---
 

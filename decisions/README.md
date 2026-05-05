@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-This directory holds numbered, immutable architecture decisions for `pyfallow`. Pattern adapted from Michael Nygard's [Documenting architecture decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) and the convention used in `pdurlej/platform/decisions/`.
+This directory holds numbered, immutable architecture decisions for `pyfallow`. Pattern adapted from Michael Nygard's [Documenting architecture decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) and the operator's shared ADR convention.
 
 ## Conventions
 
@@ -29,7 +29,7 @@ When a decision in `.codex/DECISIONS.md` matures (settled, applied, observable i
 | 0004 | [Test `normalize()` handles FastMCP dataclass wrapping](0004-test-normalize-dataclass-branch.md) | accepted |
 | 0005 | [Alpha-incremental release strategy](0005-alpha-incremental-release.md) | accepted |
 | 0006 | [Dogfood-first, Show-HN-later (anti-AI-slop)](0006-dogfood-pivot-anti-slop.md) | accepted (transcription corrected 2026-05-05) |
-| 0007 | [Pyfallow as bassist (counterpart to platform.exe; harness, not agent)](0007-pyfallow-as-deterministic-gate.md) | accepted (metaphor refined 2026-05-05) |
+| 0007 | [Pyfallow as bassist (deterministic harness, not agent)](0007-pyfallow-as-deterministic-gate.md) | accepted (metaphor refined 2026-05-05) |
 | 0008 | [Phase B/C execution gated on dogfood evidence](0008-phase-b-c-evidence-gated.md) | accepted (evidence-bounded refinement 2026-05-05) |
 | 0009 | [Three-bucket classification with mandatory product-language explanations](0009-three-bucket-classification.md) | accepted |
 | 0010 | [Mandatory non-author AI reviewer + branch protection on every PR](0010-mandatory-non-author-reviewer.md) | accepted |

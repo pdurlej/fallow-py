@@ -28,11 +28,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://git.pdurlej.com/pdurlej/pyfallow"
-Repository = "https://git.pdurlej.com/pdurlej/pyfallow"
-Issues = "https://git.pdurlej.com/pdurlej/pyfallow/issues"
-Changelog = "https://git.pdurlej.com/pdurlej/pyfallow/src/branch/main/CHANGELOG.md"
-Mirror = "https://github.com/pdurlej/pyfallow"
+Homepage = "https://github.com/pdurlej/pyfallow"
+Repository = "https://github.com/pdurlej/pyfallow"
+Issues = "https://github.com/pdurlej/pyfallow/issues"
+Changelog = "https://github.com/pdurlej/pyfallow/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

@@ -2,8 +2,8 @@
 
 **Date:** 2026-05-05
 **Status:** accepted
-**Authors:** operator (`pdurlej`) — decision-maker; Claude Opus 4.7 — recording
-**Related:** ADR 0006 (anti-AI-slop posture), ADR 0007 (deterministic gate identity), `pdurlej/platform` issue #75 (escalation to global pattern)
+**Authors:** operator — decision-maker; Claude Opus 4.7 — recording
+**Related:** ADR 0006 (anti-AI-slop posture), ADR 0007 (deterministic gate identity)
 
 ## Context
 
@@ -15,9 +15,9 @@ Operator's framing (voice translated, lightly cleaned):
 
 > "Why aren't you noticing? Why aren't you escalating CI problems to me? It should be hitting me immediately during reviews that without that — you can't merge this. But because you have… nobody cares about merges except me. Because I have to merge and only I can merge, that effectively means none of you (agents) care about these things.
 >
-> This is bad. We should make it so that someone else is the reviewer — I am still the merger, sure, but someone else has to review. There should be at least one reviewer always. We had something like this in platform with the 3+3 canary pattern for medium-sized changes. But this should also apply to small changes — there has to be at least one reviewer (code, product, technology — whatever fits) without whose approval the change cannot move forward. Without their approval, CI/CD shouldn't let it through.
+> This is bad. We should make it so that someone else is the reviewer — I am still the merger, sure, but someone else has to review. There should be at least one reviewer always. We had something like this with the 3+3 canary pattern for medium-sized changes. But this should also apply to small changes — there has to be at least one reviewer (code, product, technology — whatever fits) without whose approval the change cannot move forward. Without their approval, CI/CD shouldn't let it through.
 >
-> The way platform builds code should be the universal source for all microprojects."
+> The shared way we build code should be the source for microprojects."
 
 And on whether the reviewer can be an AI agent:
 
@@ -25,13 +25,13 @@ And on whether the reviewer can be an AI agent:
 
 ## Decision
 
-**Mandatory non-author reviewer on every PR**, applied uniformly across all of operator's microprojects (`pyfallow`, `hermes-agency`, `iskra-openclaw`, ...) with the platform repo's `AGENTS.md` as canonical contributor contract.
+**Mandatory non-author reviewer on every PR**, applied uniformly across operator-owned microprojects with a shared agent-runbook contract.
 
 Specifically:
 
 1. **Every PR** — regardless of size class (Small / Medium / Large / Batch per platform's existing taxonomy) — requires ≥1 approved review from a contributor **different from the PR author**.
 
-2. **Reviewer can be an AI agent.** Default rotation: `claude` reviews `codex`'s PRs; `codex` reviews `claude`'s PRs; `glm` reviews when available as a third-party perspective. **Identity-isolation enforced** — the reviewer's commits must come from a different PAT and different commit author than the PR's commits.
+2. **Reviewer can be an AI agent.** Default rotation: `claude` reviews `codex`'s PRs; `codex` reviews `claude`'s PRs; `glm` reviews when available as a third-party perspective. **Identity-isolation enforced** — the reviewer's commits must come from a different actor-scoped credential and different commit author than the PR's commits.
 
 3. **Branch protection rule on `main`** mechanically enforces:
    - Direct push to `main` blocked (whitelist empty; PR-only)
@@ -42,13 +42,13 @@ Specifically:
    - Force-push blocked
    - **Rule applies to repository administrators** — operator subject to same rules; break-glass = explicit "disable rule, push, re-enable" with audit trail in repo settings history
 
-4. **Operator (`pdurlej`) is the merger**, not a reviewer-of-record. Operator's role: final approval and merge button. Review work is delegated to AI agents per identity-isolation policy.
+4. **Operator is the merger**, not a reviewer-of-record. Operator's role: final approval and merge button. Review work is delegated to AI agents per identity-isolation policy.
 
-5. **Platform's `AGENTS.md` is canonical contributor contract** for every microproject. Microproject-local docs (e.g., `pdurlej/pyfallow/.codex/WORKFLOW.md`) may add project-specific extras; never subtract from platform contract.
+5. **Shared `AGENTS.md` conventions are the contributor contract** for every microproject. Microproject-local docs may add project-specific extras; never subtract from the shared contract.
 
 ## Pyfallow as first integration
 
-Branch protection rule on `pdurlej/pyfallow/main` enabled by operator via Forgejo Settings UI on 2026-05-05 (operator action immediately following the voice review that produced this decision). Configuration:
+Branch protection rule on `main` enabled by operator via Forgejo Settings UI on 2026-05-05 (operator action immediately following the voice review that produced this decision). Configuration:
 
 - Push to `main`: whitelist empty (no direct push)
 - Required approving reviews: 1
@@ -61,13 +61,13 @@ Branch protection rule on `pdurlej/pyfallow/main` enabled by operator via Forgej
 - Block merge on rejected reviews: yes
 - Block merge if PR is out-of-date: yes
 - Enforce for admins: yes
-- Allowed mergers (whitelist): `pdurlej` only
+- Allowed mergers (whitelist): human operator only
 
 This ADR's PR itself (`decisions/post-operator-review-2026-05-05`) is the **first PR governed by the new rules** — meta-validation that the rule works in practice.
 
-## Escalation to platform
+## Escalation to shared governance
 
-Pattern is escalated to platform repo as proposal: [`pdurlej/platform` issue #75](https://git.pdurlej.com/pdurlej/platform/issues/75) — universal source of truth in platform's `AGENTS.md`, with branch protection on every microproject inheriting from there. That issue tracks the platform-side amendment (full Canary 3+3 review per existing platform governance).
+Pattern is escalated to the shared agent-governance runbook so every microproject can inherit the same branch-protection and non-author-review floor.
 
 ## Consequences
 
@@ -79,7 +79,7 @@ Pattern is escalated to platform repo as proposal: [`pdurlej/platform` issue #75
 **Negative:**
 - **AI agents can rubber-stamp each other.** Mitigation: AGENTS.md spec for reviewer responsibility (must read CI output, must read diff, must articulate review reasoning in PR comment — not just "approve" without context). Phase B Issue (forthcoming) tracks reviewer-quality measurement.
 - **Solo agent scenarios block.** If only `claude` is available and `claude` is the author, no non-author AI agent exists. Mitigation: operator escalation-of-last-resort. Operator can review-then-merge in this case, treating their own review as the non-author review (operator is *not* the author by definition).
-- **Bootstrap problem for new microprojects.** First PR on a new microproject has no prior reviewers configured. Mitigation: branch protection rule template applied at repo creation (per platform issue #75 rollout).
+- **Bootstrap problem for new microprojects.** First PR on a new microproject has no prior reviewers configured. Mitigation: branch protection rule template applied at repo creation.
 
 **Neutral:**
 - Codex's behavior in Phase A A4 was reactive-not-defensive but it was not malicious. Codex did fix the bug; the gap was process-level (no requirement to escalate). The new rule structurally fixes the process; no individual-agent blame.
@@ -90,5 +90,4 @@ Pattern is escalated to platform repo as proposal: [`pdurlej/platform` issue #75
 - Phase A ticket A4 (commit `527865e`) — incident that surfaced the gap
 - ADR 0006 — anti-AI-slop strategic context
 - ADR 0007 — pyfallow as deterministic gate; this ADR is the process companion
-- `pdurlej/platform` issue #75 — escalation to platform-level governance amendment
-- `pdurlej/platform/AGENTS.md` § Canary 3+3 review — current scoping (this ADR extends to universal floor)
+- Local `AGENTS.md` — repository runbook implementing the reviewer floor
