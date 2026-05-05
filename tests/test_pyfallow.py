@@ -1733,7 +1733,7 @@ def test_ci_templates_are_packaged_and_platform_neutral() -> None:
 
     forgejo_text = templates["forgejo"].read_text(encoding="utf-8")
     # ADR 0011: Forgejo template uses Forgejo-native action URLs +
-    # explicit ubuntu-22.04 pin (parity with pdurlej/platform/.forgejo
+    # explicit ubuntu-22.04 pin (parity with the shared Forgejo-native
     # convention). ADR 0003's `runs-on: ubuntu-latest` was correct
     # conceptually for unblocking Phase A but partially superseded.
     assert "runs-on: ubuntu-22.04" in forgejo_text

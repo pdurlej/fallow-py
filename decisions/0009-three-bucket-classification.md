@@ -3,7 +3,7 @@
 **Date:** 2026-05-05
 **Status:** accepted
 **Supersedes:** [0001](0001-classification-namespace-underscore.md) (which kept the four-bucket convention)
-**Authors:** operator (`pdurlej`) — decision-maker; Claude Opus 4.7 — recording
+**Authors:** operator — decision-maker; Claude Opus 4.7 — recording
 
 ## Context
 
