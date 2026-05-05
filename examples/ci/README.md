@@ -10,10 +10,15 @@ Forgejo is listed first because pyfallow is designed for self-hosted git from da
 
 1. Copy `examples/ci/` into your repository.
 2. Copy `examples/ci/forgejo-actions.yml` to `.forgejo/workflows/pyfallow.yml`.
-3. Make sure the runner can use the `python:3.12` container image.
-4. Add `FORGEJO_TOKEN` if the built-in token cannot create pull-request comments.
+3. Use a Node-capable runner label such as `ubuntu-22.04`; do not combine
+   `container: python:*` with Node-based actions such as checkout.
+4. Treat PR comments as optional. The default template uploads artifacts and
+   fails after the report is written; add a trusted comment token only if your
+   Forgejo security model allows PR comments.
 
-The Forgejo template uses `runs-on: docker`, checks out full history for `--since`, installs `pyfallow`, posts a PR comment through the Forgejo API, uploads artifacts, then fails the job only after the comment step.
+The Forgejo template uses a Node-capable runner label, checks out full history for
+`--since`, installs `pyfallow`, uploads artifacts, then fails the job only after
+the report step.
 
 ## GitHub Actions
 
@@ -33,7 +38,8 @@ GitLab's native Code Quality report format is different from pyfallow's agent pl
 
 ## Comment Format
 
-All three templates call `render_pyfallow_comment.py`, so PR/MR comments use the same structure:
+All templates can call `render_pyfallow_comment.py`, so artifacts and optional
+PR/MR comments use the same structure:
 
 ```markdown
 ## pyfallow analysis
