@@ -1,10 +1,19 @@
 # pyfallow
 
-[![CI](https://github.com/pd/fallow-python/actions/workflows/ci.yml/badge.svg)](https://github.com/pd/fallow-python/actions/workflows/ci.yml)
+[![CI](https://github.com/pdurlej/pyfallow/actions/workflows/ci.yml/badge.svg)](https://github.com/pdurlej/pyfallow/actions/workflows/ci.yml)
 
-`pyfallow` is an early Python-first codebase intelligence tool for agents and reviewers.
+`pyfallow` is a deterministic Python codebase-intelligence checkpoint for AI
+agents and reviewers before anyone claims the code is done.
 
-It builds a static picture of imports, dependencies, complexity, duplication, architecture boundaries, and likely dead code without importing or executing the project under analysis. Python is dynamic, so findings carry confidence, evidence, and suggested actions instead of pretending to be runtime truth.
+It builds a static picture of imports, dependencies, complexity, duplication,
+architecture boundaries, and likely dead code without importing or executing the
+project under analysis. Python is dynamic, so findings carry confidence,
+evidence, and suggested actions instead of pretending to be runtime truth.
+
+Use it when an agent has touched Python and you want hard signals before the
+final "done": missing runtime dependencies, import cycles, boundary violations,
+high-complexity hotspots, duplicate code, stale suppressions, and cleanup plans
+that separate safe edits from review-only findings.
 
 ## Status
 
@@ -29,6 +38,26 @@ Then install the bundled agent instructions:
 
 See [`docs/agent-integration.md`](docs/agent-integration.md) for MCP setup, trigger rules, and the blocking/review/auto-fix workflow.
 
+## 30-second checkpoint
+
+From a clone, run the bundled demo:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pyfallow analyze --root examples/demo_project --format text
+```
+
+You should see findings such as:
+
+```text
+src/app/main.py:3: PY040 error high missing-runtime-dependency - Imported third-party package 'missingdep' is not declared as a dependency.
+src/app/cycle_a.py:1: PY020 warning high circular-dependency - Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
+src/app/domain/service.py:1: PY070 error high boundary-violation - Boundary rule 'domain-no-infra' disallows importing app.infra.db.
+```
+
+That is the intended value: pyfallow gives agents deterministic evidence about
+repo structure before they make confident claims.
+
 ## Performance
 
 pyfallow is meant to complement ruff, vulture, deptry, mypy/pyright, and security scanners rather than replace them. The benchmark harness in [`benchmarks/comparison/`](benchmarks/comparison/) compares runtime and finding categories across a small pinned repo set.
@@ -43,6 +72,19 @@ See [`docs/performance.md`](docs/performance.md) for the current methodology, lo
 - SARIF 2.1.0 for code scanning consumers.
 - Baselines for CI adoption with existing debt.
 - Conservative Python static analysis with confidence and evidence.
+
+## Where it fits
+
+pyfallow complements the tools you should already trust:
+
+| Tool family | Keep using it for | Add pyfallow when |
+| --- | --- | --- |
+| ruff / formatters | style, lint rules, fast local cleanup | you need project graph and boundary context |
+| mypy / pyright | type checking | an agent needs import/dependency/architecture evidence first |
+| vulture / deptry | focused dead-code and dependency checks | you want one agent-facing report with confidence and actions |
+| tests / CI | runtime truth | you want static preflight before spending review time |
+
+It is not a runtime oracle. It is a slop-prevention checklist for Python repos.
 
 ## What It Checks
 
@@ -103,7 +145,7 @@ fallow python --format json --root .
 
 The `fallow` command is a compatibility bridge for local workflows and possible future integration. It does not mean this project is official Fallow.
 
-## 30-Second Demo
+## Demo output
 
 Run the bundled demo project:
 
@@ -257,6 +299,20 @@ Drop-in examples live in [`examples/ci/`](examples/ci/). They are platform-neutr
 The templates run `pyfallow analyze --since <base> --format agent-fix-plan --fail-on warning --min-confidence medium` for PR/MR diffs, upload `pyfallow-report.json`, and post a grouped cleanup comment when a platform token is available.
 
 See [`examples/ci/README.md`](examples/ci/README.md) for copy paths, token notes, and the shared comment format.
+
+## Feedback wanted
+
+The most useful early feedback is concrete and boring:
+
+- a Python repo where pyfallow finds a real issue your agent missed,
+- a false positive that would make you distrust the report,
+- a framework pattern pyfallow should treat more carefully,
+- an agent workflow where `agent-context`, `agent-fix-plan`, or MCP output is awkward.
+
+Please include the command you ran, the finding ID or fingerprint when relevant,
+and whether you were using pyfallow as a human reviewer, Codex/Claude/OpenCode
+checkpoint, or CI gate. Discussions live at
+[github.com/pdurlej/pyfallow/discussions](https://github.com/pdurlej/pyfallow/discussions).
 
 ## Configuration
 
