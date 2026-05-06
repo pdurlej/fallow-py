@@ -15,11 +15,34 @@ final "done": missing runtime dependencies, import cycles, boundary violations,
 high-complexity hotspots, duplicate code, stale suppressions, and cleanup plans
 that separate safe edits from review-only findings.
 
+## 30-second checkpoint
+
+From a clone, run the bundled demo:
+
+```bash
+python3 -m pip install -e ".[dev]"
+python3 -m pyfallow analyze --root examples/demo_project --format text
+```
+
+You should see findings such as:
+
+```text
+src/app/main.py:3: PY040 error high missing-runtime-dependency - Imported third-party package 'missingdep' is not declared as a dependency.
+src/app/cycle_a.py:1: PY020 warning high circular-dependency - Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
+src/app/domain/service.py:1: PY070 error high boundary-violation - Boundary rule 'domain-no-infra' disallows importing app.infra.db.
+```
+
+That is the intended value: pyfallow gives agents deterministic evidence about
+repo structure before they make confident claims.
+
 ## Status
 
 Current release target: `0.3.0a2`.
 
 Runtime dependencies are stdlib-only on Python 3.11+. Development and packaging tools are optional extras.
+
+Command examples use `python`; on macOS or minimal shells, use `python3` if
+`python` is not installed.
 
 ## For Agents
 
@@ -37,26 +60,6 @@ Then install the bundled agent instructions:
 - Cursor rule mirror: [`examples/cursor-rules/pyfallow.mdc`](examples/cursor-rules/pyfallow.mdc)
 
 See [`docs/agent-integration.md`](docs/agent-integration.md) for MCP setup, trigger rules, and the blocking/review/auto-fix workflow.
-
-## 30-second checkpoint
-
-From a clone, run the bundled demo:
-
-```bash
-python -m pip install -e ".[dev]"
-python -m pyfallow analyze --root examples/demo_project --format text
-```
-
-You should see findings such as:
-
-```text
-src/app/main.py:3: PY040 error high missing-runtime-dependency - Imported third-party package 'missingdep' is not declared as a dependency.
-src/app/cycle_a.py:1: PY020 warning high circular-dependency - Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
-src/app/domain/service.py:1: PY070 error high boundary-violation - Boundary rule 'domain-no-infra' disallows importing app.infra.db.
-```
-
-That is the intended value: pyfallow gives agents deterministic evidence about
-repo structure before they make confident claims.
 
 ## Performance
 
@@ -156,9 +159,9 @@ python -m pyfallow analyze --root examples/demo_project --format text
 Example text output excerpt:
 
 ```text
-PY040 error high examples/demo_project/src/app/main.py:3 Imported third-party package 'missingdep' is not declared as a dependency.
-PY020 warning high examples/demo_project/src/app/cycle_a.py:1 Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
-PY070 error high examples/demo_project/src/app/domain/service.py:1 Import violates architecture boundary rule 'domain-no-infra'.
+src/app/main.py:3: PY040 error high missing-runtime-dependency - Imported third-party package 'missingdep' is not declared as a dependency.
+src/app/cycle_a.py:1: PY020 warning high circular-dependency - Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
+src/app/domain/service.py:1: PY070 error high boundary-violation - Boundary rule 'domain-no-infra' disallows importing app.infra.db.
 ```
 
 Short checked-in excerpts live in [`examples/outputs/`](examples/outputs/).
