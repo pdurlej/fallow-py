@@ -24,12 +24,12 @@ python3 -m pip install -e ".[dev]"
 python3 -m pyfallow analyze --root examples/demo_project --format text
 ```
 
-You should see findings such as:
+You should see findings like this abbreviated excerpt:
 
 ```text
-src/app/main.py:3: PY040 error high missing-runtime-dependency - Imported third-party package 'missingdep' is not declared as a dependency.
-src/app/cycle_a.py:1: PY020 warning high circular-dependency - Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
-src/app/domain/service.py:1: PY070 error high boundary-violation - Boundary rule 'domain-no-infra' disallows importing app.infra.db.
+PY040 error   missing-runtime-dependency   src/app/main.py:3
+PY020 warning circular-dependency          src/app/cycle_a.py:1
+PY070 error   boundary-violation           src/app/domain/service.py:1
 ```
 
 That is the intended value: pyfallow gives agents deterministic evidence about
@@ -156,12 +156,12 @@ Run the bundled demo project:
 python -m pyfallow analyze --root examples/demo_project --format text
 ```
 
-Example text output excerpt:
+Abbreviated text output excerpt:
 
 ```text
-src/app/main.py:3: PY040 error high missing-runtime-dependency - Imported third-party package 'missingdep' is not declared as a dependency.
-src/app/cycle_a.py:1: PY020 warning high circular-dependency - Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
-src/app/domain/service.py:1: PY070 error high boundary-violation - Boundary rule 'domain-no-infra' disallows importing app.infra.db.
+PY040 error   missing-runtime-dependency   src/app/main.py:3
+PY020 warning circular-dependency          src/app/cycle_a.py:1
+PY070 error   boundary-violation           src/app/domain/service.py:1
 ```
 
 Short checked-in excerpts live in [`examples/outputs/`](examples/outputs/).
