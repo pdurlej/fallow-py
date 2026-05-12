@@ -11,12 +11,13 @@ import tomllib
 import zipfile
 from pathlib import Path
 
+import pytest
 import pyfallow
 from pyfallow.analysis import analyze
 from pyfallow.ast_index import index_file
 from pyfallow.baseline import compare_with_baseline, create_baseline
 from pyfallow.classify import agent_fix_plan, classify_finding
-from pyfallow.config import load_config
+from pyfallow.config import ConfigError, load_config
 from pyfallow.dependencies import parse_dependency_declarations
 from pyfallow.models import RULES, VERSION
 from pyfallow.predict import parse_import_spec, verify_imports
@@ -1590,6 +1591,62 @@ def test_config_validation_emits_config_error(tmp_path: Path) -> None:
     assert config.dupes.min_tokens == 40
     assert config.dupes.mode == "mild"
     assert config.health.max_cognitive == 15
+
+
+@pytest.mark.parametrize(
+    ("config_text", "field"),
+    [
+        (
+            """
+            [tool.pyfallow]
+            roots = "src"
+            """,
+            "roots",
+        ),
+        (
+            """
+            [tool.pyfallow]
+            entry = [123]
+            """,
+            "entry",
+        ),
+        (
+            """
+            [tool.pyfallow]
+            include_tests = "yes"
+            """,
+            "include_tests",
+        ),
+        (
+            """
+            [tool.pyfallow.dupes]
+            min_tokens = "40"
+            """,
+            "dupes.min_tokens",
+        ),
+        (
+            """
+            [tool.pyfallow.dependencies]
+            include_optional = "true"
+            """,
+            "dependencies.include_optional",
+        ),
+        (
+            """
+            [tool.pyfallow.dependencies.import_map]
+            PIL = 123
+            """,
+            "dependencies.import_map.PIL",
+        ),
+    ],
+)
+def test_config_type_validation_rejects_malformed_toml_values(
+    tmp_path: Path, config_text: str, field: str
+) -> None:
+    write(tmp_path / "pyproject.toml", config_text)
+
+    with pytest.raises(ConfigError, match=field):
+        load_config(tmp_path)
 
 
 def test_sarif_has_fingerprints_properties_and_related_locations(tmp_path: Path, monkeypatch) -> None:

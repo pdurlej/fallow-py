@@ -183,6 +183,7 @@ def load_config(root: str | Path = ".", config_path: str | Path | None = None) -
 
 
 def build_config(root: Path, config_path: Path | None, data: dict[str, Any]) -> PythonConfig:
+    _validate_config_types(data, config_path)
     cfg = PythonConfig(root=root, config_path=config_path)
     for key in (
         "roots",
@@ -248,6 +249,164 @@ def _list_or_value(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value]
     return [str(value)]
+
+
+def _validate_config_types(data: dict[str, Any], config_path: Path | None) -> None:
+    for key in ("roots", "entry", "frameworks", "ignore"):
+        if key in data:
+            _expect_str_list(config_path, key, data[key])
+    for key in ("include_tests", "namespace_packages", "framework_heuristics"):
+        if key in data:
+            _expect_bool(config_path, key, data[key])
+
+    _validate_section(
+        data,
+        config_path,
+        "dead_code",
+        {
+            "enabled": _expect_bool,
+            "detect_unused_modules": _expect_bool,
+            "detect_unused_symbols": _expect_bool,
+            "treat_init_as_entry": _expect_bool,
+            "ignore_symbols": _expect_str_list,
+            "ignore_decorated": _expect_bool,
+            "ignore_protocol_methods": _expect_bool,
+            "ignore_dunder_methods": _expect_bool,
+            "confidence_for_init_exports": _expect_str,
+            "entry_symbols": _expect_str_list,
+        },
+    )
+    _validate_section(
+        data,
+        config_path,
+        "dependencies",
+        {
+            "enabled": _expect_bool,
+            "check_unused": _expect_bool,
+            "check_missing": _expect_bool,
+            "include_optional": _expect_bool,
+            "include_dev": _expect_bool,
+            "report_type_only_missing": _expect_bool,
+            "report_test_only_missing": _expect_bool,
+            "ignore": _expect_str_list,
+            "import_map": _expect_str_dict,
+        },
+    )
+    _validate_section(
+        data,
+        config_path,
+        "dupes",
+        {
+            "enabled": _expect_bool,
+            "mode": _expect_str,
+            "min_lines": _expect_int,
+            "min_tokens": _expect_int,
+            "max_groups": _expect_int,
+            "ignore_docstrings": _expect_bool,
+        },
+    )
+    _validate_section(
+        data,
+        config_path,
+        "health",
+        {
+            "enabled": _expect_bool,
+            "max_cyclomatic": _expect_int,
+            "max_cognitive": _expect_int,
+            "max_function_lines": _expect_int,
+            "max_file_lines": _expect_int,
+            "hotspot_score_threshold": _expect_int,
+        },
+    )
+    _validate_section(data, config_path, "baseline", {"path": _expect_str})
+    _validate_boundaries_section(data, config_path)
+
+
+def _validate_section(
+    data: dict[str, Any],
+    config_path: Path | None,
+    name: str,
+    validators: dict[str, Any],
+) -> None:
+    if name not in data:
+        return
+    section = data[name]
+    _expect_table(config_path, name, section)
+    for key, value in section.items():
+        validator = validators.get(key)
+        if validator is not None:
+            validator(config_path, f"{name}.{key}", value)
+
+
+def _validate_boundaries_section(data: dict[str, Any], config_path: Path | None) -> None:
+    if "boundaries" not in data:
+        return
+    section = data["boundaries"]
+    _expect_table(config_path, "boundaries", section)
+    if "rules" not in section:
+        return
+    rules = section["rules"]
+    if not isinstance(rules, list):
+        _type_error(config_path, "boundaries.rules", "list of tables", rules)
+    for index, raw in enumerate(rules):
+        key_prefix = f"boundaries.rules[{index}]"
+        _expect_table(config_path, key_prefix, raw)
+        if "name" in raw:
+            _expect_str(config_path, f"{key_prefix}.name", raw["name"])
+        if "severity" in raw:
+            _expect_str(config_path, f"{key_prefix}.severity", raw["severity"])
+        if "from" in raw:
+            _expect_str_or_str_list(config_path, f"{key_prefix}.from", raw["from"])
+        if "from_patterns" in raw:
+            _expect_str_or_str_list(config_path, f"{key_prefix}.from_patterns", raw["from_patterns"])
+        if "disallow" in raw:
+            _expect_str_or_str_list(config_path, f"{key_prefix}.disallow", raw["disallow"])
+
+
+def _expect_table(config_path: Path | None, key: str, value: Any) -> None:
+    if not isinstance(value, dict):
+        _type_error(config_path, key, "table", value)
+
+
+def _expect_bool(config_path: Path | None, key: str, value: Any) -> None:
+    if not isinstance(value, bool):
+        _type_error(config_path, key, "bool", value)
+
+
+def _expect_int(config_path: Path | None, key: str, value: Any) -> None:
+    if not isinstance(value, int) or isinstance(value, bool):
+        _type_error(config_path, key, "integer", value)
+
+
+def _expect_str(config_path: Path | None, key: str, value: Any) -> None:
+    if not isinstance(value, str):
+        _type_error(config_path, key, "string", value)
+
+
+def _expect_str_list(config_path: Path | None, key: str, value: Any) -> None:
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        _type_error(config_path, key, "list of strings", value)
+
+
+def _expect_str_or_str_list(config_path: Path | None, key: str, value: Any) -> None:
+    if isinstance(value, str):
+        return
+    _expect_str_list(config_path, key, value)
+
+
+def _expect_str_dict(config_path: Path | None, key: str, value: Any) -> None:
+    if not isinstance(value, dict):
+        _type_error(config_path, key, "table of string values", value)
+    for item_key, item_value in value.items():
+        if not isinstance(item_key, str) or not isinstance(item_value, str):
+            _type_error(config_path, f"{key}.{item_key}", "string", item_value)
+
+
+def _type_error(config_path: Path | None, key: str, expected: str, value: Any) -> None:
+    location = f"Config file {config_path}: " if config_path else "Config: "
+    raise ConfigError(
+        f"{location}field {key!r} expected {expected}, got {type(value).__name__}."
+    )
 
 
 def _validate(cfg: PythonConfig) -> None:
