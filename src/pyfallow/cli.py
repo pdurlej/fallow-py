@@ -93,6 +93,7 @@ def _run_analysis(args: argparse.Namespace) -> int:
     config = load_config(args.root, args.config)
     _apply_cli_config(config, args)
     result = analyze(config)
+    _print_cli_warnings(args, result)
     _log_analysis_warnings(args, result)
     baseline = None
     if getattr(args, "baseline", None):
@@ -116,6 +117,7 @@ def _run_baseline(args: argparse.Namespace) -> int:
     config = load_config(args.root, args.config)
     _apply_cli_config(config, args)
     result = analyze(config)
+    _print_cli_warnings(args, result)
     _log_analysis_warnings(args, result)
     if args.baseline_command == "create":
         baseline = create_baseline(result)
@@ -150,6 +152,14 @@ def _log_analysis_warnings(args: argparse.Namespace, result: dict[str, Any]) -> 
         logging.debug("analysis warning: %s", warning)
 
 
+def _print_cli_warnings(args: argparse.Namespace, result: dict[str, Any]) -> None:
+    if args.quiet:
+        return
+    for warning in result.get("analysis", {}).get("warnings", []):
+        if warning.get("code") in {"changed-only-deprecated", "changed-only-not-available-non-git"}:
+            print(warning["message"], file=sys.stderr)
+
+
 def _with_limitations(output: str, fmt: str, show_limitations: bool) -> str:
     if not show_limitations or not supports_limitations_format(fmt):
         return output
@@ -178,11 +188,8 @@ def _apply_cli_config(config, args: argparse.Namespace) -> None:
         config.since_ref = args.since
     elif args.changed_only:
         config.changed_only_requested = True
+        config.changed_only_alias = True
         config.since_ref = "HEAD~1"
-        message = "--changed-only is deprecated; use --since HEAD~1 instead."
-        config.analysis_warnings.append({"code": "changed-only-deprecated", "message": message})
-        if not args.quiet:
-            print(message, file=sys.stderr)
 
 
 def _format_for_command(result: dict[str, Any], command: str, fmt: str) -> str:

@@ -600,7 +600,9 @@ def test_cli_exit_codes_and_focus_commands(tmp_path: Path) -> None:
     assert payload["analysis"]["changed_only"]["requested"] is True
     assert payload["analysis"]["changed_only"]["effective"] is False
     warning_codes = {warning["code"] for warning in payload["analysis"]["warnings"]}
-    assert {"changed-only-deprecated", "since-not-available-non-git"} <= warning_codes
+    assert warning_codes == {"changed-only-not-available-non-git"}
+    assert "changed-only-deprecated" not in warning_codes
+    assert "--changed-only is deprecated" not in changed_only.stderr
 
 
 def test_since_filters_findings_to_changed_files(tmp_path: Path) -> None:
@@ -1511,6 +1513,8 @@ def test_cli_debug_and_show_limitations_flags_are_observable(tmp_path: Path) -> 
     debug_run = run_cli(["analyze", "--root", str(tmp_path), "--changed-only", "--debug", "--format", "json"])
     assert debug_run.returncode == 0
     assert "pyfallow DEBUG: analysis warning:" in debug_run.stderr
+    assert "changed-only-not-available-non-git" in debug_run.stderr
+    assert "--changed-only is deprecated" not in debug_run.stderr
 
     limitations_run = run_cli(["analyze", "--root", str(tmp_path), "--format", "text", "--show-limitations"])
     assert limitations_run.returncode == 0
