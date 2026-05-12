@@ -492,11 +492,23 @@ def _apply_diff_scope(
     }
     if resolution.warning:
         config.changed_only_effective = False
-        config.analysis_warnings.append(resolution.warning)
-        diff_scope["reason"] = resolution.warning["message"]
+        warning = (
+            _changed_only_alias_unavailable_warning(resolution.warning)
+            if config.changed_only_alias
+            else resolution.warning
+        )
+        config.analysis_warnings.append(warning)
+        diff_scope["reason"] = warning["message"]
         return issues, duplicate_groups, cycle_graphs, diff_scope
 
     config.changed_only_effective = True
+    if config.changed_only_alias:
+        config.analysis_warnings.append(
+            {
+                "code": "changed-only-deprecated",
+                "message": "--changed-only is deprecated; use --since HEAD~1 instead.",
+            }
+        )
     diff_scope["reason"] = f"Filtered findings to files changed since {config.since_ref}."
     filtered_issues = [
         issue
@@ -514,6 +526,16 @@ def _apply_diff_scope(
         if _cycle_graph_in_diff_scope(cycle, changed_files, changed_modules)
     ]
     return filtered_issues, filtered_duplicate_groups, filtered_cycle_graphs, diff_scope
+
+
+def _changed_only_alias_unavailable_warning(warning: dict[str, str]) -> dict[str, str]:
+    if warning["code"] != "since-not-available-non-git":
+        return warning
+    return {
+        "code": "changed-only-not-available-non-git",
+        "message": "--changed-only requested outside a Git workspace; full analysis was used. "
+        "Use --since HEAD~1 in Git workspaces for diff-aware analysis.",
+    }
 
 
 def _issue_in_diff_scope(issue: Issue, changed_files: set[str], changed_modules: set[str]) -> bool:

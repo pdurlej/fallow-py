@@ -11,12 +11,13 @@ import tomllib
 import zipfile
 from pathlib import Path
 
+import pytest
 import pyfallow
 from pyfallow.analysis import analyze
 from pyfallow.ast_index import index_file
 from pyfallow.baseline import compare_with_baseline, create_baseline
 from pyfallow.classify import agent_fix_plan, classify_finding
-from pyfallow.config import load_config
+from pyfallow.config import ConfigError, load_config
 from pyfallow.dependencies import parse_dependency_declarations
 from pyfallow.models import RULES, VERSION
 from pyfallow.predict import parse_import_spec, verify_imports
@@ -600,7 +601,9 @@ def test_cli_exit_codes_and_focus_commands(tmp_path: Path) -> None:
     assert payload["analysis"]["changed_only"]["requested"] is True
     assert payload["analysis"]["changed_only"]["effective"] is False
     warning_codes = {warning["code"] for warning in payload["analysis"]["warnings"]}
-    assert {"changed-only-deprecated", "since-not-available-non-git"} <= warning_codes
+    assert warning_codes == {"changed-only-not-available-non-git"}
+    assert "changed-only-deprecated" not in warning_codes
+    assert "--changed-only is deprecated" not in changed_only.stderr
 
 
 def test_since_filters_findings_to_changed_files(tmp_path: Path) -> None:
@@ -1130,6 +1133,32 @@ def test_all_concat_getattr_and_namespace_ambiguity_are_reported(tmp_path: Path)
     assert any(item["module"] == "pkg.amb" for item in result["analysis"]["module_ambiguities"])
 
 
+def test_explicit_source_roots_preserve_configured_order(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["zsrc", "asrc"]
+        entry = ["zsrc/app.py"]
+        """,
+    )
+    write(tmp_path / "zsrc/app.py", "def main():\n    return 1\n")
+    write(tmp_path / "asrc/helper.py", "def helper():\n    return 1\n")
+
+    result = analyze_fixture(tmp_path)
+
+    assert result["analysis"]["source_roots"] == ["zsrc", "asrc"]
+
+
+def test_inferred_source_roots_prefer_specific_children_before_repo_root(tmp_path: Path) -> None:
+    write(tmp_path / "app.py", "def root_main():\n    return 1\n")
+    write(tmp_path / "src/pkg/app.py", "def package_main():\n    return 1\n")
+
+    result = analyze_fixture(tmp_path)
+
+    assert result["analysis"]["source_roots"][:2] == ["src", "."]
+
+
 def test_include_tests_false_does_not_leak_test_references_to_production(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
@@ -1511,6 +1540,8 @@ def test_cli_debug_and_show_limitations_flags_are_observable(tmp_path: Path) -> 
     debug_run = run_cli(["analyze", "--root", str(tmp_path), "--changed-only", "--debug", "--format", "json"])
     assert debug_run.returncode == 0
     assert "pyfallow DEBUG: analysis warning:" in debug_run.stderr
+    assert "changed-only-not-available-non-git" in debug_run.stderr
+    assert "--changed-only is deprecated" not in debug_run.stderr
 
     limitations_run = run_cli(["analyze", "--root", str(tmp_path), "--format", "text", "--show-limitations"])
     assert limitations_run.returncode == 0
@@ -1586,6 +1617,62 @@ def test_config_validation_emits_config_error(tmp_path: Path) -> None:
     assert config.dupes.min_tokens == 40
     assert config.dupes.mode == "mild"
     assert config.health.max_cognitive == 15
+
+
+@pytest.mark.parametrize(
+    ("config_text", "field"),
+    [
+        (
+            """
+            [tool.pyfallow]
+            roots = "src"
+            """,
+            "roots",
+        ),
+        (
+            """
+            [tool.pyfallow]
+            entry = [123]
+            """,
+            "entry",
+        ),
+        (
+            """
+            [tool.pyfallow]
+            include_tests = "yes"
+            """,
+            "include_tests",
+        ),
+        (
+            """
+            [tool.pyfallow.dupes]
+            min_tokens = "40"
+            """,
+            "dupes.min_tokens",
+        ),
+        (
+            """
+            [tool.pyfallow.dependencies]
+            include_optional = "true"
+            """,
+            "dependencies.include_optional",
+        ),
+        (
+            """
+            [tool.pyfallow.dependencies.import_map]
+            PIL = 123
+            """,
+            "dependencies.import_map.PIL",
+        ),
+    ],
+)
+def test_config_type_validation_rejects_malformed_toml_values(
+    tmp_path: Path, config_text: str, field: str
+) -> None:
+    write(tmp_path / "pyproject.toml", config_text)
+
+    with pytest.raises(ConfigError, match=field):
+        load_config(tmp_path)
 
 
 def test_sarif_has_fingerprints_properties_and_related_locations(tmp_path: Path, monkeypatch) -> None:

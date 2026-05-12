@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import json
+import os
 import subprocess
 import sys
 import textwrap
@@ -12,6 +13,7 @@ from urllib.parse import quote
 
 from fastmcp import Client
 
+from pyfallow_mcp.runtime import REPORT_CACHE, cached_report
 from pyfallow_mcp.server import build_server
 from pyfallow_mcp.tools import verify_imports_impl
 
@@ -325,6 +327,66 @@ def test_verify_imports_cache_detects_new_python_module(tmp_path: Path) -> None:
 
     assert first["hallucinated"][0]["raw"] == "new_module"
     assert {item["raw"] for item in second["safe"]} == {"new_module"}
+
+
+def test_cached_report_invalidates_same_size_source_content_change(tmp_path: Path) -> None:
+    root = tmp_path
+    write(
+        root / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["src"]
+        entry = ["src/app.py"]
+        """,
+    )
+    source = root / "src/app.py"
+    source.parent.mkdir(parents=True)
+    before = "def main():\n    return 1\n"
+    after = "def main(:\n    return 1\n "
+    assert len(before) == len(after)
+    source.write_text(before, encoding="utf-8")
+
+    REPORT_CACHE.clear()
+    first = cached_report(root)
+    original_stat = source.stat()
+    assert "parse-error" not in {issue["rule"] for issue in first["issues"]}
+
+    source.write_text(after, encoding="utf-8")
+    os.utime(source, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+    second = cached_report(root)
+
+    assert second is not first
+    assert "parse-error" in {issue["rule"] for issue in second["issues"]}
+
+
+def test_cached_report_invalidates_same_size_config_content_change(tmp_path: Path) -> None:
+    root = tmp_path
+    write(root / "src/app.py", "def main():\n    return 1\n")
+    config = root / ".pyfallow.toml"
+    before = textwrap.dedent(
+        """
+        roots = ["src"]
+        entry = ["src/app.py"]
+
+        [dupes]
+        mode = "mild"
+        """
+    ).strip() + "\n"
+    after = before.replace('"mild"', '"wild"')
+    assert len(before) == len(after)
+    config.write_text(before, encoding="utf-8")
+
+    REPORT_CACHE.clear()
+    first = cached_report(root)
+    original_stat = config.stat()
+    assert "config-error" not in {issue["rule"] for issue in first["issues"]}
+
+    config.write_text(after, encoding="utf-8")
+    os.utime(config, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+    second = cached_report(root)
+
+    assert second is not first
+    assert "config-error" in {issue["rule"] for issue in second["issues"]}
 
 
 def test_safe_to_remove_classifies_unknown_fingerprints_deterministically(tmp_path: Path) -> None:
