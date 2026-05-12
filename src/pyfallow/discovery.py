@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 
 from .config import PythonConfig
@@ -13,7 +14,7 @@ def discover_source_roots(config: PythonConfig) -> list[Path]:
     root = config.root
     if config.roots:
         roots = [(root / item).resolve() for item in config.roots]
-        return sorted([path for path in roots if path.exists()], key=lambda p: p.as_posix())
+        return _dedupe_preserving_order(path for path in roots if path.exists())
 
     candidates: list[Path] = []
     for name in COMMON_SOURCE_DIRS:
@@ -33,13 +34,23 @@ def discover_source_roots(config: PythonConfig) -> list[Path]:
     if root_py_files or package_dirs or not candidates:
         candidates.append(root.resolve())
 
+    return _dedupe_preserving_order(sorted(candidates, key=_source_root_specificity_key))
+
+
+def _source_root_specificity_key(path: Path) -> tuple[int, str]:
+    resolved = path.resolve()
+    return (-len(resolved.parts), resolved.as_posix())
+
+
+def _dedupe_preserving_order(paths: Iterable[Path]) -> list[Path]:
     deduped: list[Path] = []
     seen: set[str] = set()
-    for path in sorted(candidates, key=lambda p: len(p.as_posix()), reverse=True):
+    for path in paths:
         key = path.as_posix()
-        if key not in seen:
-            seen.add(key)
-            deduped.append(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(path)
     return deduped
 
 
