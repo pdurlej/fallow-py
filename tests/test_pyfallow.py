@@ -2358,3 +2358,70 @@ def test_comparison_benchmark_dry_run_writes_plan_without_cloning(tmp_path: Path
     assert "--format" in plan["command"]
     assert "json" in plan["command"]
     assert not (workspace / "requests").exists()
+
+
+def test_analysis_profile_benchmark_lists_cases_and_phases() -> None:
+    result = subprocess.run(
+        [sys.executable, "benchmarks/analysis-profile/run.py", "--list"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    summary = json.loads(result.stdout)
+    assert {case["name"] for case in summary["cases"]} == {"demo-project", "generated"}
+    assert "file_indexing" in summary["phases"]
+    assert "format_serialization" in summary["phases"]
+
+
+def test_analysis_profile_benchmark_profiles_generated_fixture(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    output = tmp_path / "profile.json"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "benchmarks/analysis-profile/run.py",
+            "--case",
+            "generated",
+            "--generated-modules",
+            "12",
+            "--runs",
+            "1",
+            "--workspace",
+            str(workspace),
+            "--output",
+            str(output),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=TIMEOUT,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    case = payload["cases"][0]
+    assert case["case"] == "generated"
+    assert case["repo_metrics"]["files_analyzed"] == 14
+    assert case["median_total_seconds"] > 0
+    phases = {row["phase"] for row in case["median_phases"]}
+    assert {
+        "source_discovery",
+        "file_indexing",
+        "module_resolution",
+        "dependency_analysis",
+        "graph_analysis",
+        "duplicate_detection",
+        "format_serialization",
+    } <= phases
+
+    readme = (ROOT / "benchmarks/analysis-profile/README.md").read_text(encoding="utf-8")
+    performance = (ROOT / "docs/performance.md").read_text(encoding="utf-8")
+    assert "Do not implement parallel AST indexing yet" in readme
+    assert "Analyzer Internals Profile" in performance
+    assert "do not add parallel AST indexing on this evidence alone" in performance
