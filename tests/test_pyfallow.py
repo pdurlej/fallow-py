@@ -1133,6 +1133,32 @@ def test_all_concat_getattr_and_namespace_ambiguity_are_reported(tmp_path: Path)
     assert any(item["module"] == "pkg.amb" for item in result["analysis"]["module_ambiguities"])
 
 
+def test_explicit_source_roots_preserve_configured_order(tmp_path: Path) -> None:
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["zsrc", "asrc"]
+        entry = ["zsrc/app.py"]
+        """,
+    )
+    write(tmp_path / "zsrc/app.py", "def main():\n    return 1\n")
+    write(tmp_path / "asrc/helper.py", "def helper():\n    return 1\n")
+
+    result = analyze_fixture(tmp_path)
+
+    assert result["analysis"]["source_roots"] == ["zsrc", "asrc"]
+
+
+def test_inferred_source_roots_prefer_specific_children_before_repo_root(tmp_path: Path) -> None:
+    write(tmp_path / "app.py", "def root_main():\n    return 1\n")
+    write(tmp_path / "src/pkg/app.py", "def package_main():\n    return 1\n")
+
+    result = analyze_fixture(tmp_path)
+
+    assert result["analysis"]["source_roots"][:2] == ["src", "."]
+
+
 def test_include_tests_false_does_not_leak_test_references_to_production(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
