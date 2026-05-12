@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import time
 from pathlib import Path
 from typing import Any
@@ -28,7 +29,7 @@ IGNORED_SIGNATURE_DIRS = {
     "site-packages",
     "venv",
 }
-REPORT_CACHE: dict[str, tuple[float, tuple[tuple[str, int, int], ...], dict[str, Any]]] = {}
+REPORT_CACHE: dict[str, tuple[float, tuple[tuple[str, int, int, str], ...], dict[str, Any]]] = {}
 
 
 def analyze_report(root: str | Path, since: str | None = None) -> dict[str, Any]:
@@ -80,7 +81,7 @@ def issue_sort_key(issue: dict[str, Any]) -> tuple[int, str, str, int, str]:
     )
 
 
-def _report_signature(root: Path, result: dict[str, Any]) -> tuple[tuple[str, int, int], ...]:
+def _report_signature(root: Path, result: dict[str, Any]) -> tuple[tuple[str, int, int, str], ...]:
     return tuple(_path_signature(root, rel) for rel in sorted(_signature_paths(root, result)))
 
 
@@ -117,10 +118,21 @@ def _is_ignored_signature_path(path: str) -> bool:
     return any(part in IGNORED_SIGNATURE_DIRS or part.endswith(".egg-info") for part in path.split("/"))
 
 
-def _path_signature(root: Path, rel: str) -> tuple[str, int, int]:
+def _path_signature(root: Path, rel: str) -> tuple[str, int, int, str]:
     file_path = root / rel
     try:
         stat = file_path.stat()
     except FileNotFoundError:
-        return rel, -1, -1
-    return rel, stat.st_mtime_ns, stat.st_size
+        return rel, -1, -1, "missing"
+    return rel, stat.st_mtime_ns, stat.st_size, _file_digest(file_path)
+
+
+def _file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError:
+        return "unreadable"
+    return digest.hexdigest()
