@@ -45,3 +45,7 @@ benchmarks/soak/results/
 benchmarks/comparison/workspace/
 benchmarks/comparison/venvs/
 benchmarks/comparison/results/
+
+# analyzer profile benchmark generated fixtures and run artifacts
+benchmarks/analysis-profile/workspace/
+benchmarks/analysis-profile/results/

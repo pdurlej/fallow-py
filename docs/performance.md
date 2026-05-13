@@ -113,3 +113,35 @@ python benchmarks/comparison/run.py --repo all --tool all --runs 5 --execute
 ```
 
 Generated results are written under `benchmarks/comparison/results/` and intentionally ignored. Commit updated numbers only after recording the machine, Python version, tool versions, and run command.
+
+## Analyzer Internals Profile
+
+DeepSeek audit triage issue #41 raised parallel AST indexing as a possible future optimization.
+The current evidence says to measure more before implementing concurrency.
+
+Harness:
+
+```bash
+python benchmarks/analysis-profile/run.py --case all --generated-modules 120 --runs 3
+```
+
+Local profile environment:
+
+- Apple M1 Max
+- macOS 26.4.1 arm64
+- Python 3.14.4
+- Three timed runs per case
+- No repository dependencies installed
+
+Local median profile:
+
+| Case | Files | Imports | Issues | Median total | Largest measured phases |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `demo-project` | 12 | 12 | 17 | 0.007018s | source discovery 0.001413s; duplicate detection 0.001413s; file indexing 0.001281s |
+| `generated --generated-modules 120` | 122 | 41 | 297 | 0.076249s | file indexing 0.021216s; complexity 0.014413s; source discovery 0.011337s |
+
+Decision: do not add parallel AST indexing on this evidence alone. The generated fixture shows
+file indexing as the largest measured phase, but total runtime is still below 100ms and meaningful
+time is also spread across complexity, discovery, duplicate detection, and module resolution.
+Parallelism should wait for a larger real-world corpus where indexing dominates enough to justify
+the concurrency and determinism costs.
