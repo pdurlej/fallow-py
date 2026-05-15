@@ -1,6 +1,6 @@
-# pyfallow-cleanup Claude Code Skill
+# fallow-py-cleanup Claude Code Skill
 
-This example skill tells Claude Code when and how to call the `pyfallow-mcp` server during Python cleanup, review, and commit workflows.
+This example skill tells Claude Code when and how to call the `fallow-py-mcp` server during Python cleanup, review, and commit workflows.
 
 ## Install
 
@@ -8,7 +8,7 @@ From this repository:
 
 ```bash
 mkdir -p .claude/skills
-cp -R examples/claude-skill/pyfallow-cleanup .claude/skills/
+cp -R examples/claude-skill/fallow-py-cleanup .claude/skills/
 python -m pip install -e ".[dev]"
 python -m pip install -e ./mcp
 ```
@@ -19,7 +19,7 @@ Configure the MCP server in Claude Code:
 {
   "mcpServers": {
     "pyfallow": {
-      "command": "pyfallow-mcp",
+      "command": "fallow-py-mcp",
       "args": ["--root", "/absolute/path/to/your/repo"]
     }
   }
@@ -27,6 +27,9 @@ Configure the MCP server in Claude Code:
 ```
 
 Restart Claude Code after installing the skill and MCP server.
+
+The MCP server key is still shown as `pyfallow` for 0.3.x compatibility with
+existing tool references. New install commands should use `fallow-py-mcp`.
 
 ## Manual Smoke Test
 

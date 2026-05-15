@@ -18,7 +18,7 @@ Copy the bundled skill into a repository-local Claude skills directory:
 
 ```bash
 mkdir -p .claude/skills
-cp -R examples/claude-skill/pyfallow-cleanup .claude/skills/
+cp -R examples/claude-skill/fallow-py-cleanup .claude/skills/
 ```
 
 Configure the MCP server:
@@ -34,7 +34,7 @@ Configure the MCP server:
 }
 ```
 
-The skill is in [`examples/claude-skill/pyfallow-cleanup/`](../examples/claude-skill/pyfallow-cleanup/). It instructs the agent to call fallow-py before commits, after multi-file Python edits, and before marking work complete.
+The skill is in [`examples/claude-skill/fallow-py-cleanup/`](../examples/claude-skill/fallow-py-cleanup/). It instructs the agent to call fallow-py before commits, after multi-file Python edits, and before marking work complete. The MCP namespace is shown as `pyfallow` for 0.3.x compatibility; the package and command names are `fallow-py-mcp`.
 
 ## Cursor
 
@@ -42,7 +42,7 @@ Copy the Cursor mirror rule into your project:
 
 ```bash
 mkdir -p .cursor/rules
-cp examples/cursor-rules/pyfallow.mdc .cursor/rules/pyfallow.mdc
+cp examples/cursor-rules/fallow-py.mdc .cursor/rules/fallow-py.mdc
 ```
 
 The rule is always-on for Python files and asks Cursor to use MCP when available, or fall back to the CLI:
@@ -93,12 +93,13 @@ the grouped fields directly so agents do not reimplement classification grouping
 
 ## Release Assets
 
-Small zip bundles are checked in under `examples/` for first-release convenience:
+Small legacy zip bundles are checked in under `examples/` for first-release convenience:
 
 - `examples/claude-skill/claude-skill-pyfallow-cleanup-v0.3.0.zip`
 - `examples/cursor-rules/cursor-rules-pyfallow-v0.3.0.zip`
 
-They contain the same text files as the source directories and should be regenerated when those files change.
+They preserve the pre-rename `pyfallow` filenames for 0.3.x alpha compatibility. New
+source examples use `fallow-py-*` names.
 
 ## Limitations
 

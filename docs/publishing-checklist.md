@@ -1,5 +1,13 @@
 # Publishing Checklist
 
+## Current Public State
+
+- Forgejo canonical repo: `https://git.pdurlej.com/pdurlej/fallow-py`.
+- GitHub mirror: `https://github.com/pdurlej/fallow-py`.
+- Current alpha versions: `fallow-py 0.3.0a3` and `fallow-py-mcp 0.1.0a3`.
+- GitHub repository topics are set. Forgejo topics require an operator/admin account;
+  `codex` cannot update them with its current permissions.
+
 ## Before Pushing
 
 - Remove generated files: `build/`, `dist/`, `*.egg-info/`, caches, `.DS_Store`, and local editor state.
@@ -11,7 +19,7 @@
 - Inspect README for current commands and non-affiliation language.
 - Inspect `LICENSE`.
 - Inspect GitHub templates.
-- Set real project URLs in `pyproject.toml` before the next public release.
+- Verify project URLs in `pyproject.toml` still point at `pdurlej/fallow-py`.
 - Update version consistently.
 - Update `CHANGELOG.md`.
 - Verify `examples/demo_project` commands still work.
@@ -22,9 +30,9 @@
 - Push code.
 - Check GitHub Actions on all configured Python versions.
 - Set repository description:
-  `Python-first static codebase intelligence for agents and reviewers.`
+  `Deterministic Python codebase intelligence for AI agents before they claim done.`
 - Add topics:
-  `python`, `static-analysis`, `code-intelligence`, `ai-agents`, `sarif`, `dead-code`, `architecture`.
+  `python`, `static-analysis`, `code-intelligence`, `ai-agents`, `sarif`, `dead-code`, `architecture`, `dependency-analysis`.
 - Check GitHub Community Standards.
 - Create the release from the changelog.
 - Do not publish to PyPI until package metadata and name ownership are confirmed.

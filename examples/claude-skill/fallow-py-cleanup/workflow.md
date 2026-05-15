@@ -1,6 +1,6 @@
-# pyfallow-cleanup Workflow
+# fallow-py-cleanup Workflow
 
-Use this workflow for Python changes when the pyfallow MCP server is available.
+Use this workflow for Python changes when the fallow-py MCP server is available.
 
 ## Step 1: Detect The Trigger
 
@@ -16,7 +16,7 @@ Activate this skill when:
 Prefer the CLI fix-plan format when shell access is available:
 
 ```bash
-pyfallow analyze --root . --since HEAD --format agent-fix-plan
+fallow-py analyze --root . --since HEAD --format agent-fix-plan
 ```
 
 If using MCP tools directly, call:
@@ -101,7 +101,7 @@ After fixes, call `pyfallow.analyze_diff` again with the same `since` ref. Conti
 If the project has an explicit baseline, prefer the CLI for baseline-aware gating until MCP baseline arguments are added:
 
 ```bash
-pyfallow analyze --root . --since HEAD --baseline .fallow-baseline.json --fail-on warning --min-confidence medium
+fallow-py analyze --root . --since HEAD --baseline .fallow-baseline.json --fail-on warning --min-confidence medium
 ```
 
 ## Pre-Edit Usage
