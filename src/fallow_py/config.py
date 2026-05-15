@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tomllib
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -156,6 +157,7 @@ class PythonConfig:
 
 def load_config(root: str | Path = ".", config_path: str | Path | None = None) -> PythonConfig:
     root_path = Path(root).resolve()
+    selected_from_argument = config_path is not None
     selected: Path | None = Path(config_path).resolve() if config_path else None
     data: dict[str, Any] = {}
     if selected:
@@ -164,6 +166,7 @@ def load_config(root: str | Path = ".", config_path: str | Path | None = None) -
         data = _read_toml(selected)
     else:
         for candidate in (
+            root_path / ".fallow-py.toml",
             root_path / ".fallow.toml",
             root_path / ".pyfallow.toml",
             root_path / "pyproject.toml",
@@ -174,9 +177,11 @@ def load_config(root: str | Path = ".", config_path: str | Path | None = None) -
                     selected = candidate
                     data = maybe
                     break
-    if selected and selected.name == "pyproject.toml":
+    if selected and selected.name == "pyproject.toml" and selected_from_argument:
         data = _extract_config(_read_toml(selected), "pyproject.toml")
-    elif selected and selected.name in {".fallow.toml", ".pyfallow.toml"}:
+    elif selected and selected.name in {".fallow-py.toml", ".fallow.toml", ".pyfallow.toml"}:
+        if selected.name == ".pyfallow.toml":
+            _warn_legacy_config(".pyfallow.toml", ".fallow-py.toml")
         raw = _read_toml(selected)
         data = _extract_config(raw, selected.name) or raw
     return build_config(root_path, selected, data)
@@ -231,10 +236,27 @@ def _read_toml(path: Path) -> dict[str, Any]:
 def _extract_config(raw: dict[str, Any], name: str) -> dict[str, Any]:
     if name == "pyproject.toml":
         tool = raw.get("tool", {})
+        fallow_py = tool.get("fallow_py")
         fallow_python = tool.get("fallow", {}).get("python")
         pyfallow = tool.get("pyfallow")
-        return fallow_python or pyfallow or {}
-    return raw.get("tool", {}).get("fallow", {}).get("python") or raw.get("tool", {}).get("pyfallow") or raw
+        if pyfallow and not fallow_py and not fallow_python:
+            _warn_legacy_config("[tool.pyfallow]", "[tool.fallow_py]")
+        return fallow_py or fallow_python or pyfallow or {}
+    tool = raw.get("tool", {})
+    fallow_py = tool.get("fallow_py")
+    fallow_python = tool.get("fallow", {}).get("python")
+    pyfallow = tool.get("pyfallow")
+    if pyfallow and not fallow_py and not fallow_python:
+        _warn_legacy_config("[tool.pyfallow]", "[tool.fallow_py]")
+    return fallow_py or fallow_python or pyfallow or raw
+
+
+def _warn_legacy_config(old: str, new: str) -> None:
+    warnings.warn(
+        f"{old} is deprecated; use {new} instead.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
 
 
 def _merge_dataclass(target: object, values: dict[str, Any]) -> None:

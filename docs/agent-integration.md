@@ -1,16 +1,16 @@
 # Agent Integration
 
-pyfallow is designed to give coding agents a deterministic static-analysis checkpoint before they claim Python work is complete. The recommended integration path is the `pyfallow-mcp` package plus an agent rule or skill that tells the model when to call it.
+fallow-py is designed to give coding agents a deterministic static-analysis checkpoint before they claim Python work is complete. The recommended integration path is the `fallow-py-mcp` package plus an agent rule or skill that tells the model when to call it.
 
 ## Install From A Checkout
 
 ```bash
 python -m pip install -e ".[dev]"
 python -m pip install -e ./mcp
-pyfallow-mcp --root /absolute/path/to/repo
+fallow-py-mcp --root /absolute/path/to/repo
 ```
 
-The core `pyfallow` package remains stdlib-only at runtime. MCP dependencies live in the separate `pyfallow-mcp` package.
+The core `fallow-py` package remains stdlib-only at runtime. MCP dependencies live in the separate `fallow-py-mcp` package.
 
 ## Claude Code
 
@@ -27,14 +27,14 @@ Configure the MCP server:
 {
   "mcpServers": {
     "pyfallow": {
-      "command": "pyfallow-mcp",
+      "command": "fallow-py-mcp",
       "args": ["--root", "/absolute/path/to/repo"]
     }
   }
 }
 ```
 
-The skill is in [`examples/claude-skill/pyfallow-cleanup/`](../examples/claude-skill/pyfallow-cleanup/). It instructs the agent to call pyfallow before commits, after multi-file Python edits, and before marking work complete.
+The skill is in [`examples/claude-skill/pyfallow-cleanup/`](../examples/claude-skill/pyfallow-cleanup/). It instructs the agent to call fallow-py before commits, after multi-file Python edits, and before marking work complete.
 
 ## Cursor
 
@@ -48,13 +48,13 @@ cp examples/cursor-rules/pyfallow.mdc .cursor/rules/pyfallow.mdc
 The rule is always-on for Python files and asks Cursor to use MCP when available, or fall back to the CLI:
 
 ```bash
-pyfallow analyze --root . --since HEAD --format json --min-confidence medium
+fallow-py analyze --root . --since HEAD --format json --min-confidence medium
 ```
 
 ## Recommended Agent Workflow
 
 1. Call `pyfallow.analyze_diff(since="HEAD", min_confidence="medium")` before commit, or use the branch base ref for PR cleanup.
-2. Before adding uncertain imports, call `pyfallow.verify_imports(file=<path>, planned_imports=[...])`.
+2. Before adding uncertain imports, call `fallow_py.verify_imports(file=<path>, planned_imports=[...])`.
 3. Read `analyze_diff.blocking`, `analyze_diff.review_needed`, `analyze_diff.auto_safe`, and `analyze_diff.manual_only`.
 4. Call `pyfallow.explain_finding` when you need remediation details.
 5. Auto-fix only findings classified as `auto_safe`.
@@ -102,4 +102,4 @@ They contain the same text files as the source directories and should be regener
 
 ## Limitations
 
-Agent triggers are heuristic. Claude Code skills and Cursor rules improve the odds that a model runs pyfallow at the right time, but they cannot guarantee deterministic tool use. CI should still run `pyfallow analyze --fail-on warning --min-confidence medium` or an equivalent baseline-aware command.
+Agent triggers are heuristic. Claude Code skills and Cursor rules improve the odds that a model runs fallow-py at the right time, but they cannot guarantee deterministic tool use. CI should still run `fallow-py analyze --fail-on warning --min-confidence medium` or an equivalent baseline-aware command.

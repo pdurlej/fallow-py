@@ -1,13 +1,13 @@
-# pyfallow-mcp
+# fallow-py-mcp
 
-MCP server package for `pyfallow`.
+MCP server package for `fallow-py`.
 
 Install locally from this repository:
 
 ```bash
 python -m pip install -e ../
 python -m pip install -e .
-pyfallow-mcp --root /path/to/repo
+fallow-py-mcp --root /path/to/repo
 ```
 
 Claude Code `mcp.json` example:
@@ -16,18 +16,18 @@ Claude Code `mcp.json` example:
 {
   "mcpServers": {
     "pyfallow": {
-      "command": "pyfallow-mcp",
+      "command": "fallow-py-mcp",
       "args": ["--root", "/path/to/repo"]
     }
   }
 }
 ```
 
-The core `pyfallow` package remains stdlib-only. MCP dependencies live in this integration package.
+The core `fallow-py` package remains stdlib-only. MCP dependencies live in this integration package.
 
 Tools:
 
-- `analyze_diff`: diff-aware pyfallow findings with `agent-fix-plan` classification
+- `analyze_diff`: diff-aware fallow-py findings with `agent-fix-plan` classification
 - `agent_context`: compact project map for coding agents
 - `explain_finding`: deterministic remediation guidance
 - `safe_to_remove`: conservative removal classification

@@ -3,20 +3,20 @@ name = "demo-project"
 version = "0.1.0"
 dependencies = ["requests", "unusedlib"]
 
-[tool.pyfallow]
+[tool.fallow_py]
 roots = ["src"]
 entry = ["src/app/main.py"]
 
-[tool.pyfallow.dupes]
+[tool.fallow_py.dupes]
 min_lines = 3
 min_tokens = 10
 
-[tool.pyfallow.health]
+[tool.fallow_py.health]
 max_cyclomatic = 3
 max_cognitive = 4
 hotspot_score_threshold = 20
 
-[[tool.pyfallow.boundaries.rules]]
+[[tool.fallow_py.boundaries.rules]]
 name = "domain-no-infra"
 from = "src/app/domain/**"
 disallow = ["src/app/infra/**"]

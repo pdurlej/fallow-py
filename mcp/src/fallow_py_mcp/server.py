@@ -18,7 +18,7 @@ from .tools import (
 )
 
 SERVER_INSTRUCTIONS = (
-    "Use pyfallow tools before committing or showing Python code changes. "
+    "Use fallow-py tools before committing or showing Python code changes. "
     "Treat high-confidence findings as actionable and low-confidence findings as review context."
 )
 
@@ -81,10 +81,10 @@ def build_server(default_root: str | Path | None = None) -> FastMCP:
     return server
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="pyfallow-mcp", description="MCP server for pyfallow.")
+def main(argv: list[str] | None = None, *, prog: str = "fallow-py-mcp") -> int:
+    parser = argparse.ArgumentParser(prog=prog, description="MCP server for fallow-py.")
     parser.add_argument("--root", default=".", help="Default analysis root for tools/resources.")
-    parser.add_argument("--version", action="version", version=f"pyfallow-mcp {VERSION}")
+    parser.add_argument("--version", action="version", version=f"{prog} {VERSION}")
     args = parser.parse_args(argv)
     build_server(args.root).run()
     return 0

@@ -1,6 +1,6 @@
 # Limitations
 
-`pyfallow` is a static and semi-static analyzer. It never imports or executes analyzed project code. That safety choice means findings are approximate.
+`fallow-py` is a static and semi-static analyzer. It never imports or executes analyzed project code. That safety choice means findings are approximate.
 
 ## Dynamic Imports
 
@@ -16,7 +16,7 @@ Runtime assignment to modules, classes, functions, or imports is not modeled.
 
 ## Dependency Injection
 
-Dependency injection containers and service locators may reference classes by strings, annotations, config, or runtime registration. pyfallow does not fully model those systems.
+Dependency injection containers and service locators may reference classes by strings, annotations, config, or runtime registration. fallow-py does not fully model those systems.
 
 ## Framework Magic
 

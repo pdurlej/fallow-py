@@ -1,6 +1,6 @@
 [project]
 dependencies = ["celery"]
 
-[tool.pyfallow]
+[tool.fallow_py]
 roots = ["src"]
 entry = ["src/app.py"]

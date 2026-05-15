@@ -5,7 +5,7 @@ analysis. Each case includes:
 
 - `pyproject.toml` and minimal source files
 - `expected.json` used by tests
-- `EXPECTED.md` explaining why the case is difficult and what pyfallow should do
+- `EXPECTED.md` explaining why the case is difficult and what fallow-py should do
 
 The corpus is intentionally small. If a project finds a new false positive, add the smallest
 reproduction here before changing analyzer behavior.

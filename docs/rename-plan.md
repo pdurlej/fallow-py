@@ -39,7 +39,7 @@ No source code touched. No CI / packaging / config changes. Pure documentation o
 
 **Branch:** `rename/package-fallow-py`
 **Risk:** medium (largest mechanical diff)
-**Status:** in progress
+**Status:** merged (#46)
 
 Scope:
 - `src/pyfallow/` → `src/fallow_py/` (full directory rename, preserving git history via `git mv`)
@@ -66,9 +66,9 @@ Out of scope:
 
 ### PR #3 — CLI command, config, packaging, docs
 
-**Branch:** TBD (`rename/cli-config-docs`)
+**Branch:** `rename/cli-config-docs`
 **Risk:** low
-**Status:** not started
+**Status:** in progress
 
 Scope:
 - `pyproject.toml`:
@@ -125,3 +125,4 @@ After PR #4 merges, the rename is observably complete.
 
 - **2026-05-13** — PR #1 opened (this doc + ADR 0012). Status: in review.
 - **2026-05-15** — PR #1 merged as #45; PR #2 started on `rename/package-fallow-py`.
+- **2026-05-15** — PR #2 merged as #46; PR #3 started on `rename/cli-config-docs`.

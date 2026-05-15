@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 This project follows the spirit of [Keep a Changelog](https://keepachangelog.com/) and uses semantic versioning while the public contract stabilizes.
 
+## 0.3.0a3 / 0.1.0a3 mcp - TBD
+
+### Changed
+
+- Renamed the public Python distribution from `pyfallow` to `fallow-py`.
+- Renamed the public MCP distribution from `pyfallow-mcp` to `fallow-py-mcp`.
+- Added canonical console scripts `fallow-py` and `fallow-py-mcp`.
+- Kept legacy `pyfallow`, `pyfallow-mcp`, `pyfallow_mcp`, and import compatibility shims during the alpha migration.
+- Made `.fallow-py.toml` and `[tool.fallow_py]` the canonical configuration names while keeping legacy `.pyfallow.toml` and `[tool.pyfallow]` fallbacks with deprecation warnings.
+
 ## 0.3.0a2 / 0.1.0a2 mcp - 2026-05-04
 
 ### Added

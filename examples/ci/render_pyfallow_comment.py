@@ -16,8 +16,8 @@ GROUPS = [
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Render a pyfallow agent-fix-plan as Markdown.")
-    parser.add_argument("report", type=Path, help="Path to pyfallow agent-fix-plan JSON.")
+    parser = argparse.ArgumentParser(description="Render a fallow-py agent-fix-plan as Markdown.")
+    parser.add_argument("report", type=Path, help="Path to fallow-py agent-fix-plan JSON.")
     args = parser.parse_args()
     plan = json.loads(args.report.read_text(encoding="utf-8"))
     print(render_comment(plan))
@@ -27,7 +27,7 @@ def main() -> int:
 def render_comment(plan: dict[str, Any]) -> str:
     counts = {name: len(plan.get(name, [])) for name, _ in GROUPS}
     total = sum(counts.values())
-    lines = ["## pyfallow analysis", ""]
+    lines = ["## fallow-py analysis", ""]
     if total == 0:
         lines.extend(
             [

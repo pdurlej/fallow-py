@@ -8,6 +8,7 @@ import subprocess
 import sys
 import textwrap
 import time
+import tomllib
 from pathlib import Path
 from urllib.parse import quote
 
@@ -57,7 +58,7 @@ def make_repo(root: Path) -> Path:
         [project]
         dependencies = ["unusedpkg"]
 
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -82,7 +83,7 @@ def make_cycle_repo(root: Path) -> Path:
     write(
         root / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -101,11 +102,11 @@ def make_grouped_repo(root: Path) -> Path:
     write(
         root / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
 
-        [[tool.pyfallow.boundaries.rules]]
+        [[tool.fallow_py.boundaries.rules]]
         name = "domain-no-infra"
         from = "src/domain/**"
         disallow = ["src/infra/**", "infra.*"]
@@ -335,7 +336,7 @@ def test_cached_report_invalidates_same_size_source_content_change(tmp_path: Pat
     write(
         root / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -363,7 +364,7 @@ def test_cached_report_invalidates_same_size_source_content_change(tmp_path: Pat
 def test_cached_report_invalidates_same_size_config_content_change(tmp_path: Path) -> None:
     root = tmp_path
     write(root / "src/app.py", "def main():\n    return 1\n")
-    config = root / ".pyfallow.toml"
+    config = root / ".fallow-py.toml"
     before = textwrap.dedent(
         """
         roots = ["src"]
@@ -428,9 +429,20 @@ def test_console_entrypoint_help() -> None:
 
         assert result.returncode == 0
         assert "--root" in result.stdout
+        if module == "pyfallow_mcp":
+            assert "`pyfallow-mcp` is deprecated" in result.stderr
 
 
-def test_mcp_self_audit_maps_core_import_to_legacy_distribution() -> None:
+def test_mcp_release_metadata_uses_fallow_py_distribution() -> None:
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert pyproject["project"]["name"] == "fallow-py-mcp"
+    assert pyproject["project"]["version"] == "0.1.0a3"
+    assert "fallow-py>=0.3.0a3" in pyproject["project"]["dependencies"]
+    assert pyproject["project"]["scripts"]["fallow-py-mcp"] == "fallow_py_mcp.server:main"
+    assert pyproject["project"]["scripts"]["pyfallow-mcp"] == "pyfallow_mcp.server:main"
+
+
+def test_mcp_self_audit_has_no_distribution_drift() -> None:
     from fallow_py.analysis import analyze
     from fallow_py.config import load_config
 

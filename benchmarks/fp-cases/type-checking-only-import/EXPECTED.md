@@ -7,5 +7,5 @@ blocking runtime dependency finding.
 
 Why this is tough: the import appears in Python source but is intentionally not executed at runtime.
 
-How pyfallow handles it: TYPE_CHECKING depth is tracked during AST indexing and dependency policy lowers
+How fallow-py handles it: TYPE_CHECKING depth is tracked during AST indexing and dependency policy lowers
 the finding scope.

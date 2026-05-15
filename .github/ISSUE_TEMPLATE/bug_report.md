@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a pyfallow crash, incorrect output, or CLI problem
+about: Report a fallow-py crash, incorrect output, or CLI problem
 title: "[Bug]: "
 labels: bug
 assignees: ""
@@ -8,7 +8,7 @@ assignees: ""
 
 ## Version
 
-`pyfallow --version` is not available yet; include package version or commit.
+Run `fallow-py --version`. If you used the legacy `pyfallow` alias, include the deprecation stderr too.
 
 ## Python Version
 
@@ -43,4 +43,3 @@ Paste a short JSON/text excerpt. Avoid secrets and private paths.
 ## Confidence Or Severity Concern
 
 If the finding exists but severity/confidence feels wrong, explain why.
-

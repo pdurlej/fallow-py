@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve pyfallow.
+Thanks for helping improve fallow-py.
 
 The most valuable contributions right now are correctness fixes, false-positive reductions, fixture projects, documentation, and release engineering. Please avoid expanding analyzer categories unless there is an accepted design discussion first.
 
@@ -19,13 +19,13 @@ Runtime code must remain stdlib-only. Dev and packaging tools belong in the `dev
 Run these before opening a PR:
 
 ```bash
-python -m pyfallow --help
-python -m pyfallow --format json --root . --output /tmp/pyfallow-report.json
-python -m pyfallow analyze --format text --root .
-python -m pyfallow analyze --format sarif --root . --output /tmp/pyfallow.sarif
-python -m pyfallow agent-context --format markdown --root . --output /tmp/pyfallow-agent-context.md
-python -m pyfallow baseline create --root . --output /tmp/pyfallow-baseline.json
-python -m pyfallow baseline compare --root . --baseline /tmp/pyfallow-baseline.json
+python -m fallow_py --help
+python -m fallow_py --format json --root . --output /tmp/pyfallow-report.json
+python -m fallow_py analyze --format text --root .
+python -m fallow_py analyze --format sarif --root . --output /tmp/pyfallow.sarif
+python -m fallow_py agent-context --format markdown --root . --output /tmp/pyfallow-agent-context.md
+python -m fallow_py baseline create --root . --output /tmp/pyfallow-baseline.json
+python -m fallow_py baseline compare --root . --baseline /tmp/pyfallow-baseline.json
 ```
 
 ## Coding Principles

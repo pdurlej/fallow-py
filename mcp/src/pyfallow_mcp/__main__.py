@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fallow_py_mcp.server import main
+from .server import main
 
 
 if __name__ == "__main__":

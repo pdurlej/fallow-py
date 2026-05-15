@@ -32,7 +32,7 @@ def _text_report(result: dict[str, Any]) -> str:
     summary = result["summary"]
     analysis = result["analysis"]
     lines = [
-        f"pyfallow {result['version']} - {summary['total_issues']} issues "
+        f"fallow-py {result['version']} - {summary['total_issues']} issues "
         f"({summary['errors']} error, {summary['warnings']} warning, {summary['info']} info)",
         f"Analyzed {analysis['modules_analyzed']} modules / {analysis['files_analyzed']} files.",
     ]
@@ -62,7 +62,7 @@ def _text_report(result: dict[str, Any]) -> str:
 
 def _markdown_report(result: dict[str, Any]) -> str:
     lines = [
-        "# pyfallow Report",
+        "# fallow-py Report",
         "",
         f"- Issues: {result['summary']['total_issues']}",
         f"- Modules: {result['analysis']['modules_analyzed']}",

@@ -3,15 +3,15 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyfallow-mcp"
-version = "0.1.0a2"
-description = "MCP server for pyfallow agentic codebase intelligence."
+name = "fallow-py-mcp"
+version = "0.1.0a3"
+description = "MCP server for fallow-py agentic codebase intelligence."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "pyfallow contributors" }]
-keywords = ["mcp", "pyfallow", "static-analysis", "ai-agents", "code-intelligence"]
+authors = [{ name = "fallow-py contributors" }]
+keywords = ["mcp", "fallow-py", "pyfallow", "static-analysis", "ai-agents", "code-intelligence"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -24,7 +24,7 @@ classifiers = [
 dependencies = [
   "fastmcp>=3.2,<4",
   "pydantic>=2.11",
-  "pyfallow>=0.3.0a2",
+  "fallow-py>=0.3.0a3",
 ]
 
 [project.urls]
@@ -41,6 +41,7 @@ dev = [
 ]
 
 [project.scripts]
+fallow-py-mcp = "fallow_py_mcp.server:main"
 pyfallow-mcp = "pyfallow_mcp.server:main"
 
 [tool.setuptools.packages.find]
@@ -50,6 +51,3 @@ where = ["src"]
 testpaths = ["tests"]
 pythonpath = ["src", "../src"]
 addopts = "-q"
-
-[tool.pyfallow.dependencies.import_map]
-fallow_py = "pyfallow"

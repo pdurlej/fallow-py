@@ -10,16 +10,16 @@
 
 ## What this repo is
 
-`pyfallow` is a **deterministic Python static analyzer** that AI agents call on themselves before commit. The thesis (per ADR 0006, ADR 0007, `docs/philosophy.md`):
+`fallow-py` is a **deterministic Python static analyzer** that AI agents call on themselves before commit. The thesis (per ADR 0006, ADR 0007, `docs/philosophy.md`):
 
-> Pyfallow is the **bassist** for the AI-agent band: disciplined background structure, rhythm, and timing. It lets creative and orchestration agents move faster without turning every change into a trust fall. **Without bassist, the band sounds empty; with bassist, the audience often does not notice the bassist — and that is part of the role.**
+> Fallow-py is the **bassist** for the AI-agent band: disciplined background structure, rhythm, and timing. It lets creative and orchestration agents move faster without turning every change into a trust fall. **Without bassist, the band sounds empty; with bassist, the audience often does not notice the bassist — and that is part of the role.**
 
-Pyfallow is a **harness** (deterministic tool), not an **agent** (reasoning, opinion-having entity). Categorical distinction enforced.
+Fallow-py is a **harness** (deterministic tool), not an **agent** (reasoning, opinion-having entity). Categorical distinction enforced.
 
 The repo holds:
 
-- **Core analyzer** in `src/pyfallow/` — 28 modules, stdlib-only Python ≥3.11
-- **MCP server** in `mcp/src/pyfallow_mcp/` — separate package, FastMCP + Pydantic v2
+- **Core analyzer** in `src/fallow_py/` — 28 modules, stdlib-only Python ≥3.11
+- **MCP server** in `mcp/src/fallow_py_mcp/` — separate package, FastMCP + Pydantic v2
 - **Tests** in `tests/` (core) and `mcp/tests/` (MCP)
 - **CI workflows** in `.forgejo/workflows/` (primary) and `.github/workflows/` (mirror)
 - **Architecture decisions** in `decisions/` — numbered ADRs (Nygard format)
@@ -35,10 +35,10 @@ The repo holds:
 
 **Post-Phase-A, dogfood window open** (ADR 0006, ADR 0008).
 
-Phase A (5 ship-blocker tickets A1-A5) merged on `main` via PR #2 on 2026-05-04. TestPyPI has `pyfallow 0.3.0a2` and `pyfallow-mcp 0.1.0a2`.
+Phase A (5 ship-blocker tickets A1-A5) merged on `main` via PR #2 on 2026-05-04. The rename path now targets `fallow-py 0.3.0a3` and `fallow-py-mcp 0.1.0a3`; legacy `pyfallow` import/CLI shims remain during the alpha migration.
 
 **Phase B (12 issues #4-#15) and Phase C (10 issues #16-#25) are PAUSED** until dogfood evidence accumulates. Window is **evidence-bounded, not time-bounded** (ADR 0008 evidence-bounded refinement). Triage triggers when:
-- ≥100 pyfallow CI runs across integrated repos, AND
+- ≥100 fallow-py CI runs across integrated repos, AND
 - ≥20 dogfood log entries with non-`[FRICTION]`-only category breakdown, AND
 - Operator's qualitative read that the evidence is sufficient
 
@@ -141,7 +141,7 @@ Reviewers read **product-first and operator-first**, not only diff-first.
 
 ### Owner Action Board (required for owner-facing reports)
 
-Every State of Pyfallow / strategic stop / multi-decision report MUST start with:
+Every State of Fallow-py / strategic stop / multi-decision report MUST start with:
 
 ```markdown
 ## Owner Action Board
@@ -172,12 +172,12 @@ Example: `Yellow→green. Phase A grew from "fix some bugs" to "global governanc
 
 ## What an agent must NOT infer without runtime evidence
 
-- **Fingerprint stability across runs**: don't assume; verify with `pyfallow analyze --format json` twice and compare.
-- **Classification semantics**: don't trust your memory; read `src/pyfallow/classify.py` and `decisions/0001-*.md` + `decisions/0009-*.md`.
+- **Fingerprint stability across runs**: don't assume; verify with `fallow-py analyze --format json` twice and compare.
+- **Classification semantics**: don't trust your memory; read `src/fallow_py/classify.py` and `decisions/0001-*.md` + `decisions/0009-*.md`.
 - **Test coverage on a module**: don't assume covered if file exists in `tests/`; check actual collection (`pytest --co tests/test_<module>.py`).
 - **Forgejo runner availability**: don't assume the runner is up; verify via Forgejo Actions API or operator confirmation.
-- **PyPI vs TestPyPI state**: don't assume any version is current; `pip index versions pyfallow` or curl pypi.org JSON API.
-- **MCP wire format on a given pyfallow version**: don't assume namespace; check the installed package's `Classification` model.
+- **PyPI vs TestPyPI state**: don't assume any version is current; `pip index versions fallow-py` or curl pypi.org JSON API.
+- **MCP wire format on a given fallow-py version**: don't assume namespace; check the installed package's `Classification` model.
 
 ---
 
@@ -254,8 +254,8 @@ If executing (Codex/orchestrator) and a master prompt is insufficient:
 ## References
 
 - `decisions/` directory — all ADRs (numbered Nygard format); start with README.md for index
-- `docs/philosophy.md` — pyfallow's role as bassist + deterministic harness
-- `docs/dogfood.md` — concrete how-to integrate pyfallow into a Forgejo Actions CI in another project
+- `docs/philosophy.md` — fallow-py's role as bassist + deterministic harness
+- `docs/dogfood.md` — concrete how-to integrate fallow-py into a Forgejo Actions CI in another project
 - `docs/dogfood-log-template.md` — evidence collection protocol
 - ADR 0010 — mandatory non-author reviewer
 - ADR 0011 — Forgejo-native CI pattern

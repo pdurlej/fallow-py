@@ -81,7 +81,7 @@ def agent_fix_plan(result: dict[str, Any]) -> dict[str, Any]:
 
     plan: dict[str, Any] = {
         "schema_version": FIX_PLAN_SCHEMA_VERSION,
-        "tool": "pyfallow",
+        "tool": "fallow-py",
         "version": result["version"],
         "source_report_schema_version": result["schema_version"],
         "summary": {

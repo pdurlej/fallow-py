@@ -90,4 +90,5 @@ def test_legacy_mcp_import_shim_preserves_public_api() -> None:
 
     legacy_server = importlib.import_module("pyfallow_mcp.server")
     canonical_server = importlib.import_module("fallow_py_mcp.server")
-    assert legacy_server.main is canonical_server.main
+    assert callable(legacy_server.main)
+    assert legacy_server.main is not canonical_server.main

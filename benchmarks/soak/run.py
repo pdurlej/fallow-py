@@ -27,7 +27,7 @@ OPENCODE_PROMPT_NAME = "opencode-prompt.md"
 
 GLM_GUARDRAILS = [
     "Treat the model as a candidate generator, not an authority.",
-    "Use pyfallow output as evidence; do not invent findings or remove code just to reduce warnings.",
+    "Use fallow-py output as evidence; do not invent findings or remove code just to reduce warnings.",
     "If the evidence is ambiguous, return no_patch and explain the uncertainty.",
     "Do not touch CI, packaging, dependency declarations, auth, crypto, network, subprocess, or release files.",
     "Do not open pull requests, push branches, install dependencies, or run shell commands.",
@@ -96,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run or plan pyfallow multi-model soak jobs.")
+    parser = argparse.ArgumentParser(description="Run or plan fallow-py multi-model soak jobs.")
     parser.add_argument("--repos-config", type=Path, default=DEFAULT_REPOS)
     parser.add_argument("--models-config", type=Path, default=DEFAULT_MODELS)
     parser.add_argument("--workspace", type=Path, default=DEFAULT_WORKSPACE)
@@ -105,8 +105,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--model", default="all", help="Model name from models.toml, or all.")
     parser.add_argument("--list", action="store_true", help="Print configured repo/model matrix as JSON.")
     parser.add_argument("--dry-run", action="store_true", help="Write plan files without cloning or running tools.")
-    parser.add_argument("--execute", action="store_true", help="Clone repos and run pyfallow/opencode commands.")
-    parser.add_argument("--skip-opencode", action="store_true", help="Run pyfallow only, not opencode.")
+    parser.add_argument("--execute", action="store_true", help="Clone repos and run fallow-py/opencode commands.")
+    parser.add_argument("--skip-opencode", action="store_true", help="Run fallow-py only, not opencode.")
     parser.add_argument(
         "--allow-host-opencode-config",
         action="store_true",
@@ -215,7 +215,7 @@ def build_plan(repo: Repo, model: Model, repo_dir: Path, result_dir: Path) -> di
             "pyfallow": [
                 sys.executable,
                 "-m",
-                "pyfallow",
+                "fallow_py",
                 "analyze",
                 "--root",
                 str(repo_dir),
@@ -234,15 +234,15 @@ def build_plan(repo: Repo, model: Model, repo_dir: Path, result_dir: Path) -> di
 def build_guarded_prompt(repo: Repo) -> str:
     guardrail_lines = "\n".join(f"- {item}" for item in GLM_GUARDRAILS)
     return (
-        f"You are reviewing a bounded pyfallow soak run for {repo.name}.\n\n"
+        f"You are reviewing a bounded fallow-py soak run for {repo.name}.\n\n"
         "Role boundary:\n"
         "- You are a candidate generator. A human/Codex reviewer decides whether anything is safe.\n"
         "- Your answer is evidence, not a public PR and not a merge recommendation.\n\n"
         "Hard guardrails:\n"
         f"{guardrail_lines}\n\n"
-        "Use only local repository files and the generated pyfallow agent-fix-plan. "
+        "Use only local repository files and the generated fallow-py agent-fix-plan. "
         "Classify findings by auto_safe, review_needed, blocking, and manual_only only when the "
-        "pyfallow output contains that evidence.\n\n"
+        "fallow-py output contains that evidence.\n\n"
         "Return concise Markdown with these exact headings:\n"
         "1. Findings used\n"
         "2. Candidate action\n"
@@ -334,7 +334,7 @@ def build_opencode_prompt(plan: dict[str, Any]) -> str:
     evidence = summarize_agent_fix_plan(findings_path)
     return (
         plan["prompt"]
-        + "\n\nSupervisor-supplied pyfallow evidence excerpt follows. "
+        + "\n\nSupervisor-supplied fallow-py evidence excerpt follows. "
         "Use this excerpt as the source of truth; do not search for a different report file.\n\n"
         "```json\n"
         + json.dumps(evidence, indent=2, sort_keys=True)

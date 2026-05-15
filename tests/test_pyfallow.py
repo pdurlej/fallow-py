@@ -35,7 +35,7 @@ def write(path: Path, text: str) -> None:
 
 def run_cli(args: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "pyfallow", *args],
+        [sys.executable, "-m", "fallow_py", *args],
         text=True,
         capture_output=True,
         env=env or {**os.environ, "PYTHONPATH": str(ROOT / "src")},
@@ -153,24 +153,24 @@ def make_fixture_project(tmp_path: Path) -> Path:
         [tool.poetry.group.dev.dependencies]
         pytest = "*"
 
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/pkg/main.py"]
         include_tests = false
 
-        [tool.pyfallow.dupes]
+        [tool.fallow_py.dupes]
         min_lines = 3
         min_tokens = 10
         mode = "mild"
 
-        [tool.pyfallow.health]
+        [tool.fallow_py.health]
         max_cyclomatic = 3
         max_cognitive = 4
         max_function_lines = 20
         max_file_lines = 200
         hotspot_score_threshold = 20
 
-        [[tool.pyfallow.boundaries.rules]]
+        [[tool.fallow_py.boundaries.rules]]
         name = "domain-no-infra"
         from = "src/pkg/domain/**"
         disallow = ["src/pkg/infra/**", "pkg.infra.*"]
@@ -497,12 +497,15 @@ def test_output_formats_baseline_and_agent_context(tmp_path: Path) -> None:
 def test_release_metadata_version_schema_and_readme_examples() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert fallow_py.__version__ == pyproject["project"]["version"] == VERSION
-    assert pyproject["project"]["version"] == "0.3.0a2"
+    assert pyproject["project"]["name"] == "fallow-py"
+    assert pyproject["project"]["version"] == "0.3.0a3"
     assert pyproject["project"]["dependencies"] == []
+    assert pyproject["project"]["scripts"]["fallow-py"] == "fallow_py.cli:main"
+    assert pyproject["project"]["scripts"]["pyfallow"] == "pyfallow.cli:main"
 
     version_run = run_cli(["--version"])
     assert version_run.returncode == 0
-    assert version_run.stdout.strip() == "pyfallow 0.3.0a2"
+    assert version_run.stdout.strip() == "fallow-py 0.3.0a3"
 
     canonical_run = subprocess.run(
         [sys.executable, "-m", "fallow_py", "--version"],
@@ -513,7 +516,19 @@ def test_release_metadata_version_schema_and_readme_examples() -> None:
         timeout=TIMEOUT,
     )
     assert canonical_run.returncode == 0
-    assert canonical_run.stdout.strip() == "pyfallow 0.3.0a2"
+    assert canonical_run.stdout.strip() == "fallow-py 0.3.0a3"
+
+    legacy_run = subprocess.run(
+        [sys.executable, "-m", "pyfallow", "--version"],
+        text=True,
+        capture_output=True,
+        env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+        check=False,
+        timeout=TIMEOUT,
+    )
+    assert legacy_run.returncode == 0
+    assert legacy_run.stdout.strip() == "pyfallow 0.3.0a3"
+    assert "`pyfallow` is deprecated" in legacy_run.stderr
 
     for path in [
         ROOT / "schemas/pyfallow-report.schema.json",
@@ -526,7 +541,7 @@ def test_release_metadata_version_schema_and_readme_examples() -> None:
         assert json.loads(path.read_text(encoding="utf-8"))
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "python -m pyfallow analyze --root examples/demo_project --format text" in readme
+    assert "python -m fallow_py analyze --root examples/demo_project --format text" in readme
     assert "not currently an official fallow-rs/fallow project" in readme
     assert "Runtime dependencies are stdlib-only" in readme
 
@@ -549,7 +564,8 @@ def test_legacy_pyfallow_import_shim_preserves_public_api() -> None:
 
     legacy_cli = importlib.import_module("pyfallow.cli")
     canonical_cli = importlib.import_module("fallow_py.cli")
-    assert legacy_cli.main is canonical_cli.main
+    assert callable(legacy_cli.main)
+    assert legacy_cli.main is not canonical_cli.main
 
 
 def test_example_project_cli_commands_work() -> None:
@@ -642,7 +658,7 @@ def test_since_filters_findings_to_changed_files(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -671,7 +687,7 @@ def test_since_branch_ref_filters_multiple_changed_files(tmp_path: Path) -> None
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -700,7 +716,7 @@ def test_since_includes_uncommitted_modified_files(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -724,7 +740,7 @@ def test_since_includes_untracked_python_files(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -748,7 +764,7 @@ def test_since_keeps_cycle_findings_when_one_member_changed(tmp_path: Path) -> N
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -776,11 +792,11 @@ def test_since_keeps_boundary_findings_when_source_changed(tmp_path: Path) -> No
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
 
-        [[tool.pyfallow.boundaries.rules]]
+        [[tool.fallow_py.boundaries.rules]]
         name = "domain-no-infra"
         from = "src/pkg/domain/**"
         disallow = ["src/pkg/infra/**", "pkg.infra.*"]
@@ -838,7 +854,7 @@ def test_changed_only_deprecation_warning_and_since_alias(tmp_path: Path) -> Non
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -864,7 +880,7 @@ def test_since_zero_changes_returns_clean_report(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -890,7 +906,7 @@ def test_since_renamed_file_uses_new_path(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -915,10 +931,10 @@ def test_inferred_entrypoints_management_commands_and_no_boundary_violation(tmp_
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
 
-        [[tool.pyfallow.boundaries.rules]]
+        [[tool.fallow_py.boundaries.rules]]
         name = "domain-no-infra"
         from = "src/pkg/domain/**"
         disallow = ["src/pkg/infra/**"]
@@ -952,7 +968,7 @@ def test_visit_if_test_condition_records_name_references(tmp_path: Path) -> None
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -984,11 +1000,11 @@ def test_reexports_and_from_package_submodule_alias_usage(tmp_path: Path) -> Non
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/main.py"]
 
-        [tool.pyfallow.dead_code]
+        [tool.fallow_py.dead_code]
         confidence_for_init_exports = "high"
         """,
     )
@@ -1044,11 +1060,11 @@ def test_export_mutations_aliases_and_star_exports(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/main.py"]
 
-        [tool.pyfallow.dead_code]
+        [tool.fallow_py.dead_code]
         confidence_for_init_exports = "high"
         """,
     )
@@ -1113,7 +1129,7 @@ def test_unknown_star_exports_lower_but_do_not_suppress_unused_symbol(tmp_path: 
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/main.py"]
         """,
@@ -1136,7 +1152,7 @@ def test_all_concat_getattr_and_namespace_ambiguity_are_reported(tmp_path: Path)
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src", "alt"]
         entry = ["src/main.py"]
         """,
@@ -1169,7 +1185,7 @@ def test_explicit_source_roots_preserve_configured_order(tmp_path: Path) -> None
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["zsrc", "asrc"]
         entry = ["zsrc/app.py"]
         """,
@@ -1195,12 +1211,12 @@ def test_include_tests_false_does_not_leak_test_references_to_production(tmp_pat
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         include_tests = false
 
-        [tool.pyfallow.dependencies]
+        [tool.fallow_py.dependencies]
         include_dev = true
         """,
     )
@@ -1223,12 +1239,12 @@ def test_production_importing_test_code_is_reported_without_graph_edge(tmp_path:
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         include_tests = false
 
-        [tool.pyfallow.dependencies]
+        [tool.fallow_py.dependencies]
         include_dev = true
         """,
     )
@@ -1245,16 +1261,16 @@ def test_test_duplicates_and_complexity_are_skipped_when_tests_excluded(tmp_path
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         include_tests = false
 
-        [tool.pyfallow.dupes]
+        [tool.fallow_py.dupes]
         min_lines = 3
         min_tokens = 8
 
-        [tool.pyfallow.health]
+        [tool.fallow_py.health]
         max_cyclomatic = 2
         max_cognitive = 2
         """,
@@ -1298,7 +1314,7 @@ def test_packaging_script_target_symbol_is_used(tmp_path: Path) -> None:
         [project.scripts]
         demo = "pkg.cli:main"
 
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/other.py"]
         """,
@@ -1326,11 +1342,11 @@ def test_configured_entry_symbols_are_entrypoint_managed(tmp_path: Path) -> None
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
 
-        [tool.pyfallow.dead_code]
+        [tool.fallow_py.dead_code]
         entry_symbols = ["serve"]
         """,
     )
@@ -1361,12 +1377,12 @@ def test_dependency_policy_defaults(tmp_path: Path) -> None:
         [tool.poetry.group.dev.dependencies]
         devonly = "*"
 
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         include_tests = false
 
-        [tool.pyfallow.dependencies]
+        [tool.fallow_py.dependencies]
         include_dev = true
         """,
     )
@@ -1410,11 +1426,11 @@ def test_dependency_include_optional_and_dev_knobs_are_observable(tmp_path: Path
         [tool.poetry.group.dev.dependencies]
         devonly = "*"
 
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
 
-        [tool.pyfallow.dependencies]
+        [tool.fallow_py.dependencies]
         include_optional = false
         include_dev = false
         """,
@@ -1451,7 +1467,7 @@ def test_guarded_optional_import_does_not_count_as_runtime_violation(tmp_path: P
         [project.optional-dependencies]
         speedups = ["orjson"]
 
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -1481,7 +1497,7 @@ def test_tuple_import_error_guard_marks_imports_guarded(tmp_path: Path) -> None:
         [project.optional-dependencies]
         speedups = ["orjson"]
 
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -1512,12 +1528,12 @@ def test_namespace_protocol_dunder_and_init_export_knobs_are_observable(tmp_path
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         namespace_packages = false
 
-        [tool.pyfallow.dead_code]
+        [tool.fallow_py.dead_code]
         ignore_protocol_methods = false
         ignore_dunder_methods = false
         confidence_for_init_exports = "medium"
@@ -1571,7 +1587,7 @@ def test_cli_debug_and_show_limitations_flags_are_observable(tmp_path: Path) -> 
 
     debug_run = run_cli(["analyze", "--root", str(tmp_path), "--changed-only", "--debug", "--format", "json"])
     assert debug_run.returncode == 0
-    assert "pyfallow DEBUG: analysis warning:" in debug_run.stderr
+    assert "fallow-py DEBUG: analysis warning:" in debug_run.stderr
     assert "changed-only-not-available-non-git" in debug_run.stderr
     assert "--changed-only is deprecated" not in debug_run.stderr
 
@@ -1585,11 +1601,11 @@ def test_nested_function_complexity_does_not_inflate_parent(tmp_path: Path) -> N
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
 
-        [tool.pyfallow.health]
+        [tool.fallow_py.health]
         max_cyclomatic = 3
         max_cognitive = 4
         """,
@@ -1622,17 +1638,17 @@ def test_config_validation_emits_config_error(tmp_path: Path) -> None:
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
 
-        [tool.pyfallow.dupes]
+        [tool.fallow_py.dupes]
         mode = "wild"
         min_tokens = 0
 
-        [tool.pyfallow.health]
+        [tool.fallow_py.health]
         max_cognitive = 0
 
-        [[tool.pyfallow.boundaries.rules]]
+        [[tool.fallow_py.boundaries.rules]]
         name = "bad"
         from = []
         disallow = []
@@ -1656,42 +1672,42 @@ def test_config_validation_emits_config_error(tmp_path: Path) -> None:
     [
         (
             """
-            [tool.pyfallow]
+            [tool.fallow_py]
             roots = "src"
             """,
             "roots",
         ),
         (
             """
-            [tool.pyfallow]
+            [tool.fallow_py]
             entry = [123]
             """,
             "entry",
         ),
         (
             """
-            [tool.pyfallow]
+            [tool.fallow_py]
             include_tests = "yes"
             """,
             "include_tests",
         ),
         (
             """
-            [tool.pyfallow.dupes]
+            [tool.fallow_py.dupes]
             min_tokens = "40"
             """,
             "dupes.min_tokens",
         ),
         (
             """
-            [tool.pyfallow.dependencies]
+            [tool.fallow_py.dependencies]
             include_optional = "true"
             """,
             "dependencies.include_optional",
         ),
         (
             """
-            [tool.pyfallow.dependencies.import_map]
+            [tool.fallow_py.dependencies.import_map]
             PIL = 123
             """,
             "dependencies.import_map.PIL",
@@ -1705,6 +1721,59 @@ def test_config_type_validation_rejects_malformed_toml_values(
 
     with pytest.raises(ConfigError, match=field):
         load_config(tmp_path)
+
+
+def test_canonical_config_names_and_legacy_fallbacks(tmp_path: Path) -> None:
+    write(
+        tmp_path / ".fallow-py.toml",
+        """
+        roots = ["pkg"]
+        entry = ["pkg/app.py"]
+        include_tests = true
+        """,
+    )
+    config = load_config(tmp_path)
+    assert config.config_path == tmp_path / ".fallow-py.toml"
+    assert config.roots == ["pkg"]
+    assert config.entry == ["pkg/app.py"]
+    assert config.include_tests is True
+
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.fallow_py]
+        roots = ["src"]
+        entry = ["src/main.py"]
+        """,
+    )
+    (tmp_path / ".fallow-py.toml").unlink()
+    config = load_config(tmp_path)
+    assert config.roots == ["src"]
+    assert config.entry == ["src/main.py"]
+
+    write(
+        tmp_path / ".pyfallow.toml",
+        """
+        roots = ["legacy"]
+        entry = ["legacy/main.py"]
+        """,
+    )
+    (tmp_path / "pyproject.toml").unlink()
+    with pytest.warns(DeprecationWarning, match=".pyfallow.toml"):
+        legacy_config = load_config(tmp_path)
+    assert legacy_config.roots == ["legacy"]
+
+    write(
+        tmp_path / "pyproject.toml",
+        """
+        [tool.pyfallow]
+        roots = ["legacy_tool"]
+        """,
+    )
+    (tmp_path / ".pyfallow.toml").unlink()
+    with pytest.warns(DeprecationWarning, match=r"\[tool\.pyfallow\]"):
+        legacy_tool_config = load_config(tmp_path)
+    assert legacy_tool_config.roots == ["legacy_tool"]
 
 
 def test_sarif_has_fingerprints_properties_and_related_locations(tmp_path: Path, monkeypatch) -> None:
@@ -1920,7 +1989,7 @@ def test_ci_comment_renderer_groups_agent_fix_plan(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "## pyfallow analysis" in result.stdout
+    assert "## fallow-py analysis" in result.stdout
     assert "**2 findings on this change**" in result.stdout
     assert "### Blocking (1)" in result.stdout
     assert "`src/orders.py:12` - `missing-runtime-dependency` (high)" in result.stdout
@@ -2014,7 +2083,7 @@ def test_stale_suppression_minimal_patch_applies_cleanly(tmp_path: Path) -> None
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -2074,7 +2143,7 @@ def test_agent_fix_plan_cli_with_since_includes_diff_scope(tmp_path: Path) -> No
     write(
         tmp_path / "pyproject.toml",
         """
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
         """,
@@ -2108,11 +2177,11 @@ def make_predict_project(tmp_path: Path) -> Path:
         [project]
         dependencies = []
 
-        [tool.pyfallow]
+        [tool.fallow_py]
         roots = ["src"]
         entry = ["src/app.py"]
 
-        [[tool.pyfallow.boundaries.rules]]
+        [[tool.fallow_py.boundaries.rules]]
         name = "domain-no-infra"
         from = "src/domain/**"
         disallow = ["src/infra/**", "infra.*"]
@@ -2288,7 +2357,7 @@ def test_soak_dry_run_writes_plan_without_cloning(tmp_path: Path) -> None:
     plan = json.loads((result_dir / "plan.json").read_text(encoding="utf-8"))
     assert plan["repo"]["name"] == "requests"
     assert plan["model"]["name"] == "qwen-9b"
-    assert plan["commands"]["pyfallow"][1:4] == ["-m", "pyfallow", "analyze"]
+    assert plan["commands"]["pyfallow"][1:4] == ["-m", "fallow_py", "analyze"]
     assert "--since" in plan["commands"]["pyfallow"]
     assert "agent-fix-plan" in plan["commands"]["pyfallow"]
     assert plan["commands"]["opencode"][:4] == ["opencode", "--log-level", "WARN", "--pure"]
@@ -2338,7 +2407,7 @@ def test_soak_glm_plan_uses_coding_endpoint_and_sterile_paths(tmp_path: Path) ->
     assert "Do not touch CI, packaging" in "\n".join(plan["guardrails"])
 
 
-def test_soak_prompt_summarizes_pyfallow_evidence_without_full_context(tmp_path: Path) -> None:
+def test_soak_prompt_summarizes_fallow_py_evidence_without_full_context(tmp_path: Path) -> None:
     spec = importlib.util.spec_from_file_location("soak_run", ROOT / "benchmarks/soak/run.py")
     assert spec and spec.loader
     soak_run = importlib.util.module_from_spec(spec)
@@ -2436,7 +2505,7 @@ def test_comparison_benchmark_matrix_and_docs_are_complementary() -> None:
     assert "ruff 0.15.12" in performance
     assert "vulture 2.16" in performance
     assert "deptry 0.25.1" in performance
-    assert "Add pyfallow when" in performance
+    assert "Add fallow-py when" in performance
     assert "| requests | 0.021s | 0.179s | 0.121s | 0.245s |" in performance
     assert "**Use alongside:** ruff" in performance
 
@@ -2473,7 +2542,7 @@ def test_comparison_benchmark_dry_run_writes_plan_without_cloning(tmp_path: Path
     plan = json.loads((results / "requests/pyfallow.plan.json").read_text(encoding="utf-8"))
     assert plan["repo"]["name"] == "requests"
     assert plan["tool"]["name"] == "pyfallow"
-    assert plan["command"][1:4] == ["-m", "pyfallow", "analyze"]
+    assert plan["command"][1:4] == ["-m", "fallow_py", "analyze"]
     assert "--format" in plan["command"]
     assert "json" in plan["command"]
     assert not (workspace / "requests").exists()

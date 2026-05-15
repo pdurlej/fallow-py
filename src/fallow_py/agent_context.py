@@ -56,7 +56,7 @@ def agent_context_markdown(result: dict[str, Any]) -> str:
         "1. Fix parse errors and missing dependencies before trusting lower-confidence findings.",
         "2. Inspect boundary violations, cycles, and hotspots before broad edits.",
         "3. Review high-confidence dead modules first; avoid auto-deleting low-confidence framework modules.",
-        "4. Rerun pyfallow after edits and compare against the baseline when one exists.",
+        "4. Rerun fallow-py after edits and compare against the baseline when one exists.",
         "",
         "## Limitations",
     ]

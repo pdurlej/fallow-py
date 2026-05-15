@@ -154,11 +154,11 @@ def write_generated_fixture(root: Path, modules: int) -> None:
     (root / "pyproject.toml").write_text(
         "\n".join(
             [
-                "[tool.pyfallow]",
+                "[tool.fallow_py]",
                 'roots = ["src"]',
                 'entry = ["src/generated_app/main.py"]',
                 "",
-                "[tool.pyfallow.health]",
+                "[tool.fallow_py.health]",
                 "max_cyclomatic = 25",
                 "max_cognitive = 60",
                 "",

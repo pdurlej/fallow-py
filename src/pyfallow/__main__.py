@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fallow_py.cli import main
+from .cli import main
 
 
 if __name__ == "__main__":

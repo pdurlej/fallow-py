@@ -28,7 +28,7 @@ env/
 .DS_Store
 __MACOSX/
 
-# pyfallow generated outputs
+# fallow-py generated outputs
 .fallow-baseline.json
 pyfallow-report.json
 pyfallow.sarif

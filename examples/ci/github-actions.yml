@@ -1,4 +1,4 @@
-name: pyfallow
+name: fallow-py
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  pyfallow-cleanup:
+  fallow-py-cleanup:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,15 +24,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install pyfallow
-        run: pip install pyfallow
+      - name: Install fallow-py
+        run: pip install fallow-py
 
-      - name: Run pyfallow
+      - name: Run fallow-py
         shell: bash
         run: |
           set +e
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            pyfallow analyze \
+            fallow-py analyze \
               --root . \
               --since "${{ github.event.pull_request.base.sha }}" \
               --format agent-fix-plan \
@@ -40,7 +40,7 @@ jobs:
               --fail-on warning \
               --min-confidence medium
           else
-            pyfallow analyze \
+            fallow-py analyze \
               --root . \
               --format agent-fix-plan \
               --output pyfallow-report.json \
@@ -50,16 +50,16 @@ jobs:
           echo "$?" > pyfallow-exit-code.txt
           exit 0
 
-      - name: Render pyfallow comment
+      - name: Render fallow-py comment
         if: always()
         shell: bash
         run: |
           if [ -f pyfallow-report.json ]; then
             python examples/ci/render_pyfallow_comment.py pyfallow-report.json > pyfallow-comment.md
           else
-            echo "## pyfallow analysis" > pyfallow-comment.md
+            echo "## fallow-py analysis" > pyfallow-comment.md
             echo "" >> pyfallow-comment.md
-            echo "pyfallow did not produce a JSON report. Check the CI logs." >> pyfallow-comment.md
+            echo "fallow-py did not produce a JSON report. Check the CI logs." >> pyfallow-comment.md
           fi
 
       - name: Post GitHub PR comment
@@ -86,18 +86,18 @@ jobs:
             --data @pyfallow-comment.json \
             "https://api.github.com/repos/${REPOSITORY}/issues/${PR_NUMBER}/comments"
 
-      - name: Upload pyfallow artifacts
+      - name: Upload fallow-py artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pyfallow
+          name: fallow-py
           path: |
             pyfallow-report.json
             pyfallow-comment.md
             pyfallow-exit-code.txt
           if-no-files-found: ignore
 
-      - name: Fail on blocking pyfallow findings
+      - name: Fail on blocking fallow-py findings
         if: always()
         shell: bash
         run: exit "$(cat pyfallow-exit-code.txt 2>/dev/null || echo 0)"

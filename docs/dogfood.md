@@ -1,8 +1,8 @@
-# Dogfood — pyfallow in your project's CI
+# Dogfood — fallow-py in your project's CI
 
-**Audience:** maintainers integrating pyfallow into Python repositories, plus agents setting up such a CI pipeline.
+**Audience:** maintainers integrating fallow-py into Python repositories, plus agents setting up such a CI pipeline.
 
-**Status:** v1, written 2026-05-04. Tested against pyfallow `0.3.0a2` on TestPyPI.
+**Status:** v1, written 2026-05-04. Tested against fallow-py `0.3.0a3` on TestPyPI.
 
 **Why:** see [`docs/philosophy.md`](philosophy.md). Short version: a non-technical operator running multi-agent codebases needs a deterministic gate between agent commits and `main`.
 
@@ -10,9 +10,9 @@
 
 ## What you get
 
-After integrating pyfallow into a Forgejo Actions workflow on a Python project:
+After integrating fallow-py into a Forgejo Actions workflow on a Python project:
 
-- Every PR runs `pyfallow analyze` on the diff
+- Every PR runs `fallow-py analyze` on the diff
 - Findings are classified (`auto_safe` / `review_needed` / `blocking` / `manual_only`)
 - A comment is posted on the PR with the agent-fix-plan output
 - The job fails if there are `blocking` findings or warnings above threshold
@@ -24,69 +24,69 @@ The agent that opened the PR (Codex, Claude, etc.) gets a deterministic answer t
 
 - A Forgejo repo with Actions enabled (`has_actions: true` on the repo, runner registered)
 - Python project with at least one `pyproject.toml` declaring entry points
-- The repo's runner can pull container images and install Python packages from PyPI (or TestPyPI during pyfallow alpha)
+- The repo's runner can pull container images and install Python packages from PyPI (or TestPyPI during fallow-py alpha)
 
 ## Minimal integration (3 steps)
 
 ### Step 1 — copy the workflow
 
-Create `.forgejo/workflows/pyfallow.yml` in your project's repo. Start from the pyfallow-shipped template:
+Create `.forgejo/workflows/fallow-py.yml` in your project's repo. Start from the fallow-py-shipped template:
 
 ```bash
 # In your project root
 mkdir -p .forgejo/workflows
 curl -sSL https://raw.githubusercontent.com/pdurlej/pyfallow/main/examples/ci/forgejo-actions.yml \
-  -o .forgejo/workflows/pyfallow.yml
+  -o .forgejo/workflows/fallow-py.yml
 ```
 
-(Or copy by hand from `examples/ci/forgejo-actions.yml` in the pyfallow repo.)
+(Or copy by hand from `examples/ci/forgejo-actions.yml` in the fallow-py repo.)
 
-### Step 2 — pin a pyfallow version
+### Step 2 — pin a fallow-py version
 
-The shipped template installs the latest `pyfallow` from PyPI. During alpha (pre-`0.3.0` stable), pin to a specific TestPyPI version to avoid surprise breaks:
+The shipped template installs the latest `fallow-py` from PyPI. During alpha (pre-`0.3.0` stable), pin to a specific TestPyPI version to avoid surprise breaks:
 
 ```yaml
-# In .forgejo/workflows/pyfallow.yml, replace the install step with:
+# In .forgejo/workflows/fallow-py.yml, replace the install step with:
 
-      - name: Install pyfallow (alpha pin)
+      - name: Install fallow-py (alpha pin)
         run: |
           python -m pip install --upgrade pip
           python -m pip install \
             --index-url https://test.pypi.org/simple/ \
             --extra-index-url https://pypi.org/simple/ \
-            "pyfallow==0.3.0a2"
+            "fallow-py==0.3.0a3"
 ```
 
-Once pyfallow lands on production PyPI as `0.3.0` stable, switch to `pip install pyfallow~=0.3.0` and remove the `--index-url` flags.
+Once fallow-py lands on production PyPI as `0.3.0` stable, switch to `pip install fallow-py~=0.3.0` and remove the `--index-url` flags.
 
-### Step 3 — configure pyfallow for your repo
+### Step 3 — configure fallow-py for your repo
 
-Add a `.pyfallow.toml` (or `[tool.pyfallow]` table in `pyproject.toml`) declaring:
+Add a `.fallow-py.toml` (or `[tool.fallow_py]` table in `pyproject.toml`) declaring:
 
 ```toml
-[tool.pyfallow]
+[tool.fallow_py]
 roots = ["src"]                    # source code paths
 entry = ["src/yourproject/main.py", "src/yourproject/cli.py"]
 # entry = roots from which reachability is computed; everything not reached
 # from any entry is candidate dead code
 
-[tool.pyfallow.boundaries]
+[tool.fallow_py.boundaries]
 # (optional) architecture boundary rules
 # Example: domain layer cannot import from infrastructure
 "src/yourproject/domain/**" = { disallow = ["src/yourproject/infrastructure/**"] }
 
-[tool.pyfallow.suppressions]
+[tool.fallow_py.suppressions]
 # (optional) global suppressions; prefer line-level `# fallow: ignore[<rule>]` instead
 ```
 
-Then commit, push, open a PR. The runner pulls pyfallow, runs analyze on your diff, posts the comment, fails on blocking findings.
+Then commit, push, open a PR. The runner pulls fallow-py, runs analyze on your diff, posts the comment, fails on blocking findings.
 
 ## Reading the CI comment as operator
 
-The pyfallow comment on a PR will look like:
+The fallow-py comment on a PR will look like:
 
 ```
-## pyfallow analysis
+## fallow-py analysis
 
 **Verdict:** DO NOT COMMIT (1 blocking)
 
@@ -111,9 +111,9 @@ The pyfallow comment on a PR will look like:
 | All green ("No findings...") | Merge if review otherwise OK |
 | Only `auto_safe` findings | Tell the agent: "apply the suggested patches in your next commit" |
 | `review_needed` findings | Read them. Decide: legitimate FP (suppress) or real (fix) |
-| `blocking` findings | **Send the PR back to the agent.** This is the whole point — pyfallow caught what the agent missed |
+| `blocking` findings | **Send the PR back to the agent.** This is the whole point — fallow-py caught what the agent missed |
 
-**Anti-pattern:** "the CI is red but the change looks fine, let me merge anyway." Don't. The agent that opened this PR is supposed to call pyfallow before pushing — if it didn't, that's an agent integrity failure that needs to surface, not be hidden.
+**Anti-pattern:** "the CI is red but the change looks fine, let me merge anyway." Don't. The agent that opened this PR is supposed to call fallow-py before pushing — if it didn't, that's an agent integrity failure that needs to surface, not be hidden.
 
 ## Reading the artifacts as a downstream agent
 
@@ -128,8 +128,8 @@ If your platform has a "next-agent picks up here" pattern (e.g., Codex reading P
 ```json
 {
   "schema_version": "1.0",
-  "tool": "pyfallow",
-  "version": "0.3.0a2",
+  "tool": "fallow-py",
+  "version": "0.3.0a3",
   "summary": {
     "auto_safe_count": 0,
     "review_needed_count": 1,
@@ -159,17 +159,17 @@ An agent acting on this: iterate through `auto_safe` and apply patches; iterate 
 
 ## Identity-isolation for agents
 
-If an agent is committing to a repo that integrates pyfallow's CI workflow, it should commit with **its own identity**, not a shared maintainer identity:
+If an agent is committing to a repo that integrates fallow-py's CI workflow, it should commit with **its own identity**, not a shared maintainer identity:
 
 - Agent commits use an actor-specific `user.name` and `user.email`
 - Agent pushes use actor-scoped credentials from your team's approved secret store
 - Agent-created PRs use the same actor identity that produced the commit
 
-This applies recursively: any new pyfallow-integrated repo inherits this convention. Pyfallow does not enforce it (out of scope), but if it's violated, audit logs will lie.
+This applies recursively: any new fallow-py-integrated repo inherits this convention. Fallow-py does not enforce it (out of scope), but if it's violated, audit logs will lie.
 
-## Sister project: pyfallow-mcp
+## Sister project: fallow-py-mcp
 
-For agents using MCP transport (Claude Code, Cursor with MCP, etc.), `pyfallow-mcp` exposes the same analysis as MCP tools:
+For agents using MCP transport (Claude Code, Cursor with MCP, etc.), `fallow-py-mcp` exposes the same analysis as MCP tools:
 
 - `analyze_diff(root, since, min_confidence, max_findings)` — same as CLI agent-fix-plan but in-process
 - `verify_imports(root, file, planned_imports)` — pre-edit hallucination check
@@ -177,7 +177,7 @@ For agents using MCP transport (Claude Code, Cursor with MCP, etc.), `pyfallow-m
 - `agent_context(root, scope)` — full project overview for an agent starting cold
 - `explain_finding(root, fingerprint)` — investigation hints + fix options for one finding
 
-Install: `pip install pyfallow-mcp==0.1.0a2` (TestPyPI alpha, pinned alongside pyfallow `0.3.0a2`).
+Install: `pip install fallow-py-mcp==0.1.0a3` (TestPyPI alpha, pinned alongside fallow-py `0.3.0a3`).
 
 Wire into your agent's MCP config (Claude Code example):
 
@@ -185,7 +185,7 @@ Wire into your agent's MCP config (Claude Code example):
 {
   "mcpServers": {
     "pyfallow": {
-      "command": "pyfallow-mcp",
+      "command": "fallow-py-mcp",
       "args": ["--root", "/path/to/your/project"]
     }
   }
@@ -196,39 +196,39 @@ For agents that use MCP, `verify_imports` is the highest-leverage tool: catch a 
 
 ## Dogfood expectations (evidence-bounded window)
 
-Operator's strategic decision (chat log 2026-05-04, refined in ADR 0008 on 2026-05-05): pyfallow does **not** push to Show HN until we have evidence from real-world dogfood. The window is evidence-bounded, not calendar-bounded:
+Operator's strategic decision (chat log 2026-05-04, refined in ADR 0008 on 2026-05-05): fallow-py does **not** push to Show HN until we have evidence from real-world dogfood. The window is evidence-bounded, not calendar-bounded:
 
-- Pyfallow `0.3.0a2` integrated into real repositories first, starting with the operator's own working repos and expanding as appetite allows
+- Fallow-py `0.3.0a3` integrated into real repositories first, starting with the operator's own working repos and expanding as appetite allows
 - Operator and agents log surprising findings, FPs, missed real bugs, friction in a dogfood log (template at [`docs/dogfood-log-template.md`](dogfood-log-template.md)) in the **pyfallow** repo
-- Phase B/C starts only after the evidence threshold is met: at least 100 pyfallow CI runs across integrated repos, at least 20 meaningful dogfood log entries, and the operator's qualitative read. Plans in `.codex/MASTER/PHASE-B/` and `PHASE-C/` are not deleted — they are **subjected to evidence** before execution
+- Phase B/C starts only after the evidence threshold is met: at least 100 fallow-py CI runs across integrated repos, at least 20 meaningful dogfood log entries, and the operator's qualitative read. Plans in `.codex/MASTER/PHASE-B/` and `PHASE-C/` are not deleted — they are **subjected to evidence** before execution
 
 This is anti-AI-slop posture: don't polish from imagination, polish from logs.
 
-## When pyfallow is wrong
+## When fallow-py is wrong
 
-If you're confident pyfallow flagged something incorrectly:
+If you're confident fallow-py flagged something incorrectly:
 
 1. Add `# fallow: ignore[<rule>]` on the line, with a comment explaining why
-2. Open an issue in the pyfallow issue tracker with:
+2. Open an issue in the fallow-py issue tracker with:
    - Link to the suppressed line
    - Reasoning why it's a false positive
    - The rule code (e.g. `PY031`)
-   - The fingerprint (from `pyfallow analyze --format json`)
-3. The pyfallow Phase B/C planning will treat it as input for framework heuristic improvements
+   - The fingerprint (from `fallow-py analyze --format json`)
+3. The fallow-py Phase B/C planning will treat it as input for framework heuristic improvements
 
-If you're confident pyfallow **missed** a real structural problem:
+If you're confident fallow-py **missed** a real structural problem:
 
-1. Same — open an issue, but with the reverse: "this committed code has structural issue X, pyfallow didn't flag it, expected behavior?"
+1. Same — open an issue, but with the reverse: "this committed code has structural issue X, fallow-py didn't flag it, expected behavior?"
 2. Phase B already has tickets for known gaps (SQLAlchemy declarative_base, async generators, descriptors with `__set_name__`). Check `.codex/MASTER/PHASE-B/` first.
 
 ## Using low-cost coding models safely
 
-The dogfood thesis includes cheap or mid-tier models using pyfallow feedback, but those models are not allowed to become unsupervised maintainers. For GLM-5.1 on Z.ai Coding Plan and similar models, use this containment pattern:
+The dogfood thesis includes cheap or mid-tier models using fallow-py feedback, but those models are not allowed to become unsupervised maintainers. For GLM-5.1 on Z.ai Coding Plan and similar models, use this containment pattern:
 
 1. Run the model in a sterile local environment: temporary `HOME`, `opencode --pure`, `share: disabled`, no MCP servers, no global plugins.
-2. Deny shell, web fetch/search, and external-directory access for the first pass. A supervisor runs pyfallow and tests, then feeds back bounded excerpts.
+2. Deny shell, web fetch/search, and external-directory access for the first pass. A supervisor runs fallow-py and tests, then feeds back bounded excerpts.
 3. Treat model output as a candidate patch. Codex/human review decides whether it is safe to apply.
-4. Require a behavioral reproducer before public PRs. A pyfallow warning reduction alone is not evidence that the bug is fixed.
+4. Require a behavioral reproducer before public PRs. A fallow-py warning reduction alone is not evidence that the bug is fixed.
 5. Keep the PR small and disclose AI assistance if the upstream project allows it.
 
 Stop immediately if the model asks to inspect secrets, home directories, shell history, cloud config, browser state, package credentials, CI secrets, or anything outside the checked-out public repository. Also stop if it tries to touch CI, packaging, dependency locks, auth, crypto, subprocess invocation, release automation, or network behavior without an issue explicitly asking for that surface.
@@ -237,8 +237,8 @@ For repeatable soak runs, prefer [`benchmarks/soak/run.py`](../benchmarks/soak/r
 
 ## References
 
-- [`docs/philosophy.md`](philosophy.md) — why pyfallow exists in this shape
-- [`docs/limitations.md`](limitations.md) — what pyfallow does NOT catch (Phase C ticket)
+- [`docs/philosophy.md`](philosophy.md) — why fallow-py exists in this shape
+- [`docs/limitations.md`](limitations.md) — what fallow-py does NOT catch (Phase C ticket)
 - Full rule reference — Phase C ticket; not yet present as a live docs page
 - [`examples/ci/forgejo-actions.yml`](../examples/ci/forgejo-actions.yml) — the workflow template
 - [`examples/ci/README.md`](../examples/ci/README.md) — multi-platform CI guide (Forgejo, GitHub, GitLab)
