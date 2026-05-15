@@ -3,14 +3,14 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyfallow"
-version = "0.3.0a2"
-description = "Python-first static codebase intelligence for agents and reviewers."
+name = "fallow-py"
+version = "0.3.0a3"
+description = "Python implementation of Fallow static codebase intelligence for agents and reviewers."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "pyfallow contributors" }]
+authors = [{ name = "fallow-py contributors" }]
 keywords = [
   "agents",
   "architecture",
@@ -47,8 +47,9 @@ dev = [
 ]
 
 [project.scripts]
+fallow-py = "fallow_py.cli:main"
 pyfallow = "pyfallow.cli:main"
-fallow = "pyfallow.cli:main"
+fallow = "fallow_py.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

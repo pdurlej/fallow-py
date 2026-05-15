@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-`pyfallow` is currently pre-1.0. Security fixes are expected to target the latest released version.
+`fallow-py` is currently pre-1.0. Security fixes are expected to target the latest released version.
 
 | Version | Supported |
 | --- | --- |
@@ -20,7 +20,7 @@ This repository does not yet publish a private security contact. Until one exist
 
 ## Analyzer Safety Model
 
-`pyfallow` must never execute analyzed project code. It must not:
+`fallow-py` must never execute analyzed project code. It must not:
 
 - import analyzed project modules
 - run `setup.py`
@@ -28,5 +28,5 @@ This repository does not yet publish a private security contact. Until one exist
 - call external AI services
 - require network access at runtime
 
-This makes pyfallow safer for untrusted repositories, but it is still a local file analyzer. Run it with normal care when inspecting untrusted code.
+This makes fallow-py safer for untrusted repositories, but it is still a local file analyzer. Run it with normal care when inspecting untrusted code.
 

@@ -1,12 +1,12 @@
 # Architecture
 
-`pyfallow` is a standalone Python static analysis backend. The runtime intentionally uses only the Python standard library so it can run in clean agent, CI, and review environments without bringing extra analyzer dependencies.
+`fallow-py` is a standalone Python static analysis backend. The runtime intentionally uses only the Python standard library so it can run in clean agent, CI, and review environments without bringing extra analyzer dependencies.
 
 ## Pipeline
 
 The high-level pipeline is:
 
-1. Load configuration from `.fallow.toml`, `.pyfallow.toml`, or `pyproject.toml`.
+1. Load configuration from `.fallow.toml`, `.fallow-py.toml`, or `pyproject.toml`.
 2. Discover source roots and Python files.
 3. Resolve file paths to Python module names.
 4. Parse files with `ast` and index imports, symbols, references, exports, suppressions, and framework hints.
@@ -25,7 +25,7 @@ Ignored paths include virtual environments, caches, build directories, package m
 
 ## AST Indexing
 
-Indexing is static and non-executing. `pyfallow` parses Python files with `ast.parse` and never imports analyzed project modules. Parse failures become `parse-error` issues and downstream analyzers skip those modules.
+Indexing is static and non-executing. `fallow-py` parses Python files with `ast.parse` and never imports analyzed project modules. Parse failures become `parse-error` issues and downstream analyzers skip those modules.
 
 The index captures:
 
@@ -90,7 +90,7 @@ Stable ordering is preferred throughout the pipeline so reports are suitable for
 
 `--since <ref>` resolves the ref with Git, discovers changed Python files using `git diff --name-only --find-renames --diff-filter=ACMR <ref>...HEAD`, then adds staged, unstaged, and untracked Python files from the working tree. It then runs the normal full analysis. Full analysis is still required so cycles, boundary violations, imports, exports, and dependency policies have repo-wide context.
 
-After analysis, pyfallow filters findings to the diff scope:
+After analysis, fallow-py filters findings to the diff scope:
 
 - findings whose primary path is a changed file
 - cycles where any module or supporting file is changed
@@ -103,4 +103,4 @@ The JSON contract exposes this in `analysis.diff_scope`. Non-Git workspaces and 
 
 Optional external adapters could be added later behind explicit configuration. Good candidates include Ruff, Vulture, Deptry, Radon, Pyright, and Mypy. They should remain optional and must not replace the stdlib-only core.
 
-An upstream Fallow integration could call `pyfallow` as a subprocess language backend and consume the JSON report contract.
+An upstream Fallow integration could call `fallow-py` as a subprocess language backend and consume the JSON report contract.

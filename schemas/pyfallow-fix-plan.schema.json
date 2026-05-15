@@ -18,7 +18,7 @@
   ],
   "properties": {
     "schema_version": { "const": "1.0" },
-    "tool": { "const": "pyfallow" },
+    "tool": { "const": "fallow-py" },
     "version": { "type": "string" },
     "source_report_schema_version": { "type": "string" },
     "diff_scope": { "$ref": "#/$defs/diffScope" },

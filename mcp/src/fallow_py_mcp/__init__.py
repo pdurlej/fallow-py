@@ -1,6 +1,6 @@
-"""MCP server integration for pyfallow."""
+"""MCP server integration for fallow-py."""
 
-VERSION = "0.1.0a2"
+VERSION = "0.1.0a3"
 
 __version__ = VERSION
 

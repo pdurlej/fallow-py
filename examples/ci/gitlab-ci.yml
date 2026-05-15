@@ -5,12 +5,12 @@ pyfallow:
   stage: quality
   image: python:3.12
   before_script:
-    - pip install pyfallow
+    - pip install fallow-py
   script:
     - |
       set +e
       if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]; then
-        pyfallow analyze \
+        fallow-py analyze \
           --root . \
           --since "$CI_MERGE_REQUEST_DIFF_BASE_SHA" \
           --format agent-fix-plan \
@@ -18,7 +18,7 @@ pyfallow:
           --fail-on warning \
           --min-confidence medium
       else
-        pyfallow analyze \
+        fallow-py analyze \
           --root . \
           --format agent-fix-plan \
           --output pyfallow-report.json \

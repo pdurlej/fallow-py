@@ -1,4 +1,4 @@
-# pyfallow Multi-Model Soak Harness
+# fallow-py Multi-Model Soak Harness
 
 This directory contains reproducible infrastructure for the v0.3 real-world soak. It does not check in full run artifacts.
 
@@ -16,12 +16,12 @@ Generated repositories live under `benchmarks/soak/workspace/` by default. Gener
 Each run writes:
 
 - `plan.json`: deterministic run plan and command lines
-- `findings.json`: pyfallow `agent-fix-plan` output when execution is enabled
+- `findings.json`: fallow-py `agent-fix-plan` output when execution is enabled
 - `agent_output.md`: opencode output when opencode execution is enabled
 - `time.json`: timing and return-code metadata
 - `human_classification.md`: reviewer template for TP/FP/disputed calibration
 
-The harness uses only Python stdlib. It shells out to `git`, `python -m pyfallow`, and optionally `opencode` when `--execute` is passed.
+The harness uses only Python stdlib. It shells out to `git`, `python -m fallow_py`, and optionally `opencode` when `--execute` is passed.
 
 ## GLM/OpenCode guardrails
 
@@ -33,7 +33,7 @@ The soak harness treats GLM-5.1 and other non-frontier models as candidate gener
 - Shell, web fetch/search, and external-directory access are denied.
 - File edits/writes require approval; the harness records model output instead of opening PRs.
 - Project-level OpenCode config files cause the OpenCode step to skip by default until reviewed.
-- The prompt explicitly tells the model not to invent findings, not to remove unrelated code to satisfy pyfallow, and to return `no_patch` when evidence is ambiguous.
+- The prompt explicitly tells the model not to invent findings, not to remove unrelated code to satisfy fallow-py, and to return `no_patch` when evidence is ambiguous.
 
 For Z.ai Coding Plan users, `glm-5-1` uses the Coding endpoint:
 

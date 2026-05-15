@@ -21,30 +21,30 @@ def supports_limitations_format(fmt: str) -> bool:
     return fmt in TEXT_LIMITATION_FORMATS
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, *, prog: str = "fallow-py") -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == "python":
         argv = argv[1:]
     if argv in (["--version"], ["-V"]):
-        print(f"pyfallow {VERSION}")
+        print(f"{prog} {VERSION}")
         return 0
     if not argv or argv[0].startswith("-"):
         argv = ["analyze", *argv]
-    parser = build_parser()
+    parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
-    _configure_logging(args.debug)
+    _configure_logging(args.debug, prog)
     try:
         if args.command == "baseline":
             return _run_baseline(args)
         return _run_analysis(args)
     except (FileNotFoundError, ValueError, OSError, json.JSONDecodeError) as exc:
         if not getattr(args, "quiet", False):
-            print(f"pyfallow error: {exc}", file=sys.stderr)
+            print(f"{prog} error: {exc}", file=sys.stderr)
         return 2
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="pyfallow", description="Python static codebase intelligence.")
+def build_parser(prog: str = "fallow-py") -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog=prog, description="Python static codebase intelligence.")
     sub = parser.add_subparsers(dest="command", required=True)
     for command in ["analyze", "dead-code", "deps", "graph", "cycles", "dupes", "health", "boundaries", "agent-context"]:
         child = sub.add_parser(command)
@@ -138,10 +138,10 @@ def _run_baseline(args: argparse.Namespace) -> int:
     return _exit_code(filtered, args.fail_on, baseline_active=True)
 
 
-def _configure_logging(debug: bool) -> None:
+def _configure_logging(debug: bool, prog: str = "fallow-py") -> None:
     logging.basicConfig(
         level=logging.DEBUG if debug else logging.WARNING,
-        format="pyfallow %(levelname)s: %(message)s",
+        format=f"{prog} %(levelname)s: %(message)s",
     )
 
 

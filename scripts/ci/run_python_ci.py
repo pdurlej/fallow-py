@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run pyfallow CI checks and produce agent-readable artifacts."""
+"""Run fallow-py CI checks and produce agent-readable artifacts."""
 
 from __future__ import annotations
 
@@ -88,17 +88,19 @@ def main() -> int:
         ("Install package", [py, "-m", "pip", "install", "-e", ".[dev]"]),
         ("Compile", [py, "-m", "compileall", "-q", "src", "tests", "mcp/src", "mcp/tests"]),
         ("Test", [py, "-m", "pytest", "-q"]),
-        ("Self audit", [py, "-m", "pyfallow", "analyze", "--root", ".", "--fail-on", "warning", "--min-confidence", "medium"]),
-        ("CLI smoke json", [py, "-m", "pyfallow", "--format", "json", "--root", ".", "--output", str(ARTIFACT_DIR / "pyfallow-report.json")]),
-        ("CLI smoke text", [py, "-m", "pyfallow", "analyze", "--format", "text", "--root", "."]),
-        ("CLI smoke sarif", [py, "-m", "pyfallow", "analyze", "--format", "sarif", "--root", ".", "--output", str(ARTIFACT_DIR / "pyfallow.sarif")]),
-        ("Agent context smoke", [py, "-m", "pyfallow", "agent-context", "--format", "markdown", "--root", ".", "--output", str(ARTIFACT_DIR / "pyfallow-agent-context.md")]),
-        ("Baseline create", [py, "-m", "pyfallow", "baseline", "create", "--root", ".", "--output", str(ARTIFACT_DIR / "pyfallow-baseline.json")]),
-        ("Baseline compare", [py, "-m", "pyfallow", "baseline", "compare", "--root", ".", "--baseline", str(ARTIFACT_DIR / "pyfallow-baseline.json")]),
+        ("Self audit", [py, "-m", "fallow_py", "analyze", "--root", ".", "--fail-on", "warning", "--min-confidence", "medium"]),
+        ("CLI smoke json", [py, "-m", "fallow_py", "--format", "json", "--root", ".", "--output", str(ARTIFACT_DIR / "pyfallow-report.json")]),
+        ("CLI smoke text", [py, "-m", "fallow_py", "analyze", "--format", "text", "--root", "."]),
+        ("CLI smoke sarif", [py, "-m", "fallow_py", "analyze", "--format", "sarif", "--root", ".", "--output", str(ARTIFACT_DIR / "pyfallow.sarif")]),
+        ("Agent context smoke", [py, "-m", "fallow_py", "agent-context", "--format", "markdown", "--root", ".", "--output", str(ARTIFACT_DIR / "pyfallow-agent-context.md")]),
+        ("Baseline create", [py, "-m", "fallow_py", "baseline", "create", "--root", ".", "--output", str(ARTIFACT_DIR / "pyfallow-baseline.json")]),
+        ("Baseline compare", [py, "-m", "fallow_py", "baseline", "compare", "--root", ".", "--baseline", str(ARTIFACT_DIR / "pyfallow-baseline.json")]),
+        ("Legacy CLI smoke", [py, "-m", "pyfallow", "--version"]),
         ("Install MCP package", [py, "-m", "pip", "install", "-e", "./mcp"]),
         ("MCP tests", [py, "-m", "pytest", "-q", "mcp/tests"]),
-        ("MCP self audit", [py, "-m", "pyfallow", "analyze", "--root", "mcp", "--fail-on", "warning", "--min-confidence", "medium"]),
-        ("MCP smoke", [py, "-m", "pyfallow_mcp", "--help"]),
+        ("MCP self audit", [py, "-m", "fallow_py", "analyze", "--root", "mcp", "--fail-on", "warning", "--min-confidence", "medium"]),
+        ("MCP smoke", [py, "-m", "fallow_py_mcp", "--help"]),
+        ("Legacy MCP smoke", [py, "-m", "pyfallow_mcp", "--help"]),
         ("Build package", [py, "-m", "build"]),
         ("Check package", ["/bin/sh", "-lc", f"{shlex.quote(py)} -m twine check dist/*"]),
         (

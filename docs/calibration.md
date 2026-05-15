@@ -2,7 +2,7 @@
 
 This page tracks real-world calibration from the multi-model soak in `benchmarks/soak/`.
 
-The v0.3.0a2 infrastructure is checked in, but the full 50-run soak is not committed here. Maintainers should run the matrix, classify findings in each `human_classification.md`, then update this document before a wider public announcement.
+The v0.3.0a3 infrastructure is checked in, but the full 50-run soak is not committed here. Maintainers should run the matrix, classify findings in each `human_classification.md`, then update this document before a wider public announcement.
 
 ## Soak Matrix
 
@@ -33,7 +33,7 @@ The v0.3.0a2 infrastructure is checked in, but the full 50-run soak is not commi
    python benchmarks/soak/run.py --repo requests --model qwen-9b --dry-run
    ```
 
-2. Run pyfallow-only shakedown:
+2. Run fallow-py-only shakedown:
 
    ```bash
    python benchmarks/soak/run.py --repo requests --model qwen-9b --execute --skip-opencode
@@ -51,4 +51,4 @@ The v0.3.0a2 infrastructure is checked in, but the full 50-run soak is not commi
 
 ## Current Status
 
-Calibration data is pending. Until the full soak is classified, v0.3.0a2 messaging should describe the analyzer as early and evidence-carrying, not as production-perfect.
+Calibration data is pending. Until the full soak is classified, v0.3.0a3 messaging should describe the analyzer as early and evidence-carrying, not as production-perfect.

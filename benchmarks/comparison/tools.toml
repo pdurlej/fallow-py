@@ -22,5 +22,5 @@ best_at = "Dependency declaration versus observed imports."
 [[tools]]
 name = "pyfallow"
 package = "-e ."
-version = "0.3.0-alpha.1"
+version = "0.3.0a3"
 best_at = "Repo-wide graph, confidence-carrying cleanup findings, and agent-native output."

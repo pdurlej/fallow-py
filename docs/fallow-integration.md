@@ -1,15 +1,16 @@
 # Future Fallow Integration
 
-`pyfallow` is inspired by `fallow-rs/fallow`, but it is not currently an official fallow-rs/fallow project and does not imply endorsement or affiliation.
+`fallow-py` is inspired by `fallow-rs/fallow`, but it is not currently an official fallow-rs/fallow project and does not imply endorsement or affiliation.
 
 The current repository is a standalone Python package and CLI. This was the safest integration path because the repository started empty and had no existing Rust, Node, or shared Fallow core to extend.
 
 ## Compatibility Surface
 
-The core package installs two console scripts:
+The core package installs three console scripts during the alpha migration:
 
-- `pyfallow`
+- `fallow-py`
 - `fallow`
+- `pyfallow` (legacy alias)
 
 The `fallow` entry point is a compatibility bridge for local workflows and possible future integration. It accepts patterns such as:
 
@@ -20,26 +21,26 @@ fallow python --format json --root .
 fallow python agent-context --format markdown --root .
 ```
 
-The separate `pyfallow-mcp` package exposes the same analyzer through MCP for agent runtimes. It is intentionally packaged outside the stdlib-only core:
+The separate `fallow-py-mcp` package exposes the same analyzer through MCP for agent runtimes. It is intentionally packaged outside the stdlib-only core:
 
 ```bash
-python -m pip install pyfallow pyfallow-mcp
-pyfallow-mcp --root /path/to/repo
+python -m pip install fallow-py fallow-py-mcp
+fallow-py-mcp --root /path/to/repo
 ```
 
 ## Subprocess Backend Contract
 
-A future upstream Fallow CLI could invoke pyfallow as a subprocess:
+A future upstream Fallow CLI could invoke fallow-py as a subprocess:
 
 ```bash
-python -m pyfallow analyze --language python --format json --root <repo>
+python -m fallow_py analyze --language python --format json --root <repo>
 ```
 
 Expected output:
 
 - stdout contains the requested report format unless `--output` is used
 - stderr contains tool/runtime errors
-- exit codes follow pyfallow CLI semantics
+- exit codes follow fallow-py CLI semantics
 - JSON report uses `schema_version`
 
 ## Input Contract
@@ -79,4 +80,4 @@ MCP tools return structured objects derived from this JSON contract, not raw JSO
 - documentation that distinguishes official integration from this standalone package
 - release process alignment
 
-Until that happens, pyfallow should describe itself as inspired by Fallow, not official Fallow.
+Until that happens, fallow-py should describe itself as inspired by Fallow, not official Fallow.

@@ -423,7 +423,7 @@ def _config_error_issues(config: PythonConfig) -> list[Issue]:
                 path=relpath(config.config_path, config.root) if config.config_path else None,
                 message=diagnostic["message"],
                 evidence={"key": diagnostic["key"]},
-                actions=[Action("fix-config", True, "Fix the invalid pyfallow configuration value.")],
+                actions=[Action("fix-config", True, "Fix the invalid fallow-py configuration value.")],
             )
         )
     return issues

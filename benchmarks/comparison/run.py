@@ -204,7 +204,7 @@ def command_for(tool: Tool, repo_dir: Path, output_path: Path, venvs: Path) -> l
         return [
             str(bin_dir / "python"),
             "-m",
-            "pyfallow",
+            "fallow_py",
             "analyze",
             "--root",
             str(repo_dir),

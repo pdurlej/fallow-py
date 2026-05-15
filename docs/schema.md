@@ -101,8 +101,8 @@ Each item keeps the original `fingerprint`, rule id, file/line, confidence, one-
 SARIF output targets SARIF 2.1.0 compatibility:
 
 - rule ids are `PYxxx`
-- descriptor names use pyfallow rule slugs
-- result level maps from pyfallow severity
+- descriptor names use fallow-py rule slugs
+- result level maps from fallow-py severity
 - result properties include confidence
 - fingerprints include `pyfallowFingerprint` and `primaryLocationLineHash`
 - cycles and duplicates include capped related locations

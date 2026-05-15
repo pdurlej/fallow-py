@@ -1,24 +1,24 @@
 # Dogfood-log template
 
-**Status:** template. Copy this file into your project's working-notes directory (pyfallow uses `.codex/DOGFOOD-LOG.md`, gitignored, as its convention) when you start a dogfood window.
+**Status:** template. Copy this file into your project's working-notes directory (fallow-py uses `.codex/DOGFOOD-LOG.md`, gitignored, as its convention) when you start a dogfood window.
 
 **Why this is a template, not a live log:** the active dogfood log lives outside git because the operator and agents add raw, half-formed observations they wouldn't want preserved as repo history. The template here gives you the shape; the content is yours.
 
-**Recommended window close condition:** evidence-bounded, not calendar-bounded. ADR 0008 uses at least 100 pyfallow CI runs across integrated repos, at least 20 meaningful dogfood log entries, and the operator's qualitative read as the loose threshold for triage.
+**Recommended window close condition:** evidence-bounded, not calendar-bounded. ADR 0008 uses at least 100 fallow-py CI runs across integrated repos, at least 20 meaningful dogfood log entries, and the operator's qualitative read as the loose threshold for triage.
 
-**Purpose:** capture concrete findings from real day-to-day work with pyfallow integrated into projects you actually edit. After the window closes, log content drives the next sprint's ticket prioritization. Without this log, polish becomes imagination-based ("we should add X" with no evidence vs "we saw FP on SQLAlchemy 4 times this week, refine the framework heuristic").
+**Purpose:** capture concrete findings from real day-to-day work with fallow-py integrated into projects you actually edit. After the window closes, log content drives the next sprint's ticket prioritization. Without this log, polish becomes imagination-based ("we should add X" with no evidence vs "we saw FP on SQLAlchemy 4 times this week, refine the framework heuristic").
 
 **How to use:**
-- Add an entry whenever pyfallow does something notable: catches a real bug, raises a false positive, surfaces something subtle, frustrates the operator, surprises an agent
+- Add an entry whenever fallow-py does something notable: catches a real bug, raises a false positive, surfaces something subtle, frustrates the operator, surprises an agent
 - Each entry is short (3-5 lines). Don't perfect — capture-then-classify
 - Don't worry about format consistency. Patterns emerge from raw observations, not from forcing a schema upfront
-- One entry per event. If pyfallow flags 5 things on one PR, that's potentially 5 entries (only the surprising ones, not the routine green CI runs)
+- One entry per event. If fallow-py flags 5 things on one PR, that's potentially 5 entries (only the surprising ones, not the routine green CI runs)
 
 **Categories** (use them when they fit, ignore when they don't):
 
-- `[TP]` — true positive: pyfallow caught a real structural problem, agent or operator was about to ship slop
-- `[FP]` — false positive: pyfallow flagged something that's actually fine
-- `[FN]` — false negative: structural problem that landed and pyfallow didn't catch
+- `[TP]` — true positive: fallow-py caught a real structural problem, agent or operator was about to ship slop
+- `[FP]` — false positive: fallow-py flagged something that's actually fine
+- `[FN]` — false negative: structural problem that landed and fallow-py didn't catch
 - `[FRICTION]` — UX issue: install pain, slow run, confusing output, hard to read
 - `[SURPRISE]` — unexpected behavior, neither clearly right nor wrong
 - `[WIN]` — moment where operator or agent visibly benefited (deserves a story)
@@ -38,7 +38,7 @@ Entry template — copy and fill:
 
 **Repo:** owner/<repo>
 **PR / commit:** <link or sha>
-**Pyfallow rule(s):** PY0XX, PY0YY
+**fallow-py rule(s):** PY0XX, PY0YY
 **What happened:** 1-3 sentences
 
 **Surprising part:** what made this entry-worthy (vs routine)
@@ -55,11 +55,11 @@ Low-cost model attempt template — copy and fill:
 **Task / issue:** <link or local fixture>
 **Model path:** <provider/model/version>
 **Containment:** sterile HOME? opencode --pure? MCP disabled? shell denied?
-**Pyfallow before:** <command + summary>
+**fallow-py before:** <command + summary>
 **Behavioral test before:** <command + failing/passing summary>
 **Model intervention:** GLM-only / GLM + Codex review / Codex-authored
 **Outcome:** opened_pr / safe_no_pr / rejected_bad_patch / aborted_policy / aborted_containment / tooling_failure
-**Pyfallow after:** <command + summary>
+**fallow-py after:** <command + summary>
 **Tests after:** <command + summary>
 **Notes:** where the model followed instructions, drifted, invented facts, or needed a guardrail
 -->
@@ -68,8 +68,8 @@ Low-cost model attempt template — copy and fill:
 
 **Repo:** owner/your-project
 **PR / commit:** <link to first PR>
-**Pyfallow rule(s):** N/A
-**What happened:** Started using pyfallow in CI. First PR merged with green pyfallow gate.
+**fallow-py rule(s):** N/A
+**What happened:** Started using fallow-py in CI. First PR merged with green fallow-py gate.
 
 **Surprising part:** N/A — meta entry to mark the window opened.
 
