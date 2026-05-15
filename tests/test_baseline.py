@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-from pyfallow.baseline import read_baseline
-from pyfallow.config import ConfigError
+from fallow_py.baseline import read_baseline
+from fallow_py.config import ConfigError
 
 
 def test_read_baseline_rejects_integer_issue_fingerprints(tmp_path) -> None:

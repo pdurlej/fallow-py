@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pyfallow.analysis import LIMITATIONS
-from pyfallow.config import load_config
-from pyfallow.models import RULES
+from fallow_py.analysis import LIMITATIONS
+from fallow_py.config import load_config
+from fallow_py.models import RULES
 
 from .runtime import analyze_report, findings
 from .schemas import (

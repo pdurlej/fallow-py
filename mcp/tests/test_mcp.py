@@ -13,11 +13,12 @@ from urllib.parse import quote
 
 from fastmcp import Client
 
-from pyfallow_mcp.runtime import REPORT_CACHE, cached_report
-from pyfallow_mcp.server import build_server
-from pyfallow_mcp.tools import verify_imports_impl
+from fallow_py_mcp.runtime import REPORT_CACHE, cached_report
+from fallow_py_mcp.server import build_server
+from fallow_py_mcp.tools import verify_imports_impl
 
 TIMEOUT = 15
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def write(path: Path, text: str) -> None:
@@ -416,13 +417,39 @@ def test_resources_return_report_and_module_graph(tmp_path: Path) -> None:
 
 
 def test_console_entrypoint_help() -> None:
-    result = subprocess.run(
-        [sys.executable, "-m", "pyfallow_mcp", "--help"],
-        text=True,
-        capture_output=True,
-        check=False,
-        timeout=TIMEOUT,
-    )
+    for module in ["fallow_py_mcp", "pyfallow_mcp"]:
+        result = subprocess.run(
+            [sys.executable, "-m", module, "--help"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=TIMEOUT,
+        )
 
-    assert result.returncode == 0
-    assert "--root" in result.stdout
+        assert result.returncode == 0
+        assert "--root" in result.stdout
+
+
+def test_mcp_self_audit_maps_core_import_to_legacy_distribution() -> None:
+    from fallow_py.analysis import analyze
+    from fallow_py.config import load_config
+
+    result = analyze(load_config(ROOT))
+    dependency_issues = [
+        issue
+        for issue in result["issues"]
+        if issue["rule"] in {"missing-runtime-dependency", "unused-runtime-dependency"}
+    ]
+
+    assert not [
+        issue
+        for issue in dependency_issues
+        if issue["rule"] == "missing-runtime-dependency"
+        and issue.get("evidence", {}).get("distribution") == "fallow-py"
+    ]
+    assert not [
+        issue
+        for issue in dependency_issues
+        if issue["rule"] == "unused-runtime-dependency"
+        and issue.get("evidence", {}).get("distribution") == "pyfallow"
+    ]

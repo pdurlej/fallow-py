@@ -1,8 +1,6 @@
-"""Compatibility entry point for ``python -m pyfallow``."""
-
 from __future__ import annotations
 
-from fallow_py.cli import main
+from .server import main
 
 
 if __name__ == "__main__":

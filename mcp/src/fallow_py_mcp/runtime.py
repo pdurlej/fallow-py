@@ -5,10 +5,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from pyfallow.analysis import analyze
-from pyfallow.classify import classify_finding
-from pyfallow.config import load_config
-from pyfallow.models import SEVERITY_ORDER
+from fallow_py.analysis import analyze
+from fallow_py.classify import classify_finding
+from fallow_py.config import load_config
+from fallow_py.models import SEVERITY_ORDER
 
 from .schemas import Finding
 

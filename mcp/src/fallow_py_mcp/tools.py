@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pyfallow.analysis import filter_result
-from pyfallow.classify import ClassificationResult, flatten_classification_groups, group_by_classification
-from pyfallow.config import load_config
-from pyfallow.predict import verify_imports
+from fallow_py.analysis import filter_result
+from fallow_py.classify import ClassificationResult, flatten_classification_groups, group_by_classification
+from fallow_py.config import load_config
+from fallow_py.predict import verify_imports
 
 from .context import agent_context_impl
 from .remediation import explain_finding_impl
