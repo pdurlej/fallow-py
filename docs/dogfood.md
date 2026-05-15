@@ -35,7 +35,7 @@ Create `.forgejo/workflows/fallow-py.yml` in your project's repo. Start from the
 ```bash
 # In your project root
 mkdir -p .forgejo/workflows
-curl -sSL https://raw.githubusercontent.com/pdurlej/pyfallow/main/examples/ci/forgejo-actions.yml \
+curl -sSL https://raw.githubusercontent.com/pdurlej/fallow-py/main/examples/ci/forgejo-actions.yml \
   -o .forgejo/workflows/fallow-py.yml
 ```
 
