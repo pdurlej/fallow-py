@@ -34,3 +34,4 @@ When a decision in `.codex/DECISIONS.md` matures (settled, applied, observable i
 | 0009 | [Three-bucket classification with mandatory product-language explanations](0009-three-bucket-classification.md) | accepted |
 | 0010 | [Mandatory non-author AI reviewer + branch protection on every PR](0010-mandatory-non-author-reviewer.md) | accepted |
 | 0011 | [Adopt Forgejo-native CI pattern (from parallel Codex thread's stash)](0011-forgejo-native-ci-pattern.md) | accepted |
+| 0012 | [Umbrella branding "fallow": pyfallow → fallow-py, new TS sibling → fallow-ts](0012-umbrella-branding-fallow.md) | accepted |
