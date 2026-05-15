@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 This project follows the spirit of [Keep a Changelog](https://keepachangelog.com/) and uses semantic versioning while the public contract stabilizes.
 
-## 0.3.0a3 / 0.1.0a3 mcp - TBD
+## 0.3.0a3 / 0.1.0a3 mcp - 2026-05-15
+
+Release notes: [`docs/release-notes/0.3.0a3.md`](docs/release-notes/0.3.0a3.md).
 
 ### Changed
 

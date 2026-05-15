@@ -1859,8 +1859,8 @@ def test_json_schema_and_golden_fixture_contract() -> None:
 
 
 def test_agent_integration_examples_are_packaged() -> None:
-    skill_root = ROOT / "examples/claude-skill/pyfallow-cleanup"
-    cursor_rule = ROOT / "examples/cursor-rules/pyfallow.mdc"
+    skill_root = ROOT / "examples/claude-skill/fallow-py-cleanup"
+    cursor_rule = ROOT / "examples/cursor-rules/fallow-py.mdc"
     agent_doc = ROOT / "docs/agent-integration.md"
 
     for path in [
@@ -1877,10 +1877,12 @@ def test_agent_integration_examples_are_packaged() -> None:
     cursor_text = cursor_rule.read_text(encoding="utf-8")
 
     assert "pyfallow.analyze_diff" in skill_text
+    assert "fallow-py analyze" in skill_text
     assert "blocking" in skill_text
     assert "DO NOT mark the task complete" in workflow_text
     assert "missing_dependencies" in workflow_text
     assert "alwaysApply: true" in cursor_text
+    assert "fallow-py analyze" in cursor_text
 
     archives = {
         ROOT / "examples/claude-skill/claude-skill-pyfallow-cleanup-v0.3.0.zip": {

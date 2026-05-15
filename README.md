@@ -1,6 +1,6 @@
 # fallow-py
 
-[![CI](https://github.com/pd/fallow-python/actions/workflows/ci.yml/badge.svg)](https://github.com/pd/fallow-python/actions/workflows/ci.yml)
+[![CI](https://github.com/pdurlej/fallow-py/actions/workflows/ci.yml/badge.svg)](https://github.com/pdurlej/fallow-py/actions/workflows/ci.yml)
 
 `fallow-py` is an early Python-first codebase intelligence tool for agents and reviewers.
 
@@ -8,9 +8,13 @@ It builds a static picture of imports, dependencies, complexity, duplication, ar
 
 ## Status
 
-Current release target: `0.3.0a3`.
+Current alpha: `0.3.0a3`.
 
 Runtime dependencies are stdlib-only on Python 3.11+. Development and packaging tools are optional extras.
+
+The dogfood evidence window is open. Phase B/C hardening work is intentionally
+paused until real repository runs produce enough signal; see
+[`docs/dogfood-evidence-status.md`](docs/dogfood-evidence-status.md).
 
 ## For Agents
 
@@ -24,8 +28,8 @@ fallow-py-mcp --root /path/to/repo
 
 Then install the bundled agent instructions:
 
-- Claude Code skill: [`examples/claude-skill/pyfallow-cleanup/`](examples/claude-skill/pyfallow-cleanup/)
-- Cursor rule mirror: [`examples/cursor-rules/pyfallow.mdc`](examples/cursor-rules/pyfallow.mdc)
+- Claude Code skill: [`examples/claude-skill/fallow-py-cleanup/`](examples/claude-skill/fallow-py-cleanup/)
+- Cursor rule mirror: [`examples/cursor-rules/fallow-py.mdc`](examples/cursor-rules/fallow-py.mdc)
 
 See [`docs/agent-integration.md`](docs/agent-integration.md) for MCP setup, trigger rules, and the blocking/review/auto-fix workflow.
 

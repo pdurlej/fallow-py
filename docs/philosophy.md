@@ -76,7 +76,7 @@ This is the founding principle. Fallow-py exists to keep that promise.
 
 If you are an LLM-based agent acting on a codebase that has fallow-py integrated:
 
-1. **Before commit, call `fallow-py analyze` (CLI) or `pyfallow.analyze_diff` (MCP) on your diff.** This is a deterministic check on what you just changed. It is cheap.
+1. **Before commit, call `fallow-py analyze` (CLI) or the MCP `analyze_diff` tool on your diff.** This is a deterministic check on what you just changed. It is cheap.
 
 2. **Read the classification, not just the message.** `auto_safe` findings are safe to apply with the suggested patch. `review_needed` findings require thinking. `blocking` findings stop the commit. `manual_only` findings are informational.
 
