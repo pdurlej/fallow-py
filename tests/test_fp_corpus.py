@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 
-from pyfallow.analysis import analyze
-from pyfallow.config import load_config
-from pyfallow.models import CONFIDENCE_ORDER
+from fallow_py.analysis import analyze
+from fallow_py.config import load_config
+from fallow_py.models import CONFIDENCE_ORDER
 
 ROOT = Path(__file__).resolve().parents[1]
 CORPUS_ROOT = ROOT / "benchmarks" / "fp-cases"

@@ -12,16 +12,16 @@ import zipfile
 from pathlib import Path
 
 import pytest
-import pyfallow
-from pyfallow.analysis import analyze
-from pyfallow.ast_index import index_file
-from pyfallow.baseline import compare_with_baseline, create_baseline
-from pyfallow.classify import agent_fix_plan, classify_finding
-from pyfallow.config import ConfigError, load_config
-from pyfallow.dependencies import parse_dependency_declarations
-from pyfallow.models import RULES, VERSION
-from pyfallow.predict import parse_import_spec, verify_imports
-from pyfallow.sarif import to_sarif
+import fallow_py
+from fallow_py.analysis import analyze
+from fallow_py.ast_index import index_file
+from fallow_py.baseline import compare_with_baseline, create_baseline
+from fallow_py.classify import agent_fix_plan, classify_finding
+from fallow_py.config import ConfigError, load_config
+from fallow_py.dependencies import parse_dependency_declarations
+from fallow_py.models import RULES, VERSION
+from fallow_py.predict import parse_import_spec, verify_imports
+from fallow_py.sarif import to_sarif
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -496,13 +496,24 @@ def test_output_formats_baseline_and_agent_context(tmp_path: Path) -> None:
 
 def test_release_metadata_version_schema_and_readme_examples() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert pyfallow.__version__ == pyproject["project"]["version"] == VERSION
+    assert fallow_py.__version__ == pyproject["project"]["version"] == VERSION
     assert pyproject["project"]["version"] == "0.3.0a2"
     assert pyproject["project"]["dependencies"] == []
 
     version_run = run_cli(["--version"])
     assert version_run.returncode == 0
     assert version_run.stdout.strip() == "pyfallow 0.3.0a2"
+
+    canonical_run = subprocess.run(
+        [sys.executable, "-m", "fallow_py", "--version"],
+        text=True,
+        capture_output=True,
+        env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+        check=False,
+        timeout=TIMEOUT,
+    )
+    assert canonical_run.returncode == 0
+    assert canonical_run.stdout.strip() == "pyfallow 0.3.0a2"
 
     for path in [
         ROOT / "schemas/pyfallow-report.schema.json",
@@ -518,6 +529,27 @@ def test_release_metadata_version_schema_and_readme_examples() -> None:
     assert "python -m pyfallow analyze --root examples/demo_project --format text" in readme
     assert "not currently an official fallow-rs/fallow project" in readme
     assert "Runtime dependencies are stdlib-only" in readme
+
+
+def test_legacy_pyfallow_import_shim_preserves_public_api() -> None:
+    for name in list(sys.modules):
+        if name == "pyfallow" or name.startswith("pyfallow."):
+            sys.modules.pop(name)
+
+    with pytest.warns(DeprecationWarning, match="pyfallow"):
+        legacy = importlib.import_module("pyfallow")
+
+    assert legacy.__version__ == fallow_py.__version__
+    assert legacy.analyze is fallow_py.analyze
+    assert legacy.load_config is fallow_py.load_config
+
+    legacy_analysis = importlib.import_module("pyfallow.analysis")
+    canonical_analysis = importlib.import_module("fallow_py.analysis")
+    assert legacy_analysis is canonical_analysis
+
+    legacy_cli = importlib.import_module("pyfallow.cli")
+    canonical_cli = importlib.import_module("fallow_py.cli")
+    assert legacy_cli.main is canonical_cli.main
 
 
 def test_example_project_cli_commands_work() -> None:

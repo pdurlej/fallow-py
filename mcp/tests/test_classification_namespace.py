@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from typing import Any, Literal, get_args, get_origin
 
-from pyfallow.classify import CLASSIFICATION_GROUPS
-from pyfallow_mcp.schemas import Classification, Finding, Remediation
+import pytest
+
+from fallow_py.classify import CLASSIFICATION_GROUPS
+from fallow_py_mcp.schemas import Classification, Finding, Remediation
 
 CORE_GROUPS = set(CLASSIFICATION_GROUPS)
 
@@ -44,7 +46,7 @@ def test_remediation_classification_mirrors_core_groups() -> None:
 
 def test_safe_classification_canary_returns_auto_safe_for_clean_high_confidence() -> None:
     """Canary: safe_classification must return the core underscore namespace."""
-    from pyfallow_mcp.safety import safe_classification
+    from fallow_py_mcp.safety import safe_classification
 
     issue = {
         "rule": "unused-symbol",
@@ -66,3 +68,26 @@ def test_safe_classification_canary_returns_auto_safe_for_clean_high_confidence(
     assert result.decision == "auto_safe", (
         f"safe_classification must return underscore namespace, got {result.decision!r}."
     )
+
+
+def test_legacy_mcp_import_shim_preserves_public_api() -> None:
+    import importlib
+    import sys
+
+    import fallow_py_mcp
+
+    for name in list(sys.modules):
+        if name == "pyfallow_mcp" or name.startswith("pyfallow_mcp."):
+            sys.modules.pop(name)
+
+    with pytest.warns(DeprecationWarning, match="pyfallow_mcp"):
+        legacy = importlib.import_module("pyfallow_mcp")
+    assert legacy.__version__ == fallow_py_mcp.__version__
+
+    legacy_runtime = importlib.import_module("pyfallow_mcp.runtime")
+    canonical_runtime = importlib.import_module("fallow_py_mcp.runtime")
+    assert legacy_runtime is canonical_runtime
+
+    legacy_server = importlib.import_module("pyfallow_mcp.server")
+    canonical_server = importlib.import_module("fallow_py_mcp.server")
+    assert legacy_server.main is canonical_server.main

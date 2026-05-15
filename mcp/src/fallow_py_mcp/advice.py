@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pyfallow.models import RULES
+from fallow_py.models import RULES
 
 from .schemas import FixOption
 from .safety import safe_auto_issue

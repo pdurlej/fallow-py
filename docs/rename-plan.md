@@ -26,7 +26,7 @@ The full report (with comparison table and references) is in this conversation's
 
 **Branch:** `rename/adr-umbrella-branding`
 **Risk:** zero
-**Status:** open
+**Status:** merged (#45)
 
 Scope:
 - New `decisions/0012-umbrella-branding-fallow.md`
@@ -37,9 +37,9 @@ No source code touched. No CI / packaging / config changes. Pure documentation o
 
 ### PR #2 — Python package rename + import shim
 
-**Branch:** TBD (`rename/package-fallow-py`)
+**Branch:** `rename/package-fallow-py`
 **Risk:** medium (largest mechanical diff)
-**Status:** not started
+**Status:** in progress
 
 Scope:
 - `src/pyfallow/` → `src/fallow_py/` (full directory rename, preserving git history via `git mv`)
@@ -124,3 +124,4 @@ After PR #4 merges, the rename is observably complete.
 ## Update log
 
 - **2026-05-13** — PR #1 opened (this doc + ADR 0012). Status: in review.
+- **2026-05-15** — PR #1 merged as #45; PR #2 started on `rename/package-fallow-py`.

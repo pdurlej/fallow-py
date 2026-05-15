@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pyfallow.classify import CLASSIFICATION_GROUPS
+from fallow_py.classify import CLASSIFICATION_GROUPS
 from pydantic import BaseModel, ConfigDict, Field
 
 ClassificationDecision = Literal[*CLASSIFICATION_GROUPS]

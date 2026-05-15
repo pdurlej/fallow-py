@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pyfallow.classify import classify_finding
+from fallow_py.classify import classify_finding
 
 from .advice import fix_options, investigation_hints, safety_notes
 from .safety import safe_auto_issue
