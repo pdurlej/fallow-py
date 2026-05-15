@@ -50,3 +50,6 @@ where = ["src"]
 testpaths = ["tests"]
 pythonpath = ["src", "../src"]
 addopts = "-q"
+
+[tool.pyfallow.dependencies.import_map]
+fallow_py = "pyfallow"
