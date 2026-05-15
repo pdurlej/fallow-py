@@ -111,12 +111,12 @@ Run the bundled demo project:
 python -m fallow_py analyze --root examples/demo_project --format text
 ```
 
-Example text output excerpt:
+Abbreviated text output excerpt:
 
 ```text
-PY040 error high examples/demo_project/src/app/main.py:3 Imported third-party package 'missingdep' is not declared as a dependency.
-PY020 warning high examples/demo_project/src/app/cycle_a.py:1 Import cycle detected: app.cycle_a -> app.cycle_b -> app.cycle_a
-PY070 error high examples/demo_project/src/app/domain/service.py:1 Import violates architecture boundary rule 'domain-no-infra'.
+PY040 error   missing-runtime-dependency   examples/demo_project/src/app/main.py:3
+PY020 warning circular-dependency          examples/demo_project/src/app/cycle_a.py:1
+PY070 error   boundary-violation           examples/demo_project/src/app/domain/service.py:1
 ```
 
 Short checked-in excerpts live in [`examples/outputs/`](examples/outputs/).

@@ -68,7 +68,7 @@ Out of scope:
 
 **Branch:** `rename/cli-config-docs`
 **Risk:** low
-**Status:** in progress
+**Status:** merged (#47)
 
 Scope:
 - `pyproject.toml`:
@@ -100,13 +100,13 @@ Out of scope:
 
 **Branch:** N/A (admin operation)
 **Risk:** low (Forgejo preserves PRs / issues / forwarding redirects)
-**Status:** not started
+**Status:** admin rename completed; URL cleanup in progress
 
 Scope:
 - Operator (or claude with admin PAT) renames the repo on Forgejo: `pdurlej/pyfallow` → `pdurlej/fallow-py`
 - GitHub mirror: same admin rename on github.com
 - Local checkouts: `git remote set-url origin https://git.pdurlej.com/pdurlej/fallow-py.git` (Forgejo's HTTP redirect will keep old URLs working for a while; explicit update prevents drift)
-- Update any external references that point at the old URL (none known at the time of this rename)
+- Update package metadata and docs links that point at the old URL.
 
 After PR #4 merges, the rename is observably complete.
 
@@ -126,3 +126,4 @@ After PR #4 merges, the rename is observably complete.
 - **2026-05-13** — PR #1 opened (this doc + ADR 0012). Status: in review.
 - **2026-05-15** — PR #1 merged as #45; PR #2 started on `rename/package-fallow-py`.
 - **2026-05-15** — PR #2 merged as #46; PR #3 started on `rename/cli-config-docs`.
+- **2026-05-15** — PR #3 merged as #47; Forgejo and GitHub repos renamed to `fallow-py`; URL cleanup started on `rename/repo-url-cleanup`.

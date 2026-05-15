@@ -71,7 +71,7 @@ git push
 
 # PR creation via Forgejo API:
 curl -sX POST -H "Authorization: token <actor-token>" -H "Content-Type: application/json" \
-  https://<forgejo-host>/api/v1/repos/<owner>/pyfallow/pulls -d @pr-body.json
+  https://<forgejo-host>/api/v1/repos/<owner>/<repo>/pulls -d @pr-body.json
 ```
 
 **Anti-pattern:** pushing as the human operator when you are an agent. Audit trail lies. If it happens, delete/repost with the correct identity and record the correction.
