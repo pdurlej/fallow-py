@@ -204,6 +204,31 @@ Operator's strategic decision (chat log 2026-05-04, refined in ADR 0008 on 2026-
 
 This is anti-AI-slop posture: don't polish from imagination, polish from logs.
 
+## Aggregating dogfood evidence
+
+Use [`scripts/dogfood/aggregate_evidence.py`](../scripts/dogfood/aggregate_evidence.py)
+from a trusted host to turn many CI runs and report artifacts into one operator-readable
+summary. The script is stdlib-only and has two inputs:
+
+- Forgejo Actions run metadata, read through `/api/v1/repos/{owner}/{repo}/actions/runs`
+- locally available fallow-py report artifacts, usually files named `pyfallow-report.json`
+
+Example cron-friendly command:
+
+```bash
+FALLOW_FORGEJO_TOKEN="$TOKEN" \
+python scripts/dogfood/aggregate_evidence.py \
+  --repo pdurlej/fallow-py \
+  --runs-limit 100 \
+  --artifacts-dir pdurlej/fallow-py=/var/lib/fallow-py/dogfood/fallow-py \
+  --output /var/lib/fallow-py/dogfood/weekly.md \
+  --json-output /var/lib/fallow-py/dogfood/weekly.json
+```
+
+If artifact download is handled by a separate rs2000 job, point `--artifacts-dir`
+at the extracted artifact tree. The aggregator does not need maintainer credentials
+unless it is reading private Forgejo run metadata.
+
 ## When fallow-py is wrong
 
 If you're confident fallow-py flagged something incorrectly:
