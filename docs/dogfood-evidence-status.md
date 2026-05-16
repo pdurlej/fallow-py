@@ -12,6 +12,9 @@ It prevents the current plan from living only in chat context.
 - Phase B/C engineering issues remain open but paused by ADR 0008.
 - DeepSeek audit triage is indexed in [Forgejo #35](https://git.pdurlej.com/pdurlej/fallow-py/issues/35) and summarized in [`docs/audits/deepseek-v4-pro-triage-2026-05-12.md`](audits/deepseek-v4-pro-triage-2026-05-12.md).
 - Dogfood aggregation infrastructure is tracked in [Forgejo #29](https://git.pdurlej.com/pdurlej/fallow-py/issues/29).
+  The current lightweight aggregator is [`scripts/dogfood/aggregate_evidence.py`](../scripts/dogfood/aggregate_evidence.py):
+  it reads Forgejo Actions run metadata plus locally available `pyfallow-report.json`
+  artifacts and emits Markdown/JSON summaries for operator review.
 
 ## Evidence Gate
 
@@ -25,14 +28,21 @@ calendar date passes. The current gate is:
 ## Immediate Next Work
 
 1. Integrate fallow-py CI into operator-owned Python repositories.
-2. Log false positives, useful findings, missed findings, and workflow friction with [`docs/dogfood-log-template.md`](dogfood-log-template.md).
-3. Keep accepted DeepSeek follow-ups visible through Forgejo issues instead of re-litigating the raw audit.
-4. Treat `fallow-ts` as a sibling project, not a reason to expand this Python analyzer before evidence arrives.
+2. Run the dogfood evidence aggregator from a trusted cron host, for example:
+
+   ```bash
+   python scripts/dogfood/aggregate_evidence.py \
+     --repo pdurlej/fallow-py \
+     --artifacts-dir pdurlej/fallow-py=/var/lib/fallow-py/dogfood/fallow-py \
+     --output /var/lib/fallow-py/dogfood/weekly.md \
+     --json-output /var/lib/fallow-py/dogfood/weekly.json
+   ```
+
+3. Log false positives, useful findings, missed findings, and workflow friction with [`docs/dogfood-log-template.md`](dogfood-log-template.md).
+4. Keep accepted DeepSeek follow-ups visible through Forgejo issues instead of re-litigating the raw audit.
+5. Treat `fallow-ts` as a sibling project, not a reason to expand this Python analyzer before evidence arrives.
 
 ## Operator Action Items
 
-- Set Forgejo repository topics to match GitHub: `python`, `static-analysis`,
-  `code-intelligence`, `ai-agents`, `sarif`, `dead-code`, `architecture`,
-  `dependency-analysis` ([Forgejo #49](https://git.pdurlej.com/pdurlej/fallow-py/issues/49)).
-- Decide when `0.3.0a3` should become an actual GitHub/TestPyPI release artifact
-  ([Forgejo #50](https://git.pdurlej.com/pdurlej/fallow-py/issues/50)).
+- Decide when to publish the existing draft GitHub prerelease for `0.3.0a3`.
+- Decide whether and when to upload `0.3.0a3` / `0.1.0a3` to TestPyPI.
