@@ -8,6 +8,18 @@
 
 ---
 
+## 0. Fresh session? Read agent-souls onboarding first
+
+If you are a fresh cousin session (claude / codex / glm / iskra / hermes / dziadek / pan-herbatka / pyfallow) entering this repo, read [`pdurlej/agent-souls/skills/cousin-onboarding/SKILL.md`](https://git.pdurlej.com/pdurlej/agent-souls/src/branch/main/skills/cousin-onboarding/SKILL.md) **first**, then return to the repo-specific sections below.
+
+The skill covers: identity verification, Infisical machine identity bootstrap (NOT operator paste), cardinal `agent-souls` reads, per-repo entry table, hard rules (no secrets in chat, per-cousin commits, ADR-0017 + ADR-0018).
+
+Pyfallow-specific: deterministic Python static analyzer, the "bassist" of the AI-agent band. Pre-commit discipline. See `docs/philosophy.md` before adding new analysis rules.
+
+Discipline source: [`pdurlej/agent-souls/practices/repo-onboarding-pointer.md`](https://git.pdurlej.com/pdurlej/agent-souls/src/branch/main/practices/repo-onboarding-pointer.md).
+
+---
+
 ## What this repo is
 
 `fallow-py` is a **deterministic Python static analyzer** that AI agents call on themselves before commit. The thesis (per ADR 0006, ADR 0007, `docs/philosophy.md`):
