@@ -4,12 +4,14 @@ import argparse
 import json
 import logging
 import sys
+import textwrap
+import tomllib
 from pathlib import Path
 from typing import Any
 
 from .analysis import LIMITATIONS, analyze, filter_result
 from .baseline import compare_with_baseline, create_baseline, read_baseline, write_baseline
-from .config import load_config
+from .config import ConfigError, load_config
 from .doctor import doctor_payload, format_doctor_text
 from .formatters import format_agent_context, format_result
 from .models import CONFIDENCE_ORDER, SEVERITY_ORDER, VERSION
@@ -42,6 +44,8 @@ def main(argv: list[str] | None = None, *, prog: str = "fallow-py") -> int:
             return _run_baseline(args)
         if args.command == "doctor":
             return _run_doctor(args)
+        if args.command == "init":
+            return _run_init(args)
         return _run_analysis(args)
     except (FileNotFoundError, ValueError, OSError, json.JSONDecodeError) as exc:
         if not getattr(args, "quiet", False):
@@ -65,6 +69,13 @@ def build_parser(prog: str = "fallow-py") -> argparse.ArgumentParser:
     _add_common(compare)
     doctor = sub.add_parser("doctor")
     _add_doctor(doctor)
+    init_parser = sub.add_parser("init", help="Initialize fallow-py configuration.")
+    init_group = init_parser.add_mutually_exclusive_group(required=True)
+    init_group.add_argument("--dry-run", action="store_true", help="Print recommended configuration to console.")
+    init_group.add_argument("--write", action="store_true", help="Write .fallow-py.toml if no config exists.")
+    init_parser.add_argument("--root", default=".")
+    init_parser.add_argument("--quiet", action="store_true")
+    init_parser.add_argument("--debug", action="store_true")
     explain = sub.add_parser("explain", help="Explain a fallow-py rule id or slug.")
     explain.add_argument("rule", nargs="?", help="Rule slug such as unused-symbol, or id such as PY031.")
     explain.add_argument("--all", action="store_true", help="Show all rule explanations.")
@@ -178,6 +189,57 @@ def _run_doctor(args: argparse.Namespace) -> int:
     )
     _write_or_print(output, args.output)
     return 0
+
+
+def _run_init(args: argparse.Namespace) -> int:
+    config_content = textwrap.dedent("""
+        [tool.fallow_py]
+        roots = ["src"]
+        entry = ["src/app/main.py"]
+        include_tests = false
+
+        [tool.fallow_py.dupes]
+        min_lines = 6
+        min_tokens = 40
+
+        [tool.fallow_py.health]
+        max_cyclomatic = 10
+        max_cognitive = 15
+    """).strip() + "\\n"
+
+    if args.dry_run:
+        print(config_content, end="")
+        return 0
+
+    if args.write:
+        root_path = Path(args.root).resolve()
+        candidates = [
+            root_path / ".fallow-py.toml",
+            root_path / ".fallow.toml",
+            root_path / ".pyfallow.toml",
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                raise ConfigError(f"Config file already exists: {candidate.name}")
+        pyproject_path = root_path / "pyproject.toml"
+        if pyproject_path.exists():
+            try:
+                with pyproject_path.open("rb") as handle:
+                    pyproject_data = tomllib.load(handle)
+                tool = pyproject_data.get("tool", {})
+                if "fallow_py" in tool or "fallow" in tool or "pyfallow" in tool:
+                    raise ConfigError("Config already exists in pyproject.toml under [tool.fallow_py] or [tool.fallow]")
+            except ConfigError:
+                raise
+            except Exception:
+                pass
+        output_path = root_path / ".fallow-py.toml"
+        output_path.write_text(config_content, encoding="utf-8")
+        if not args.quiet:
+            print(f"Created fallow-py configuration at {output_path.name}")
+        return 0
+
+    raise ValueError("init requires either --dry-run or --write")
 
 
 def _run_explain(args: argparse.Namespace) -> int:
