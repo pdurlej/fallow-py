@@ -205,7 +205,7 @@ def _run_init(args: argparse.Namespace) -> int:
         [tool.fallow_py.health]
         max_cyclomatic = 10
         max_cognitive = 15
-    """).strip() + "\\n"
+    """).strip() + "\n"
 
     if args.dry_run:
         print(config_content, end="")

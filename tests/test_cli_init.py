@@ -33,7 +33,6 @@ def test_init_dry_run() -> None:
 def test_init_write(tmp_path: Path) -> None:
     env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
 
-    # 1. Pierwsze udane zapisanie
     res = subprocess.run(
         [sys.executable, "-m", "fallow_py", "init", "--write", "--root", str(tmp_path)],
         text=True,
@@ -47,7 +46,16 @@ def test_init_write(tmp_path: Path) -> None:
     written_config = tmp_path / ".fallow-py.toml"
     assert written_config.exists()
 
-    # 2. Próba ponownego zapisu powinna zgłosić błąd
+    doctor = subprocess.run(
+        [sys.executable, "-m", "fallow_py", "doctor", "--root", str(tmp_path)],
+        text=True,
+        capture_output=True,
+        env=env,
+        timeout=TIMEOUT,
+    )
+    assert doctor.returncode == 0, doctor.stdout + doctor.stderr
+    assert "Config: .fallow-py.toml" in doctor.stdout
+
     res2 = subprocess.run(
         [sys.executable, "-m", "fallow_py", "init", "--write", "--root", str(tmp_path)],
         text=True,
@@ -58,7 +66,6 @@ def test_init_write(tmp_path: Path) -> None:
     assert res2.returncode != 0
     assert "Config file already exists" in res2.stderr
 
-    # 3. Próba zapisu przy obecności innego kandydata np. .fallow.toml
     tmp_path2 = tmp_path / "candidate_test"
     tmp_path2.mkdir()
     (tmp_path2 / ".fallow.toml").write_text("", encoding="utf-8")
@@ -72,7 +79,6 @@ def test_init_write(tmp_path: Path) -> None:
     assert res3.returncode != 0
     assert "Config file already exists: .fallow.toml" in res3.stderr
 
-    # 4. Próba zapisu przy obecności sekcji fallow_py w pyproject.toml
     tmp_path3 = tmp_path / "pyproject_test"
     tmp_path3.mkdir()
     write(
@@ -80,7 +86,7 @@ def test_init_write(tmp_path: Path) -> None:
         """
         [tool.fallow_py]
         some_setting = true
-        """
+        """,
     )
     res4 = subprocess.run(
         [sys.executable, "-m", "fallow_py", "init", "--write", "--root", str(tmp_path3)],
